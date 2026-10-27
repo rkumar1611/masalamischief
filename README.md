@@ -27,6 +27,9 @@ Double-click `index.html`. That's it.
 Open `assets/data.js`, copy an existing film object, and change the fields. The `id` becomes the URL
 (`review.html?id=your-id`), so use lowercase words joined by hyphens.
 
+After changing anything in `assets/`, bump the `?v=2` number on the `<link>`/`<script>` tags in every
+`.html` file (e.g. to `?v=3`), otherwise returning visitors may keep seeing the old cached version.
+
 The bundled reviews are starter copy in the house voice: rewrite them in your own words before
 launch, and check the `audio` (dubbed languages) for each film, since that varies by platform.
 
