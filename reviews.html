@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reviews · Masala Mischief</title>
+  <meta name="description" content="All Masala Mischief film reviews, searchable by title, language and genre.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body data-page="reviews">
+  <main class="wrap">
+    <div class="hero" style="padding-bottom:20px">
+      <h1>Reviews</h1>
+      <p class="lead">Every film gets a Masala Meter for fun and a score for craft.</p>
+    </div>
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Search title, language or genre" aria-label="Search reviews">
+      <select id="lang" aria-label="Language"></select>
+      <select id="sort" aria-label="Sort by">
+        <option value="latest">Latest</option>
+        <option value="masala">Most masala</option>
+        <option value="quality">Highest quality</option>
+        <option value="year">Newest film</option>
+      </select>
+    </div>
+    <div class="grid" id="list"></div>
+  </main>
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

@@ -3,129 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Masala Mischief — bold flavours, playful attitude, and a little bit of mischief.">
-  <title>Masala Mischief | Bold Flavours. Playful Attitude.</title>
+  <title>Masala Mischief · Indian film reviews with extra chilli</title>
+  <meta name="description" content="Honest, fun reviews of Hindi, Tamil, Telugu, Malayalam and Kannada films, rated on the Masala Meter. Plus mood-based picks for tonight.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
 </head>
-<body>
-  <header class="nav">
-    <a class="brand" href="#home" aria-label="Masala Mischief home">
-      <span class="brand-mark">MM</span>
-      <span>Masala Mischief</span>
-    </a>
-    <button class="menu" aria-label="Open menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
-    <nav>
-      <a href="#story">Our Story</a>
-      <a href="#goodies">Goodies</a>
-      <a href="#why">Why Us</a>
-      <a href="#contact">Contact</a>
-    </nav>
-  </header>
-
-  <main id="home">
-    <section class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">A little spice. A lot of personality.</p>
-        <h1>Bold flavours.<br><em>Playful attitude.</em></h1>
-        <p class="lead">Welcome to Masala Mischief — where familiar Indian flavours get a cheeky little twist.</p>
-        <div class="actions">
-          <a class="btn primary" href="#goodies">Explore the mischief</a>
-          <a class="btn secondary" href="#story">Our story →</a>
-        </div>
+<body data-page="home">
+  <main class="wrap">
+    <div class="hero">
+      <h1>Film reviews with <em>extra chilli</em>.</h1>
+      <p class="lead">Hindi, Tamil, Telugu, Malayalam and Kannada cinema, reviewed honestly and rated on two scales: how much fun it is, and how good it is.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="suggest.html">What should I watch tonight?</a>
+        <a class="btn" href="reviews.html">Browse reviews</a>
       </div>
-      <div class="hero-art" aria-label="Decorative spice illustration">
-        <div class="sun"></div>
-        <div class="spice-card">
-          <span>MASALA</span>
-          <strong>MISCHIEF</strong>
-          <small>made with attitude</small>
-        </div>
-        <div class="pepper p1">✦</div>
-        <div class="pepper p2">✦</div>
-        <div class="pepper p3">✦</div>
-      </div>
-    </section>
+    </div>
 
-    <section class="ticker" aria-label="Brand message">
-      <span>GOOD FOOD</span><b>✦</b><span>GOOD MOOD</span><b>✦</b><span>GOOD MISCHIEF</span><b>✦</b>
-      <span>GOOD FOOD</span><b>✦</b><span>GOOD MOOD</span>
-    </section>
-
-    <section id="story" class="section split">
+    <div class="explainer">
       <div>
-        <p class="eyebrow">The idea</p>
-        <h2>Why should masala be serious?</h2>
+        <h3>🌶️🌶️🌶️🌶️🌶️ Masala Meter</h3>
+        <p>Pure entertainment value. Whistles, slow-mo, songs you'll hum for a week. Five chillies means you'll shout at the screen.</p>
       </div>
-      <div class="body-copy">
-        <p>Masala Mischief is built around a simple thought: food should make you smile before the first bite is even over.</p>
-        <p>We love Indian flavours in all their glorious forms — earthy, tangy, smoky, spicy and wonderfully unpredictable. Our job is to bring that spirit to the table with a fresh, playful point of view.</p>
-        <p class="signature">Come hungry. Leave grinning.</p>
-      </div>
-    </section>
-
-    <section id="goodies" class="section goodies">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">Coming soon</p>
-          <h2>Things worth getting your hands on.</h2>
-        </div>
-        <p>We're cooking up the good stuff. Stay tuned.</p>
-      </div>
-      <div class="cards">
-        <article class="card card-a">
-          <span class="card-number">01</span>
-          <h3>Masala<br>Goodies</h3>
-          <p>Big flavour, tiny excuses.</p>
-        </article>
-        <article class="card card-b">
-          <span class="card-number">02</span>
-          <h3>Snack<br>Mischief</h3>
-          <p>The kind you hide from everyone else.</p>
-        </article>
-        <article class="card card-c">
-          <span class="card-number">03</span>
-          <h3>Special<br>Surprises</h3>
-          <p>Because predictable is overrated.</p>
-        </article>
-      </div>
-    </section>
-
-    <section id="why" class="manifesto">
-      <div class="manifesto-inner">
-        <p class="eyebrow">Our philosophy</p>
-        <h2>More flavour.<br>Less fuss.<br><em>More fun.</em></h2>
-        <div class="principles">
-          <div><strong>01</strong><span>Flavour first</span></div>
-          <div><strong>02</strong><span>Keep it honest</span></div>
-          <div><strong>03</strong><span>Never be boring</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="contact" class="section contact">
       <div>
-        <p class="eyebrow">Let's talk</p>
-        <h2>Got a taste for mischief?</h2>
-        <p class="body-copy">For orders, collaborations, feedback or just to say hello, drop us a message.</p>
+        <h3><span class="score">9<small>/10</small></span> Quality score</h3>
+        <p>The craft: writing, performances, filmmaking. A quiet 9/10 drama can sit at one chilli, and that's fine.</p>
       </div>
-      <div class="contact-box">
-        <a href="mailto:hello@masalamischief.in">hello@masalamischief.in</a>
-        <a href="https://instagram.com/" target="_blank" rel="noopener">Instagram →</a>
-        <a href="https://wa.me/" target="_blank" rel="noopener">WhatsApp →</a>
+    </div>
+
+    <section>
+      <div class="section-head"><h2>What's the mood?</h2><a href="suggest.html">All filters →</a></div>
+      <div class="moods" id="moods"></div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>Latest reviews</h2><a href="reviews.html">See all →</a></div>
+      <div class="grid" id="latest"></div>
+    </section>
+
+    <section>
+      <div class="section-head"><h2>Cooking next</h2></div>
+      <div class="teasers">
+        <a class="teaser" href="group.html">
+          <span class="badge">Coming soon</span>
+          <h3 style="margin-top:10px">🎬 Group Pick</h3>
+          <p class="muted">Start a room, share it on WhatsApp, everyone swipes. We show the film you all agree on, and where to watch it.</p>
+        </a>
+        <a class="teaser" href="family.html">
+          <span class="badge">Coming soon</span>
+          <h3 style="margin-top:10px">👨‍👩‍👧 Family Picks</h3>
+          <p class="muted">Parent notes for every film: violence, romance, language and scary scenes, in plain words.</p>
+        </a>
       </div>
     </section>
   </main>
-
-  <footer>
-    <div class="brand"><span class="brand-mark">MM</span><span>Masala Mischief</span></div>
-    <p>© 2026 Masala Mischief. Made with flavour & mischief.</p>
-  </footer>
-
-  <script>
-    document.querySelectorAll('nav a').forEach(a => a.addEventListener('click', () => document.body.classList.remove('nav-open')));
-  </script>
+  <script src="assets/data.js"></script>
+  <script src="assets/app.js"></script>
 </body>
 </html>
