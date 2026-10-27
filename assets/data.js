@@ -16,6 +16,7 @@ const MOODS = [
   { id: "feel-good", label: "Need a pick-me-up", emoji: "☀️", blurb: "Guaranteed to send you to bed smiling." },
   { id: "go-big", label: "Go big or go home", emoji: "💥", blurb: "Slow-motion, whistles, interval blocks that slap." },
   { id: "mind-bender", label: "Mind-bender", emoji: "🌀", blurb: "You'll be explaining the plot at 2 a.m." },
+  { id: "family-time", label: "Family movie night", emoji: "🛋️", blurb: "Something the grandparents and the kids will all enjoy." },
 ];
 
 const LANGUAGES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "English"];
@@ -23,11 +24,14 @@ const LANGUAGES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "English"
 // How a film's original language is shown on cards and filters.
 const LANG_LABELS = { English: "Hollywood" };
 
+// The film shown big on the home page as "Pick of the week". Change the id each week.
+const FEATURED_ID = "kantara";
+
 const MOVIES = [
   {
     id: "3-idiots", title: "3 Idiots", year: 2009, lang: "Hindi", audio: ["Hindi"],
     genres: ["Comedy", "Drama"], runtime: 170,
-    moods: ["feel-good", "friends-night", "rainy-sunday"], masala: 4, quality: 8.5,
+    moods: ["feel-good", "friends-night", "rainy-sunday", "family-time"], masala: 4, quality: 8.5,
     tagline: "The engineering-college film every Indian parent should be forced to watch.",
     review: [
       "Three friends, one tyrannical director and an education system that rewards rote over curiosity. It's a comedy first, and the jokes still land fifteen years on, but the reason it became a cultural event is that it said out loud what every hostel already knew.",
@@ -170,7 +174,7 @@ const MOVIES = [
   {
     id: "taare-zameen-par", title: "Taare Zameen Par", year: 2007, lang: "Hindi", audio: ["Hindi"],
     genres: ["Drama", "Family"], runtime: 165,
-    moods: ["rainy-sunday", "feel-good"], masala: 2, quality: 8.5,
+    moods: ["family-time", "rainy-sunday", "feel-good"], masala: 2, quality: 8.5,
     tagline: "Every child is special. Keep tissues handy.",
     review: [
       "Ishaan is eight, struggles at school and is labelled lazy, until an art teacher sees what everyone else missed. The animated sequences inside Ishaan's head are pure joy.",
@@ -222,7 +226,7 @@ const MOVIES = [
   {
     id: "jersey", title: "Jersey", year: 2019, lang: "Telugu", audio: ["Telugu"],
     genres: ["Sports", "Drama"], runtime: 157,
-    moods: ["rainy-sunday", "feel-good"], masala: 3, quality: 8.5,
+    moods: ["rainy-sunday", "feel-good", "family-time"], masala: 3, quality: 8.5,
     tagline: "A failed cricketer at 36, one last shot, and a promise to his son.",
     review: [
       "Arjun gave up cricket years ago and now can't afford his son's birthday gift. So he goes back to the nets. You know where a sports drama is heading, but Nani makes every step feel personal.",
@@ -302,7 +306,7 @@ const MOVIES = [
   {
     id: "jurassic-park", title: "Jurassic Park", year: 1993, lang: "English", audio: ["English", "Hindi"],
     genres: ["Adventure", "Sci-fi"], runtime: 127,
-    moods: ["go-big", "edge-of-seat", "friends-night"], masala: 4, quality: 9,
+    moods: ["go-big", "edge-of-seat", "family-time"], masala: 4, quality: 9,
     tagline: "The film that made a whole generation scared of a glass of water.",
     review: [
       "A billionaire brings dinosaurs back to life for a theme park, and nature has other plans. Thirty years on, the T-rex scene in the rain is still a masterclass in building fear.",
@@ -341,7 +345,7 @@ const MOVIES = [
   {
     id: "across-the-spider-verse", title: "Spider-Man: Across the Spider-Verse", year: 2023, lang: "English", audio: ["English", "Hindi", "Tamil", "Telugu"],
     genres: ["Animation", "Superhero"], runtime: 140,
-    moods: ["go-big", "feel-good", "friends-night"], masala: 4, quality: 9,
+    moods: ["go-big", "feel-good", "family-time"], masala: 4, quality: 9,
     tagline: "Every frame is a poster. One of them is set in Mumbattan.",
     review: [
       "Miles Morales jumps across universes and runs into an entire society of Spider-People who think they know how his story should go. Every world has its own art style, including a dazzling Indian one with Pavitr Prabhakar.",
@@ -377,4 +381,177 @@ const MOVIES = [
     misses: ["Thin plot by design", "Very loud and intense"],
     reviewed: "2026-10-08",
   },
+
+  // ---------- Family Picks ----------
+  {
+    id: "chillar-party", title: "Chillar Party", year: 2011, lang: "Hindi", audio: ["Hindi"],
+    genres: ["Comedy", "Kids"], runtime: 118,
+    moods: ["family-time", "feel-good"], masala: 3, quality: 8,
+    tagline: "A colony gang of kids, one stray dog, and a politician who picked the wrong fight.",
+    review: [
+      "A gang of housing-society kids adopts a boy who cleans cars, and his dog. When a minister wants every stray off the streets, the kids take on the system their own way.",
+      "Made for children without talking down to them. Grown-ups will laugh just as hard."
+    ],
+    hits: ["Real, funny kid actors", "Big heart", "Gentle message about kindness"],
+    misses: ["Climax gets a bit preachy", "Some rude kid nicknames"],
+    reviewed: "2026-10-28",
+  },
+  {
+    id: "stanley-ka-dabba", title: "Stanley Ka Dabba", year: 2011, lang: "Hindi", audio: ["Hindi"],
+    genres: ["Drama", "Kids"], runtime: 96,
+    moods: ["family-time", "rainy-sunday"], masala: 1, quality: 8.5,
+    tagline: "A tiffin box, a greedy teacher, and the boy who never brings lunch.",
+    review: [
+      "Stanley is the funniest kid in class, but he never has a lunch box, and a food-stealing teacher won't let him share. Shot almost entirely in a real Mumbai school, it feels like your own childhood.",
+      "Small, sweet and quietly moving. The ending reveals why Stanley never brings lunch."
+    ],
+    hits: ["Partho Gupte", "Feels completely real", "Short and sweet"],
+    misses: ["Very low-key", "Ending is sad for small kids"],
+    reviewed: "2026-10-26",
+  },
+  {
+    id: "koi-mil-gaya", title: "Koi... Mil Gaya", year: 2003, lang: "Hindi", audio: ["Hindi"],
+    genres: ["Sci-fi", "Family"], runtime: 171,
+    moods: ["family-time", "feel-good", "go-big"], masala: 4, quality: 7,
+    tagline: "Bollywood's E.T. moment. Jaadoo needs sunlight, and you need snacks.",
+    review: [
+      "Rohit, a young man with a developmental disability, accidentally calls an alien to Earth. The alien Jaadoo gives him powers and a lot of confidence.",
+      "Very 2003 in its effects and songs, but kids still fall in love with Jaadoo, and Hrithik commits completely."
+    ],
+    hits: ["Jaadoo!", "Hrithik's performance", "Big family energy"],
+    misses: ["Long", "Dated effects", "Bullying scenes can be uncomfortable"],
+    reviewed: "2026-10-23",
+  },
+  {
+    id: "iqbal", title: "Iqbal", year: 2005, lang: "Hindi", audio: ["Hindi"],
+    genres: ["Sports", "Drama"], runtime: 132,
+    moods: ["family-time", "feel-good"], masala: 3, quality: 8.5,
+    tagline: "A village boy who can't speak or hear, and a dream to bowl for India.",
+    review: [
+      "Iqbal is deaf and mute and obsessed with cricket. His father wants him in the fields; his sister and a washed-up coach believe otherwise.",
+      "An underdog story without fuss. It's simple and warm, and it's still the best Indian sports film for kids."
+    ],
+    hits: ["Shreyas Talpade", "Naseeruddin Shah", "Inspiring without preaching"],
+    misses: ["Predictable path", "Villain is cartoonish"],
+    reviewed: "2026-10-13",
+  },
+  {
+    id: "paddington-2", title: "Paddington 2", year: 2017, lang: "English", audio: ["English"],
+    genres: ["Comedy", "Family"], runtime: 104,
+    moods: ["family-time", "feel-good", "rainy-sunday"], masala: 3, quality: 9.5,
+    tagline: "A polite bear, a stolen pop-up book, and the kindest film ever made.",
+    review: [
+      "Paddington wants to buy his aunt a birthday present, gets wrongly sent to prison, and turns the whole jail into a marmalade-loving family. Hugh Grant is hilarious as a vain villain.",
+      "Every frame is crafted with care. It's a film for kids that adults quietly rewatch alone."
+    ],
+    hits: ["Pure kindness", "Hugh Grant", "Inventive visuals"],
+    misses: ["Very British humour", "Teens may find it too sweet"],
+    reviewed: "2026-10-02",
+  },
+  {
+    id: "coco", title: "Coco", year: 2017, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Animation", "Family"], runtime: 105,
+    moods: ["family-time", "rainy-sunday", "feel-good"], masala: 3, quality: 9,
+    tagline: "A boy, a guitar and a trip to the land of the dead. Call your grandmother after.",
+    review: [
+      "Miguel dreams of music in a family that has banned it, and on the Day of the Dead he ends up among his skeleton ancestors. Bright, funny and full of songs.",
+      "Indian families will recognise everything about it: the elders, the photos on the wall, the remembering. The ending gets everyone."
+    ],
+    hits: ["Gorgeous animation", "Music", "That ending"],
+    misses: ["Skeletons may spook tiny ones", "Death is a big theme"],
+    reviewed: "2026-10-06",
+  },
+  {
+    id: "toy-story", title: "Toy Story", year: 1995, lang: "English", audio: ["English"],
+    genres: ["Animation", "Family"], runtime: 81,
+    moods: ["family-time", "feel-good"], masala: 3, quality: 9,
+    tagline: "The film that started it all. Your toys are judging you.",
+    review: [
+      "Woody the cowboy is a boy's favourite toy, until a flashy space ranger called Buzz Lightyear arrives. Jealousy turns into a road trip and, eventually, friendship.",
+      "Short, quick and funny. Thirty years on, it still works on a four-year-old and a forty-year-old."
+    ],
+    hits: ["Woody and Buzz", "Tight runtime", "Funny for all ages"],
+    misses: ["Early animation looks dated", "Sid's room can scare little ones"],
+    reviewed: "2026-09-29",
+  },
 ];
+
+// Where to watch in India, from JustWatch India on WATCH_CHECKED.
+// stream = included with a subscription; rent = rent or buy. Re-check every month or so.
+const WATCH_CHECKED = "2026-10-28";
+const WATCH = {
+  "3-idiots": { stream: [], rent: [] },
+  "kumbalangi-nights": { stream: ["Prime Video"], rent: ["Apple TV"] },
+  "rrr": { stream: ["Netflix", "ZEE5"], rent: [] },
+  "super-deluxe": { stream: ["aha"], rent: ["Apple TV"] },
+  "andhadhun": { stream: ["Prime Video", "JioHotstar"], rent: ["Apple TV"] },
+  "queen": { stream: ["Prime Video"], rent: ["Apple TV"] },
+  "drishyam": { stream: ["JioHotstar"], rent: [] },
+  "vikram-vedha": { stream: ["JioHotstar", "ZEE5", "ManoramaMAX"], rent: [] },
+  "jaane-tu": { stream: [], rent: [] },
+  "premam": { stream: ["JioHotstar"], rent: [] },
+  "baahubali": { stream: ["Netflix", "JioHotstar", "SonyLIV"], rent: ["Apple TV"] },
+  "taare-zameen-par": { stream: [], rent: [] },
+  "kantara": { stream: ["Netflix", "Prime Video"], rent: ["Amazon"] },
+  "znmd": { stream: ["Netflix"], rent: [] },
+  "96": { stream: ["SonyLIV", "Sun NXT", "aha", "ManoramaMAX"], rent: [] },
+  "jersey": { stream: ["JioHotstar", "ZEE5", "Sun NXT"], rent: [] },
+  "stree": { stream: ["Prime Video", "JioHotstar"], rent: ["Amazon"] },
+  "bangalore-days": { stream: ["Prime Video", "JioHotstar"], rent: [] },
+  "avengers-endgame": { stream: ["JioHotstar"], rent: [] },
+  "interstellar": { stream: ["Prime Video", "JioHotstar"], rent: ["Amazon", "Apple TV"] },
+  "inception": { stream: ["Prime Video", "JioHotstar"], rent: ["Amazon", "Apple TV"] },
+  "jurassic-park": { stream: ["Prime Video", "JioHotstar", "ZEE5"], rent: ["Amazon", "Apple TV"] },
+  "titanic": { stream: ["JioHotstar"], rent: [] },
+  "la-la-land": { stream: ["Prime Video"], rent: ["Amazon", "Apple TV"] },
+  "across-the-spider-verse": { stream: ["ZEE5"], rent: ["Amazon", "Apple TV"] },
+  "knives-out": { stream: ["Prime Video", "Lionsgate Play"], rent: ["Apple TV"] },
+  "mad-max-fury-road": { stream: ["Prime Video", "JioHotstar"], rent: ["Amazon", "Apple TV"] },
+  "chillar-party": { stream: ["Prime Video", "JioHotstar"], rent: [] },
+  "stanley-ka-dabba": { stream: [], rent: ["Apple TV"] },
+  "koi-mil-gaya": { stream: ["ZEE5"], rent: [] },
+  "iqbal": { stream: ["Prime Video", "ZEE5", "MX Player"], rent: [] },
+  "paddington-2": { stream: [], rent: ["Amazon", "Apple TV"] },
+  "coco": { stream: ["JioHotstar"], rent: [] },
+  "toy-story": { stream: ["JioHotstar"], rent: [] },
+};
+
+// The OTT apps people can tick on the Suggest page.
+const PLATFORMS = ["Netflix", "Prime Video", "JioHotstar", "ZEE5", "SonyLIV", "Sun NXT", "aha", "ManoramaMAX"];
+
+// Parent notes for Family Picks. Levels: 0 none, 1 mild, 2 some, 3 strong.
+// age = the youngest age we'd suggest, watching with a grown-up.
+const PARENT_NOTES = {
+  "chillar-party": { age: 6, violence: 0, romance: 0, language: 1, scary: 0,
+    note: "Kids call each other cheeky nicknames and a few grown-ups are mean to a stray dog. Nothing scary." },
+  "stanley-ka-dabba": { age: 6, violence: 1, romance: 0, language: 0, scary: 0,
+    note: "A teacher bullies a child over food, and the ending touches on child labour. Good for a gentle chat afterwards." },
+  "toy-story": { age: 5, violence: 1, romance: 0, language: 0, scary: 1,
+    note: "A neighbour boy breaks and rebuilds toys into creepy hybrids, which can frighten very young kids. Cartoon peril only." },
+  "paddington-2": { age: 5, violence: 1, romance: 0, language: 0, scary: 1,
+    note: "Slapstick chases and a short spell in prison, all played for laughs. A train sequence near the end is mildly tense." },
+  "coco": { age: 7, violence: 1, romance: 0, language: 0, scary: 1,
+    note: "Skeletons everywhere (friendly ones), a murder is revealed in the backstory, and death and memory are big themes." },
+  "koi-mil-gaya": { age: 8, violence: 1, romance: 1, language: 0, scary: 1,
+    note: "Rohit is bullied and beaten up, there are romantic songs, and the alien's arrival is a little spooky." },
+  "iqbal": { age: 8, violence: 0, romance: 0, language: 0, scary: 0,
+    note: "The coach drinks heavily and a father is harsh with his son. Otherwise clean and uplifting." },
+  "taare-zameen-par": { age: 8, violence: 1, romance: 0, language: 0, scary: 1,
+    note: "Ishaan is scolded, slapped and sent away to boarding school, which may upset sensitive kids. A great way to talk about learning differences." },
+  "across-the-spider-verse": { age: 8, violence: 2, romance: 0, language: 1, scary: 1,
+    note: "Fast, loud cartoon fighting and sad losses in characters' pasts. Visual overload may tire younger kids. Ends on a cliffhanger." },
+  "jurassic-park": { age: 10, violence: 2, romance: 0, language: 1, scary: 3,
+    note: "Dinosaur attacks, a few quick deaths and children in danger. The kitchen raptor scene is very scary for under-10s." },
+  "jersey": { age: 10, violence: 0, romance: 1, language: 1, scary: 0,
+    note: "Money worries, parents arguing and a very emotional ending. A mild romance track." },
+  "interstellar": { age: 10, violence: 1, romance: 0, language: 1, scary: 2,
+    note: "Tense space scenes, a father leaving his children, and a long runtime. More confusing than scary." },
+  "la-la-land": { age: 10, violence: 0, romance: 2, language: 1, scary: 0,
+    note: "Kissing and a couple living together, plus some mild swearing. A bittersweet ending." },
+  "3-idiots": { age: 12, violence: 1, romance: 1, language: 2, scary: 0,
+    note: "A student's suicide is part of the story, with ragging and crude speech humour. Good for 12+ with a chat about exam pressure." },
+  "baahubali": { age: 12, violence: 3, romance: 1, language: 0, scary: 1,
+    note: "Huge battle scenes with blood and beheadings, plus a romantic song. Skip for under-12s." },
+  "avengers-endgame": { age: 12, violence: 2, romance: 0, language: 1, scary: 1,
+    note: "Plenty of superhero fighting and major character deaths that hit hard. Works best if kids know the earlier films." },
+};

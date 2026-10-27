@@ -3,8 +3,9 @@
 Indian and Hollywood film reviews with extra chilli. Hollywood films use `lang: "English"`, shown as
 "Hollywood" on the site (see `LANG_LABELS` in `assets/data.js`). A plain HTML/CSS/JS site with no build step.
 
-**Phase 1 (live):** reviews rated on the Masala Meter, and mood- and language-based suggestions.
-**Coming soon:** Group Pick (`group.html`) and Family Picks (`family.html`) are teaser pages for now.
+**Live:** reviews rated on the Masala Meter, mood/language/OTT-app suggestions, where to watch,
+visitor ratings and watchlist, and Family Picks (`family.html`) with parent notes.
+**Coming soon:** Group Pick (`group.html`) is a teaser page for now.
 
 ## Files
 
@@ -13,7 +14,8 @@ Indian and Hollywood film reviews with extra chilli. Hollywood films use `lang: 
 | `index.html` | Home page |
 | `reviews.html` | All reviews, with search, language filter and sort |
 | `review.html?id=…` | A single review |
-| `suggest.html` | "What should I watch?" (mood + language + dubs) |
+| `suggest.html` | "What should I watch?" (mood + language + dubs + OTT apps) |
+| `family.html` | Family Picks with parent notes and an age filter |
 | `assets/data.js` | **All films, reviews and moods. Edit this to add reviews.** |
 | `assets/app.js` | Page rendering |
 | `assets/style.css` | Styles (light and dark mode) |
@@ -27,7 +29,16 @@ Double-click `index.html`. That's it.
 Open `assets/data.js`, copy an existing film object, and change the fields. The `id` becomes the URL
 (`review.html?id=your-id`), so use lowercase words joined by hyphens.
 
-After changing anything in `assets/`, bump the `?v=2` number on the `<link>`/`<script>` tags in every
+Other things you can edit in `assets/data.js`:
+
+- `FEATURED_ID` – the film shown as "Pick of the week" on the home page.
+- `WATCH` – where each film streams in India (from JustWatch India). Update `WATCH_CHECKED` when you re-check.
+- `PARENT_NOTES` – adding an entry puts a film into Family Picks. Levels are 0 none, 1 mild, 2 some, 3 strong.
+
+Visitor ratings, the watchlist, chosen OTT apps and the light/dark choice are saved only in each
+visitor's own browser. Nothing is sent to a server, and nothing is collected about children.
+
+After changing anything in `assets/`, bump the `?v=3` number on the `<link>`/`<script>` tags in every
 `.html` file (e.g. to `?v=3`), otherwise returning visitors may keep seeing the old cached version.
 
 The bundled reviews are starter copy in the house voice: rewrite them in your own words before

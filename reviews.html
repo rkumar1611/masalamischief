@@ -4,32 +4,44 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Reviews · Masala Mischief</title>
-  <meta name="description" content="All Masala Mischief film reviews, searchable by title, language and genre.">
+  <meta name="description" content="All Masala Mischief film reviews, searchable by title, language, platform and Masala Meter.">
+  <meta name="theme-color" content="#d7263d">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=2">
+  <link rel="stylesheet" href="assets/style.css?v=3">
 </head>
 <body data-page="reviews">
   <main class="wrap">
-    <div class="hero" style="padding-bottom:20px">
+    <div class="page-head">
       <h1>Reviews</h1>
       <p class="lead">Every film gets a Masala Meter for fun and a score for craft.</p>
     </div>
-    <div class="toolbar">
-      <input id="q" type="search" placeholder="Search title, language or genre" aria-label="Search reviews">
-      <select id="lang" aria-label="Language"></select>
-      <select id="sort" aria-label="Sort by">
-        <option value="latest">Latest</option>
-        <option value="masala">Most masala</option>
-        <option value="quality">Highest quality</option>
-        <option value="year">Newest film</option>
-      </select>
+    <div class="filters">
+      <div class="toolbar">
+        <input id="q" type="search" placeholder="Search title, language or genre" aria-label="Search reviews">
+        <select id="lang" aria-label="Language"></select>
+        <select id="ott" aria-label="Streaming on"></select>
+        <select id="sort" aria-label="Sort by">
+          <option value="latest">Latest</option>
+          <option value="masala">Most masala</option>
+          <option value="quality">Highest quality</option>
+          <option value="year">Newest film</option>
+          <option value="short">Shortest first</option>
+        </select>
+      </div>
+      <div class="toolbar">
+        <span class="title-inline">Masala Meter</span>
+        <div class="chips" id="masala-chips"></div>
+        <label class="toggle"><input type="checkbox" id="family-only"> 👪 Family Picks only</label>
+        <label class="toggle"><input type="checkbox" id="saved-only"> ♡ My watchlist</label>
+      </div>
     </div>
+    <p class="count muted" id="count"></p>
     <div class="grid" id="list"></div>
   </main>
-  <script src="assets/data.js?v=2"></script>
-  <script src="assets/app.js?v=2"></script>
+  <script src="assets/data.js?v=3"></script>
+  <script src="assets/app.js?v=3"></script>
 </body>
 </html>

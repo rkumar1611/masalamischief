@@ -4,30 +4,44 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Family Picks · Masala Mischief</title>
+  <meta name="description" content="Indian and Hollywood films for kids and families, with plain-words parent notes on violence, romance, language and scary scenes.">
+  <meta name="theme-color" content="#d7263d">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=2">
+  <link rel="stylesheet" href="assets/style.css?v=3">
 </head>
-<body data-page="family">
+<body data-page="family" class="family-theme">
   <main class="wrap">
-    <div class="hero">
-      <span class="badge">Coming soon</span>
-      <h1 style="margin-top:12px">Family Picks</h1>
-      <p class="lead">A U or UA certificate doesn't tell you much. Our parent notes will tell you exactly what's in each film.</p>
+    <div class="page-head">
+      <p class="eyebrow">Masala Mischief Kids</p>
+      <h1>👪 Family Picks</h1>
+      <p class="lead">A U or UA certificate doesn't tell you much. Our parent notes say exactly what's in each film, in plain words, with the youngest age we'd suggest watching with a grown-up.</p>
     </div>
-    <div class="teasers">
-      <div class="teaser"><h3>⚔️ Violence</h3><p class="muted">Cartoonish, intense, or skip-it-with-under-tens.</p></div>
-      <div class="teaser"><h3>💋 Romance</h3><p class="muted">Holding hands, a song in the rain, or more.</p></div>
-      <div class="teaser"><h3>🤬 Language</h3><p class="muted">Whether the dialogue will come home with your kids.</p></div>
-      <div class="teaser"><h3>👻 Scary scenes</h3><p class="muted">The moments that might mean a night in your bed.</p></div>
+
+    <div class="filters">
+      <div>
+        <span class="title">Who's watching?</span>
+        <div class="chips" id="age-chips"></div>
+      </div>
+      <div class="legend">
+        <span><span class="bars lvl-0"><i></i><i></i><i></i></span> None</span>
+        <span><span class="bars lvl-1"><i></i><i></i><i></i></span> Mild</span>
+        <span><span class="bars lvl-2"><i></i><i></i><i></i></span> Some</span>
+        <span><span class="bars lvl-3"><i></i><i></i><i></i></span> Strong</span>
+      </div>
     </div>
+
     <section>
-      <p class="muted">Family Picks will be ad-free, and we won't create profiles for children.</p>
+      <div class="family-list" id="family-list"></div>
+    </section>
+
+    <section>
+      <p class="muted small">Family Picks is ad-free, and we don't create profiles for children or collect their data. Ages are our suggestion, not an official certificate. You know your kids best.</p>
     </section>
   </main>
-  <script src="assets/data.js?v=2"></script>
-  <script src="assets/app.js?v=2"></script>
+  <script src="assets/data.js?v=3"></script>
+  <script src="assets/app.js?v=3"></script>
 </body>
 </html>

@@ -4,33 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>What Should I Watch? · Masala Mischief</title>
-  <meta name="description" content="Pick a mood and a language, and get Indian and Hollywood film recommendations for tonight, including dubbed options.">
+  <meta name="description" content="Pick a mood, your languages and your OTT apps, and get Indian and Hollywood film recommendations for tonight, including dubbed options.">
+  <meta name="theme-color" content="#d7263d">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=2">
+  <link rel="stylesheet" href="assets/style.css?v=3">
 </head>
 <body data-page="suggest">
   <main class="wrap">
-    <div class="hero" style="padding-bottom:20px">
+    <div class="page-head">
       <h1>What should I watch?</h1>
-      <p class="lead">Tell us the mood and the languages you're comfortable with. We'll do the scrolling.</p>
+      <p class="lead">Tell us the mood, the languages you're comfortable with and the apps you pay for. We'll do the scrolling.</p>
     </div>
 
     <div class="filters">
       <div>
-        <label class="title">I'm in the mood for…</label>
+        <span class="title">1. I'm in the mood for…</span>
         <div class="chips" id="mood-chips"></div>
       </div>
       <div>
-        <label class="title">I'll watch in… <span class="muted" style="font-weight:400">(pick any, or none for all)</span></label>
+        <span class="title">2. I'll watch in… <span class="muted" style="font-weight:400">(pick any, or none for all)</span></span>
         <div class="chips" id="lang-chips"></div>
+      </div>
+      <div>
+        <span class="title">3. My apps <span class="muted" style="font-weight:400">(optional, remembered on this device)</span></span>
+        <div class="chips" id="app-chips"></div>
       </div>
       <div class="toolbar" style="margin:0">
         <label class="toggle"><input type="checkbox" id="dubs" checked> Include dubbed versions</label>
+        <label class="toggle"><input type="checkbox" id="family"> 👪 Kids are watching</label>
         <select id="time" aria-label="Maximum runtime">
           <option value="0">Any length</option>
+          <option value="120">Under 2 hours</option>
           <option value="140">Under 2h 20m</option>
           <option value="160">Under 2h 40m</option>
         </select>
@@ -43,7 +50,7 @@
       <div class="grid" id="results"></div>
     </section>
   </main>
-  <script src="assets/data.js?v=2"></script>
-  <script src="assets/app.js?v=2"></script>
+  <script src="assets/data.js?v=3"></script>
+  <script src="assets/app.js?v=3"></script>
 </body>
 </html>

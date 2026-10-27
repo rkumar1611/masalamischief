@@ -4,38 +4,62 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Masala Mischief · Indian film reviews with extra chilli</title>
-  <meta name="description" content="Honest, fun reviews of Hindi, Tamil, Telugu, Malayalam, Kannada and Hollywood films, rated on the Masala Meter. Plus mood-based picks for tonight.">
+  <meta name="description" content="Honest, fun reviews of Hindi, Tamil, Telugu, Malayalam, Kannada and Hollywood films, rated on the Masala Meter. Plus mood-based picks, where to watch, and parent notes.">
+  <meta property="og:title" content="Masala Mischief · Film reviews with extra chilli">
+  <meta property="og:description" content="Indian and Hollywood films rated on the Masala Meter. Find what to watch tonight, and where to stream it.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://masalamischief.in/">
+  <meta name="theme-color" content="#d7263d">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=2">
+  <link rel="stylesheet" href="assets/style.css?v=3">
 </head>
 <body data-page="home">
-  <main class="wrap">
-    <div class="hero">
-      <h1>Film reviews with <em>extra chilli</em>.</h1>
-      <p class="lead">Hindi, Tamil, Telugu, Malayalam, Kannada and Hollywood films, reviewed honestly and rated on two scales: how much fun it is, and how good it is.</p>
-      <div class="cta-row">
-        <a class="btn primary" href="suggest.html">What should I watch tonight?</a>
-        <a class="btn" href="reviews.html">Browse reviews</a>
+  <div class="hero-band">
+    <div class="wrap hero-grid">
+      <div class="hero">
+        <p class="eyebrow">Reviews · Picks · Where to watch</p>
+        <h1>Film reviews with <em>extra chilli</em>.</h1>
+        <p class="lead">Hindi, Tamil, Telugu, Malayalam, Kannada and Hollywood films, reviewed honestly and rated on two scales: how much fun it is, and how good it is.</p>
+        <div class="cta-row">
+          <a class="btn primary" href="suggest.html">What should I watch tonight?</a>
+          <a class="btn" href="reviews.html">Browse reviews</a>
+        </div>
+        <div class="stats" id="stats"></div>
       </div>
+      <div id="featured"></div>
     </div>
+  </div>
 
-    <div class="explainer">
-      <div>
-        <h3>🌶️🌶️🌶️🌶️🌶️ Masala Meter</h3>
-        <p>Pure entertainment value. Whistles, slow-mo, songs you'll hum for a week. Five chillies means you'll shout at the screen.</p>
+  <div class="ticker" aria-hidden="true"><div class="ticker-track">
+    <span>🌶️ Masala Meter</span><span>🎬 Hindi</span><span>🎬 Tamil</span><span>🎬 Telugu</span><span>🎬 Malayalam</span><span>🎬 Kannada</span><span>🎬 Hollywood</span><span>📺 Where to watch</span><span>👪 Parent notes</span>
+    <span>🌶️ Masala Meter</span><span>🎬 Hindi</span><span>🎬 Tamil</span><span>🎬 Telugu</span><span>🎬 Malayalam</span><span>🎬 Kannada</span><span>🎬 Hollywood</span><span>📺 Where to watch</span><span>👪 Parent notes</span>
+  </div></div>
+
+  <main class="wrap">
+    <section>
+      <div class="explainer">
+        <div>
+          <h3>🌶️🌶️🌶️🌶️🌶️ Masala Meter</h3>
+          <p>Pure entertainment value. Whistles, slow-mo, songs you'll hum for a week. Five chillies means you'll shout at the screen.</p>
+        </div>
+        <div>
+          <h3><span class="score">9<small>/10</small></span> Quality score</h3>
+          <p>The craft: writing, performances, filmmaking. A quiet 9/10 drama can sit at one chilli, and that's fine.</p>
+        </div>
       </div>
-      <div>
-        <h3><span class="score">9<small>/10</small></span> Quality score</h3>
-        <p>The craft: writing, performances, filmmaking. A quiet 9/10 drama can sit at one chilli, and that's fine.</p>
-      </div>
-    </div>
+    </section>
 
     <section>
       <div class="section-head"><h2>What's the mood?</h2><a href="suggest.html">All filters →</a></div>
       <div class="moods" id="moods"></div>
+    </section>
+
+    <section id="saved-section" hidden>
+      <div class="section-head"><h2>♡ Your watchlist</h2><a href="reviews.html?saved=1">See all →</a></div>
+      <div class="grid" id="saved"></div>
     </section>
 
     <section>
@@ -44,22 +68,26 @@
     </section>
 
     <section>
-      <div class="section-head"><h2>Cooking next</h2></div>
+      <div class="section-head"><h2>The charts</h2></div>
+      <div class="charts" id="charts"></div>
+    </section>
+
+    <section>
       <div class="teasers">
+        <a class="teaser live" href="family.html">
+          <span class="badge leaf">New</span>
+          <h3>👪 Family Picks</h3>
+          <p class="muted">Parent notes for every pick: violence, romance, language and scary scenes, in plain words, with a suggested age.</p>
+        </a>
         <a class="teaser" href="group.html">
           <span class="badge">Coming soon</span>
-          <h3 style="margin-top:10px">🎬 Group Pick</h3>
+          <h3>🎬 Group Pick</h3>
           <p class="muted">Start a room, share it on WhatsApp, everyone swipes. We show the film you all agree on, and where to watch it.</p>
-        </a>
-        <a class="teaser" href="family.html">
-          <span class="badge">Coming soon</span>
-          <h3 style="margin-top:10px">👨‍👩‍👧 Family Picks</h3>
-          <p class="muted">Parent notes for every film: violence, romance, language and scary scenes, in plain words.</p>
         </a>
       </div>
     </section>
   </main>
-  <script src="assets/data.js?v=2"></script>
-  <script src="assets/app.js?v=2"></script>
+  <script src="assets/data.js?v=3"></script>
+  <script src="assets/app.js?v=3"></script>
 </body>
 </html>
