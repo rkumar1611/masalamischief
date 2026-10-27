@@ -11,6 +11,7 @@ const NAV = [
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const moodById = (id) => MOODS.find((m) => m.id === id);
 const fmtRuntime = (min) => `${Math.floor(min / 60)}h ${min % 60}m`;
+const langLabel = (l) => LANG_LABELS[l] || l;
 
 function renderChrome() {
   const page = document.body.dataset.page;
@@ -42,7 +43,7 @@ function score(q) {
 function card(m, extra = "") {
   return `
     <a class="card" href="review.html?id=${encodeURIComponent(m.id)}">
-      <div class="poster lang-${m.lang}"><span class="lang-pill">${m.lang} · ${m.year}</span>${esc(m.title)}</div>
+      <div class="poster lang-${m.lang}"><span class="lang-pill">${langLabel(m.lang)} · ${m.year}</span>${esc(m.title)}</div>
       <div class="card-body">
         ${extra}
         <p>${esc(m.tagline)}</p>
@@ -67,7 +68,7 @@ function initReviews() {
   const lang = document.getElementById("lang");
   const sort = document.getElementById("sort");
   const out = document.getElementById("list");
-  lang.innerHTML = `<option value="">All languages</option>` + LANGUAGES.map((l) => `<option>${l}</option>`).join("");
+  lang.innerHTML = `<option value="">All languages</option>` + LANGUAGES.map((l) => `<option value="${l}">${langLabel(l)}</option>`).join("");
 
   const params = new URLSearchParams(location.search);
   if (params.get("lang")) lang.value = params.get("lang");
@@ -76,7 +77,7 @@ function initReviews() {
     const term = q.value.trim().toLowerCase();
     let list = MOVIES.filter((m) =>
       (!lang.value || m.lang === lang.value) &&
-      (!term || [m.title, m.lang, ...m.genres].join(" ").toLowerCase().includes(term))
+      (!term || [m.title, m.lang, langLabel(m.lang), ...m.genres].join(" ").toLowerCase().includes(term))
     );
     const sorters = {
       latest: (a, b) => b.reviewed.localeCompare(a.reviewed),
@@ -108,7 +109,7 @@ function initReview() {
   const pageUrl = location.href;
 
   root.innerHTML = `
-    <div class="poster big lang-${m.lang}"><span class="lang-pill">${m.lang} · ${m.year}</span>${esc(m.title)}</div>
+    <div class="poster big lang-${m.lang}"><span class="lang-pill">${langLabel(m.lang)} · ${m.year}</span>${esc(m.title)}</div>
     <div class="review-layout">
       <article class="review-body">
         <p class="tagline">${esc(m.tagline)}</p>
@@ -128,7 +129,7 @@ function initReview() {
       </article>
       <aside class="side">
         <dl>
-          <dt>Language</dt><dd>${m.lang}</dd>
+          <dt>Language</dt><dd>${m.lang}${LANG_LABELS[m.lang] ? ` (${LANG_LABELS[m.lang]})` : ""}</dd>
           <dt>Dubbed in</dt><dd>${dubs.length ? dubs.join(", ") : "Original only"}</dd>
           <dt>Year</dt><dd>${m.year}</dd>
           <dt>Runtime</dt><dd>${fmtRuntime(m.runtime)}</dd>
@@ -163,7 +164,7 @@ function initSuggest() {
   const heading = document.getElementById("results-head");
 
   moodsEl.innerHTML = MOODS.map((m) => `<button class="chip" data-mood="${m.id}">${m.emoji} ${m.label}</button>`).join("");
-  langsEl.innerHTML = LANGUAGES.map((l) => `<button class="chip" data-lang="${l}">${l}</button>`).join("");
+  langsEl.innerHTML = LANGUAGES.map((l) => `<button class="chip" data-lang="${l}">${l}${LANG_LABELS[l] ? ` / ${LANG_LABELS[l]}` : ""}</button>`).join("");
 
   moodsEl.addEventListener("click", (e) => {
     const b = e.target.closest("[data-mood]"); if (!b) return;

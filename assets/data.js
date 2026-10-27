@@ -18,7 +18,10 @@ const MOODS = [
   { id: "mind-bender", label: "Mind-bender", emoji: "🌀", blurb: "You'll be explaining the plot at 2 a.m." },
 ];
 
-const LANGUAGES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada"];
+const LANGUAGES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "English"];
+
+// How a film's original language is shown on cards and filters.
+const LANG_LABELS = { English: "Hollywood" };
 
 const MOVIES = [
   {
@@ -254,5 +257,124 @@ const MOVIES = [
     hits: ["Lovable cast", "Feels like home", "Breezy music"],
     misses: ["Long", "Some threads wrap up too neatly"],
     reviewed: "2026-10-17",
+  },
+
+  // ---------- Hollywood ----------
+  {
+    id: "avengers-endgame", title: "Avengers: Endgame", year: 2019, lang: "English", audio: ["English", "Hindi", "Tamil", "Telugu"],
+    genres: ["Superhero", "Action"], runtime: 181,
+    moods: ["go-big", "friends-night"], masala: 5, quality: 8,
+    tagline: "Eleven years of Marvel, one three-hour first-day-first-show.",
+    review: [
+      "Half the universe is gone and the survivors get one shot at undoing it. The first half is surprisingly quiet and sad; the last hour is the closest Hollywood has come to a full Rajinikanth entry scene.",
+      "It only really works if you've watched the films before it. If you have, you'll be whistling in your living room."
+    ],
+    hits: ["That final battle", "Pays off a decade of films", "Big emotional goodbyes"],
+    misses: ["Homework required", "Time-travel logic is wobbly", "Long"],
+    reviewed: "2026-10-27",
+  },
+  {
+    id: "interstellar", title: "Interstellar", year: 2014, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Sci-fi", "Drama"], runtime: 169,
+    moods: ["mind-bender", "rainy-sunday"], masala: 3, quality: 9,
+    tagline: "A father, a wormhole, and the most emotional maths lesson ever filmed.",
+    review: [
+      "Earth is dying, and a former pilot leaves his children to search for a new home among the stars. Nolan fills it with black holes and relativity, but the heart of it is a dad trying to keep a promise.",
+      "Watch it on the biggest screen you have, with the volume up. The organ score does half the work."
+    ],
+    hits: ["Jaw-dropping visuals", "Hans Zimmer's score", "Father–daughter story"],
+    misses: ["Dialogue explains a lot", "Ending asks for a leap of faith"],
+    reviewed: "2026-10-21",
+  },
+  {
+    id: "inception", title: "Inception", year: 2010, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Sci-fi", "Thriller"], runtime: 148,
+    moods: ["mind-bender", "edge-of-seat", "friends-night"], masala: 4, quality: 9,
+    tagline: "A heist inside a dream inside a dream. Keep up.",
+    review: [
+      "A thief who steals secrets from people's dreams is offered one job in reverse: plant an idea instead. What follows is a heist film with folding cities and a hallway fight that still looks impossible.",
+      "Clever without being cold, and the last shot will have your group arguing before the credits finish."
+    ],
+    hits: ["Original concept", "Set pieces", "That ending"],
+    misses: ["Lots of rules to follow", "Characters a bit thin"],
+    reviewed: "2026-10-11",
+  },
+  {
+    id: "jurassic-park", title: "Jurassic Park", year: 1993, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Adventure", "Sci-fi"], runtime: 127,
+    moods: ["go-big", "edge-of-seat", "friends-night"], masala: 4, quality: 9,
+    tagline: "The film that made a whole generation scared of a glass of water.",
+    review: [
+      "A billionaire brings dinosaurs back to life for a theme park, and nature has other plans. Thirty years on, the T-rex scene in the rain is still a masterclass in building fear.",
+      "For many Indian families this was the first Hollywood film they saw dubbed in Hindi. It still plays brilliantly with the whole house watching."
+    ],
+    hits: ["The T-rex scene", "Effects that still hold up", "That theme music"],
+    misses: ["Kids can be annoying", "Some scenes too scary for little ones"],
+    reviewed: "2026-10-04",
+  },
+  {
+    id: "titanic", title: "Titanic", year: 1997, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Romance", "Drama"], runtime: 195,
+    moods: ["post-breakup", "rainy-sunday"], masala: 4, quality: 8.5,
+    tagline: "The most filmi Hollywood film ever made, and we mean that kindly.",
+    review: [
+      "A rich girl, a poor artist, a disapproving mother and a ship we all know is going down. Structurally it's a Bollywood love story: big romance first half, disaster second half, one unforgettable song.",
+      "Over three hours, and it never really drags. Have tissues ready, and the door argument ready too."
+    ],
+    hits: ["Sheer scale", "Leo and Kate", "The sinking"],
+    misses: ["Very long", "Villain is cartoonish", "Dialogue is cheesy"],
+    reviewed: "2026-09-27",
+  },
+  {
+    id: "la-la-land", title: "La La Land", year: 2016, lang: "English", audio: ["English"],
+    genres: ["Musical", "Romance"], runtime: 128,
+    moods: ["first-date", "post-breakup", "rainy-sunday"], masala: 2, quality: 8.5,
+    tagline: "Hollywood finally remembers how to do a song-and-dance romance.",
+    review: [
+      "A jazz pianist and an actress fall in love in Los Angeles while chasing dreams that may pull them apart. Colourful, funny and full of songs, it's the closest Hollywood gets to a classic Yash Chopra romance.",
+      "The final ten minutes are why people either love it or can't talk about it."
+    ],
+    hits: ["Gorgeous colours", "Catchy songs", "That ending"],
+    misses: ["Singing is modest", "Slow middle"],
+    reviewed: "2026-10-16",
+  },
+  {
+    id: "across-the-spider-verse", title: "Spider-Man: Across the Spider-Verse", year: 2023, lang: "English", audio: ["English", "Hindi", "Tamil", "Telugu"],
+    genres: ["Animation", "Superhero"], runtime: 140,
+    moods: ["go-big", "feel-good", "friends-night"], masala: 4, quality: 9,
+    tagline: "Every frame is a poster. One of them is set in Mumbattan.",
+    review: [
+      "Miles Morales jumps across universes and runs into an entire society of Spider-People who think they know how his story should go. Every world has its own art style, including a dazzling Indian one with Pavitr Prabhakar.",
+      "It ends on a cliffhanger, but it's so inventive you won't mind."
+    ],
+    hits: ["Stunning animation", "Spider-Man India", "Big heart"],
+    misses: ["Ends mid-story", "Visual overload for some"],
+    reviewed: "2026-10-25",
+  },
+  {
+    id: "knives-out", title: "Knives Out", year: 2019, lang: "English", audio: ["English"],
+    genres: ["Mystery", "Comedy"], runtime: 130,
+    moods: ["mind-bender", "friends-night", "first-date"], masala: 3, quality: 8.5,
+    tagline: "A rich family, a dead patriarch, and a detective with a ridiculous accent.",
+    review: [
+      "A famous crime novelist is found dead after his birthday party, and every relative has a motive. It's a playful whodunit that keeps flipping what kind of mystery it is.",
+      "Great for a group: pause halfway and make everyone name the killer."
+    ],
+    hits: ["Twisty plot", "Fun ensemble", "Sharp humour"],
+    misses: ["Some characters barely used", "Detective's accent is a lot"],
+    reviewed: "2026-10-19",
+  },
+  {
+    id: "mad-max-fury-road", title: "Mad Max: Fury Road", year: 2015, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Action"], runtime: 120,
+    moods: ["go-big", "edge-of-seat"], masala: 5, quality: 9,
+    tagline: "Two hours, one chase, a guitar that shoots fire.",
+    review: [
+      "In a desert wasteland, a warrior helps a group of women escape a tyrant, and the whole film is basically one long chase across the sand. Almost no dialogue, just pure motion.",
+      "If you think 'Hollywood action' means boring CGI, this is the cure."
+    ],
+    hits: ["Practical stunts", "Furiosa", "Relentless pace"],
+    misses: ["Thin plot by design", "Very loud and intense"],
+    reviewed: "2026-10-08",
   },
 ];

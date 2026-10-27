@@ -136,6 +136,7 @@ section { margin-top: 40px; }
 .lang-Telugu { background: linear-gradient(135deg, #5e35b1, #1e88e5); }
 .lang-Malayalam { background: linear-gradient(135deg, #2e8b57, #00796b); }
 .lang-Kannada { background: linear-gradient(135deg, #e65100, #6d4c41); }
+.lang-English { background: linear-gradient(135deg, #1f2a44, #b8860b); }
 
 /* Ratings */
 .meter { display: inline-flex; gap: 1px; font-size: 1rem; line-height: 1; }

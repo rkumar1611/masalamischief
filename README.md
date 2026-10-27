@@ -1,6 +1,7 @@
 # Masala Mischief
 
-Indian film reviews with extra chilli. A plain HTML/CSS/JS site with no build step.
+Indian and Hollywood film reviews with extra chilli. Hollywood films use `lang: "English"`, shown as
+"Hollywood" on the site (see `LANG_LABELS` in `assets/data.js`). A plain HTML/CSS/JS site with no build step.
 
 **Phase 1 (live):** reviews rated on the Masala Meter, and mood- and language-based suggestions.
 **Coming soon:** Group Pick (`group.html`) and Family Picks (`family.html`) are teaser pages for now.
