@@ -47,6 +47,9 @@ Other things you can edit in `assets/data.js`:
   hand, for example to write a better note; the script keeps existing items as they are. If the list is
   more than 10 days old, the heading changes to "Recently added" by itself.
 - `WATCH` – where each film streams in India (from JustWatch India). Update `WATCH_CHECKED` when you re-check.
+- `IMAGES` – posters and stills from TMDB, filled in automatically by the daily workflow
+  (`scripts/fetch-images.mjs`, using the `TMDB_TOKEN` repository secret) for any film without one.
+  Each entry's `match` says which TMDB film it picked; if one is wrong, edit it or delete it to retry.
 - `PARENT_NOTES` – adding an entry puts a film into Family Picks. Levels are 0 none, 1 mild, 2 some, 3 strong.
 
 Visitor ratings, the watchlist, chosen OTT apps and the light/dark choice are saved only in each
