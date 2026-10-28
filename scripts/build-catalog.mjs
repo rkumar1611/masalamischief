@@ -1,6 +1,6 @@
-// Builds the "All films" catalogue from TMDB: the best-known films in each of our languages, with
-// poster, genres, runtime, Indian certificate, TMDB rating, a short summary and which apps stream them
-// in India. Run weekly by .github/workflows/weekly-catalog.yml with the TMDB_TOKEN repository secret.
+// Builds the "Films & series" catalogue from TMDB: the best-known films and series in each of our
+// languages, with poster, genres, runtime (or seasons), Indian certificate, TMDB rating, a short summary
+// and which apps stream them in India. Run weekly by .github/workflows/weekly-catalog.yml with the TMDB_TOKEN repository secret.
 //
 // Writes:
 //   assets/catalog/index.json   compact list for the All films page (and the sitemap)
@@ -14,6 +14,10 @@ const TOKEN = process.env.TMDB_TOKEN;
 const LANGS = ["hi", "ta", "te", "ml", "kn", "en"];
 const PER_LANG = 400;      // films per language
 const RECENT = 100;        // of which, up to this many recent popular ones
+const TV_PER_LANG = 150;   // series per Indian language
+const TV_EN = 300;         // English series
+const TV_SKIP_GENRES = "10763,10764,10766,10767"; // News, Reality, Soap, Talk
+const MAX_EPISODES = 300;  // longer than this is almost always a daily soap
 const WORKERS = 8;
 
 // TMDB provider names (India) → our app names. Anything else is left out.
@@ -38,10 +42,10 @@ async function tmdb(path, params = {}) {
   throw new Error(`TMDB failed: ${path}`);
 }
 
-async function discover(lang, params, pages) {
+async function discover(kind, lang, params, pages) {
   const ids = [];
   for (let page = 1; page <= pages; page++) {
-    const data = await tmdb("/discover/movie", { with_original_language: lang, include_adult: "false", page, ...params });
+    const data = await tmdb(`/discover/${kind}`, { with_original_language: lang, include_adult: "false", page, ...params });
     if (!data || !data.results.length) break;
     ids.push(...data.results.filter((r) => r.poster_path).map((r) => r.id));
     if (page >= data.total_pages) break;
@@ -56,9 +60,11 @@ const shorten = (s, max = 320) => {
   return (end > 120 ? cut.slice(0, end + 1) : cut.replace(/\s+\S*$/, "") + "…");
 };
 
+const appsOf = (d) => [...new Set((d["watch/providers"]?.results?.IN?.flatrate || [])
+  .map((p) => (APP_RULES.find(([re]) => re.test(p.provider_name)) || [])[1]).filter(Boolean))];
+
 function toFilm(d, lang) {
-  const providers = (d["watch/providers"]?.results?.IN?.flatrate || []).map((p) => p.provider_name);
-  const apps = [...new Set(providers.map((n) => (APP_RULES.find(([re]) => re.test(n)) || [])[1]).filter(Boolean))];
+  const apps = appsOf(d);
   const cert = (d.release_dates?.results?.find((r) => r.iso_3166_1 === "IN")?.release_dates || [])
     .map((x) => x.certification).find(Boolean) || "";
   return {
@@ -79,42 +85,89 @@ function toFilm(d, lang) {
   };
 }
 
-async function main() {
-  if (!TOKEN) { console.log("No TMDB_TOKEN set; skipping catalogue."); return; }
-  const since = new Date(Date.now() - 2 * 365 * 864e5).toISOString().slice(0, 10);
+// Series get id "tv<tmdb id>" (TMDB film and series ids can clash) and k: "tv".
+function toSeries(d, lang) {
+  const cert = (d.content_ratings?.results || []).find((r) => r.iso_3166_1 === "IN")?.rating || "";
+  const first = +(d.first_air_date || "").slice(0, 4) || null;
+  const last = +(d.last_air_date || "").slice(0, 4) || null;
+  const ended = /Ended|Canceled/.test(d.status || "");
+  return {
+    id: `tv${d.id}`,
+    k: "tv",
+    l: lang,
+    t: d.name,
+    ...(d.original_name && d.original_name !== d.name ? { o: d.original_name } : {}),
+    y: first,
+    ...(ended && last && last !== first ? { ye: last } : {}),
+    ...(ended ? { end: 1 } : {}),
+    s: d.number_of_seasons || null,
+    g: (d.genres || []).map((g) => g.name),
+    r: (d.episode_run_time || [])[0] || null,
+    v: Math.round((d.vote_average || 0) * 10) / 10,
+    n: d.vote_count || 0,
+    p: d.poster_path,
+    ...(d.backdrop_path ? { b: d.backdrop_path } : {}),
+    ...(cert ? { c: cert } : {}),
+    w: appsOf(d),
+    ov: shorten(d.overview),
+  };
+}
 
-  const picks = [];
-  for (const lang of LANGS) {
-    const recent = await discover(lang, { sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": lang === "en" ? 200 : 10 }, Math.ceil(RECENT / 20));
-    const classic = await discover(lang, { sort_by: "vote_count.desc" }, Math.ceil(PER_LANG / 20) + 2);
-    const ids = [...new Set([...recent.slice(0, RECENT), ...classic])].slice(0, PER_LANG);
-    picks.push(...ids.map((id) => [id, lang]));
-    console.log(`${lang}: ${ids.length} films`);
-  }
-
-  // Details for each film (genres, runtime, certificate, India streaming), a few at a time.
-  const films = [];
+// Fetch details a few at a time.
+async function details(picks, kind, append, toItem, keep = () => true) {
+  const out = [];
   let next = 0;
   await Promise.all(Array.from({ length: WORKERS }, async () => {
     while (next < picks.length) {
       const [id, lang] = picks[next++];
-      const d = await tmdb(`/movie/${id}`, { append_to_response: "watch/providers,release_dates" });
-      if (d && d.poster_path) films.push(toFilm(d, lang));
+      const d = await tmdb(`/${kind}/${id}`, { append_to_response: append });
+      if (d && d.poster_path && keep(d)) out.push(toItem(d, lang));
       await sleep(60);
     }
   }));
+  return out;
+}
+
+async function main() {
+  if (!TOKEN) { console.log("No TMDB_TOKEN set; skipping catalogue."); return; }
+  const since = new Date(Date.now() - 2 * 365 * 864e5).toISOString().slice(0, 10);
+
+  const moviePicks = [];
+  const tvPicks = [];
+  for (const lang of LANGS) {
+    const recent = await discover("movie", lang, { sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": lang === "en" ? 200 : 10 }, Math.ceil(RECENT / 20));
+    const classic = await discover("movie", lang, { sort_by: "vote_count.desc" }, Math.ceil(PER_LANG / 20) + 2);
+    const ids = [...new Set([...recent.slice(0, RECENT), ...classic])].slice(0, PER_LANG);
+    moviePicks.push(...ids.map((id) => [id, lang]));
+
+    const tvTarget = lang === "en" ? TV_EN : TV_PER_LANG;
+    const tvParams = { without_genres: TV_SKIP_GENRES };
+    const tvRecent = await discover("tv", lang, { ...tvParams, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": lang === "en" ? 100 : 5 }, 2);
+    const tvClassic = await discover("tv", lang, { ...tvParams, sort_by: "vote_count.desc" }, Math.ceil(tvTarget / 20) + 2);
+    // Ask for a few extra, since some get dropped below as daily soaps.
+    const tvIds = [...new Set([...tvRecent.slice(0, 30), ...tvClassic])].slice(0, Math.round(tvTarget * 1.3));
+    tvPicks.push(...tvIds.map((id) => [id, lang]));
+    console.log(`${lang}: ${ids.length} films, ${tvIds.length} series candidates`);
+  }
+
+  const films = await details(moviePicks, "movie", "watch/providers,release_dates", toFilm);
+  // Long-running daily soaps swamp Indian TV on TMDB; keep web and prime-time series.
+  const series = (await details(tvPicks, "tv", "watch/providers,content_ratings", toSeries,
+    (d) => (d.number_of_episodes || 0) <= MAX_EPISODES))
+    .sort((a, b) => b.n - a.n);
+  const keptSeries = LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, lang === "en" ? TV_EN : TV_PER_LANG));
   if (films.length < LANGS.length * 50) throw new Error(`Only ${films.length} films came back; not writing a broken catalogue.`);
 
-  films.sort((a, b) => b.n - a.n);
+  const all = [...films, ...keptSeries].sort((a, b) => b.n - a.n);
   mkdirSync(OUT, { recursive: true });
   const built = new Date().toISOString().slice(0, 10);
-  const index = films.map(({ ov, b, o, n, ...rest }) => rest);
-  writeFileSync(new URL("index.json", OUT), JSON.stringify({ built, count: films.length, films: index }));
+  const index = all.map(({ ov, b, o, ...rest }) => rest);
+  writeFileSync(new URL("index.json", OUT), JSON.stringify({ built, count: all.length, films: index }));
   for (const lang of LANGS) {
-    const byId = Object.fromEntries(films.filter((f) => f.l === lang).map((f) => [f.id, f]));
+    const byId = Object.fromEntries(all.filter((f) => f.l === lang).map((f) => [f.id, f]));
     writeFileSync(new URL(`${lang}.json`, OUT), JSON.stringify({ built, films: byId }));
   }
-  console.log(`Catalogue: ${films.length} films, built ${built}.`);
+  console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series, built ${built}.`);
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1); });
