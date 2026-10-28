@@ -47,6 +47,8 @@ Other things you can edit in `assets/data.js`:
 
 Visitor ratings, the watchlist, chosen OTT apps and the light/dark choice are saved only in each
 visitor's own browser. Nothing is sent to a server, and nothing is collected about children.
+Visit counts come from Cloudflare Web Analytics (turned on in the Cloudflare dashboard): no cookies, no
+personal profiles, just anonymous page-view totals.
 
 After changing anything in `assets/`, bump the `?v=10` number on the `<link>`/`<script>` tags in every
 `.html` file (e.g. to `?v=11`), otherwise returning visitors may keep seeing the old cached version.
