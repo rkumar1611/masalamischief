@@ -17,7 +17,13 @@ const RECENT = 100;        // of which, up to this many recent popular ones
 const TV_PER_LANG = 150;   // series per Indian language
 const TV_EN = 300;         // English series
 const TV_SKIP_GENRES = "10763,10764,10766,10767"; // News, Reality, Soap, Talk
-const MAX_EPISODES = 300;  // longer than this is almost always a daily soap
+const MAX_EPISODES = 300;  // longer than this is almost always a daily soap (not applied to anime)
+// Anime: Japanese-language animation, stored under the code "ja" and shown as "Anime".
+const ANIME = "ja";
+const ANIME_MOVIES = 200;
+const ANIME_TV = 300;
+const ANIMATION = "16";    // TMDB genre id, same for films and TV
+const OUT_LANGS = [...LANGS, ANIME];
 const WORKERS = 8;
 
 // TMDB provider names (India) → our app names. Anything else is left out.
@@ -25,6 +31,7 @@ const APP_RULES = [
   [/netflix/i, "Netflix"], [/prime video/i, "Prime Video"], [/hotstar|jiocinema/i, "JioHotstar"],
   [/zee5/i, "ZEE5"], [/sony ?liv/i, "SonyLIV"], [/sun ?nxt/i, "Sun NXT"], [/^aha/i, "aha"],
   [/manorama/i, "ManoramaMAX"], [/mx ?player/i, "MX Player"], [/lionsgate/i, "Lionsgate Play"],
+  [/crunchyroll/i, "Crunchyroll"],
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -121,7 +128,7 @@ async function details(picks, kind, append, toItem, keep = () => true) {
     while (next < picks.length) {
       const [id, lang] = picks[next++];
       const d = await tmdb(`/${kind}/${id}`, { append_to_response: append });
-      if (d && d.poster_path && keep(d)) out.push(toItem(d, lang));
+      if (d && d.poster_path && keep(d, lang)) out.push(toItem(d, lang));
       await sleep(60);
     }
   }));
@@ -150,12 +157,28 @@ async function main() {
     console.log(`${lang}: ${ids.length} films, ${tvIds.length} series candidates`);
   }
 
+  // Anime: Japanese animation only (so no Japanese live-action), films and series.
+  const anime = { with_genres: ANIMATION };
+  const animeMovies = [...new Set([
+    ...(await discover("movie", ANIME, { ...anime, sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": 50 }, 2)).slice(0, 30),
+    ...(await discover("movie", ANIME, { ...anime, sort_by: "vote_count.desc" }, Math.ceil(ANIME_MOVIES / 20) + 1)),
+  ])].slice(0, ANIME_MOVIES);
+  const animeSeries = [...new Set([
+    ...(await discover("tv", ANIME, { ...anime, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": 50 }, 3)).slice(0, 50),
+    ...(await discover("tv", ANIME, { ...anime, sort_by: "vote_count.desc" }, Math.ceil(ANIME_TV / 20) + 1)),
+  ])].slice(0, ANIME_TV);
+  moviePicks.push(...animeMovies.map((id) => [id, ANIME]));
+  tvPicks.push(...animeSeries.map((id) => [id, ANIME]));
+  console.log(`anime: ${animeMovies.length} films, ${animeSeries.length} series`);
+
   const films = await details(moviePicks, "movie", "watch/providers,release_dates", toFilm);
-  // Long-running daily soaps swamp Indian TV on TMDB; keep web and prime-time series.
+  // Long-running daily soaps swamp Indian TV on TMDB; keep web and prime-time series. Long-running
+  // anime (One Piece, Detective Conan) is the real thing, so the episode limit doesn't apply there.
   const series = (await details(tvPicks, "tv", "watch/providers,content_ratings", toSeries,
-    (d) => (d.number_of_episodes || 0) <= MAX_EPISODES))
+    (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES))
     .sort((a, b) => b.n - a.n);
-  const keptSeries = LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, lang === "en" ? TV_EN : TV_PER_LANG));
+  const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : lang === "en" ? TV_EN : TV_PER_LANG);
+  const keptSeries = OUT_LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, tvLimit(lang)));
   if (films.length < LANGS.length * 50) throw new Error(`Only ${films.length} films came back; not writing a broken catalogue.`);
 
   const all = [...films, ...keptSeries].sort((a, b) => b.n - a.n);
@@ -163,7 +186,7 @@ async function main() {
   const built = new Date().toISOString().slice(0, 10);
   const index = all.map(({ ov, b, o, ...rest }) => rest);
   writeFileSync(new URL("index.json", OUT), JSON.stringify({ built, count: all.length, films: index }));
-  for (const lang of LANGS) {
+  for (const lang of OUT_LANGS) {
     const byId = Object.fromEntries(all.filter((f) => f.l === lang).map((f) => [f.id, f]));
     writeFileSync(new URL(`${lang}.json`, OUT), JSON.stringify({ built, films: byId }));
   }
