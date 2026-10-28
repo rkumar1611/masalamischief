@@ -1,0 +1,29 @@
+# Checks /admin every 3 hours and opens (or updates) a GitHub issue when audience reviews are waiting,
+# so GitHub emails you. Needs the ADMIN_PASSWORD repository secret (same value as in Cloudflare).
+# Run it by hand from GitHub → Actions → "Review alerts" → Run workflow.
+name: Review alerts
+
+on:
+  schedule:
+    - cron: "15 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check for reviews to approve
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/review-alert.mjs
