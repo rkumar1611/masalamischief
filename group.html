@@ -4,33 +4,76 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Group Pick · Masala Mischief</title>
+  <meta name="description" content="Pick a film with friends: share a room on WhatsApp, everyone swipes yes or no, and see the films you all agree on.">
+  <meta property="og:title" content="🎬 Group Pick · help us choose tonight's film">
+  <meta property="og:description" content="Swipe yes or no on 10 films. No sign-up. We'll show the films everyone agrees on, and where to watch them.">
   <meta property="og:image" content="https://masalamischief.in/assets/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#d7263d">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=8">
+  <link rel="stylesheet" href="assets/style.css?v=9">
 </head>
 <body data-page="group">
   <main class="wrap">
-    <div class="hero">
-      <span class="badge">Coming soon</span>
-      <h1 style="margin-top:12px">Group Pick</h1>
-      <p class="lead">End the Friday-night "you choose / no, you choose" loop.</p>
+    <div class="page-head">
+      <p class="eyebrow">Group Pick</p>
+      <h1>🎬 Choose tonight's film together</h1>
+      <p class="lead">End the "you choose / no, you choose" loop. Everyone swipes on the same 10 films, and we show the ones you all said yes to.</p>
     </div>
-    <div class="teasers">
-      <div class="teaser"><h3>1. Start a room</h3><p class="muted">Pick a mood and languages. We build a shortlist.</p></div>
-      <div class="teaser"><h3>2. Share on WhatsApp</h3><p class="muted">Everyone opens the link. No sign-up needed.</p></div>
-      <div class="teaser"><h3>3. Swipe yes or no</h3><p class="muted">We show the films you all said yes to, and which OTT apps your group has them on.</p></div>
-    </div>
-    <section>
-      <p>Until then, <a href="suggest.html">find something for tonight</a>.</p>
+
+    <!-- 1. Start a room -->
+    <section id="gp-create" hidden>
+      <div class="filters">
+        <div>
+          <span class="title">1. What's the vibe? <span class="muted" style="font-weight:400">(optional)</span></span>
+          <div class="chips" id="gp-moods"></div>
+        </div>
+        <div>
+          <span class="title">2. Languages the whole group is happy with <span class="muted" style="font-weight:400">(dubs count)</span></span>
+          <div class="chips" id="gp-langs"></div>
+        </div>
+        <div class="toolbar" style="margin:0">
+          <label class="toggle"><input type="checkbox" id="gp-family"> 👪 Kids are watching</label>
+          <button class="btn primary" id="gp-start" type="button">Create room</button>
+        </div>
+      </div>
+      <div class="teasers gp-steps">
+        <div class="teaser"><h3>1. Start a room</h3><p class="muted">Pick a vibe and languages. We build a shortlist of 10.</p></div>
+        <div class="teaser"><h3>2. Share on WhatsApp</h3><p class="muted">Everyone opens the link and swipes. No sign-up, no app.</p></div>
+        <div class="teaser"><h3>3. Post your picks back</h3><p class="muted">Each person shares their result link in the group. Open the latest one to see the match.</p></div>
+      </div>
     </section>
+
+    <!-- 2. Swipe -->
+    <section id="gp-swipe" hidden>
+      <div class="gp-name" id="gp-name-box">
+        <label for="gp-name">Your name, so friends know whose votes are whose</label>
+        <div class="gp-name-row">
+          <input id="gp-name" type="text" maxlength="20" placeholder="e.g. Ravi" autocomplete="nickname">
+          <button class="btn primary" id="gp-go" type="button">Start swiping</button>
+        </div>
+        <p class="muted small">Only used inside this link. We don't save it anywhere.</p>
+      </div>
+      <div id="gp-deck" hidden>
+        <p class="gp-progress" id="gp-progress"></p>
+        <div class="gp-card" id="gp-card"></div>
+        <div class="gp-buttons">
+          <button class="gp-btn no" id="gp-no" type="button" aria-label="No">👎 Nah</button>
+          <button class="gp-btn yes" id="gp-yes" type="button" aria-label="Yes">👍 I'm in</button>
+        </div>
+        <p class="muted small center">Swipe the card, tap the buttons, or use ← →.</p>
+      </div>
+    </section>
+
+    <!-- 3. Results -->
+    <section id="gp-results" hidden></section>
   </main>
-  <script src="assets/data.js?v=8"></script>
-  <script src="assets/app.js?v=8"></script>
+  <script src="assets/data.js?v=9"></script>
+  <script src="assets/app.js?v=9"></script>
 </body>
 </html>

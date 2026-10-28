@@ -5,7 +5,7 @@ const NAV = [
   { href: "reviews.html", label: "Reviews", page: "reviews" },
   { href: "suggest.html", label: "What should I watch?", page: "suggest" },
   { href: "family.html", label: "Family Picks", page: "family" },
-  { href: "group.html", label: "Group Pick", page: "group", soon: true },
+  { href: "group.html", label: "Group Pick", page: "group" },
 ];
 
 const GENRE_ICONS = {
@@ -75,7 +75,7 @@ function renderChrome() {
         <a href="reviews.html">Reviews</a><a href="suggest.html">What should I watch?</a>
         <a href="family.html">Family Picks</a><a href="reviews.html?saved=1">My watchlist</a>
       </div>
-      <p class="fine">🌶️ Masala Meter = entertainment · score out of 10 = craft. Streaming info from JustWatch India, checked ${fmtDate(WATCH_CHECKED)}; availability changes, so confirm in the app.<br>© ${new Date().getFullYear()} Masala Mischief.</p>
+      <p class="fine">🌶️ Masala Meter = entertainment · score out of 10 = craft. Streaming info from JustWatch India, checked ${fmtDate(WATCH_CHECKED)}; availability changes, so confirm in the app.<br>${Object.keys(IMAGES).length ? `Film images from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.<br>` : ""}© ${new Date().getFullYear()} Masala Mischief.</p>
     </div></footer>`);
 
   const btn = document.getElementById("theme-btn");
@@ -98,9 +98,14 @@ function score(q) {
   return `<span class="score" title="Quality score">${q}<small>/10</small></span>`;
 }
 
+// Film images from TMDB (IMAGES in data.js). Films without one keep the coloured tile.
+const tmdb = (path, size) => `https://image.tmdb.org/t/p/${size}${path}`;
+
 function poster(m, big = false) {
   const icon = GENRE_ICONS[m.genres[0]] || "🎬";
-  return `<div class="poster lang-${m.lang}${big ? " big" : ""}">
+  const still = IMAGES[m.id] && IMAGES[m.id].backdrop;
+  return `<div class="poster lang-${m.lang}${big ? " big" : ""}${still ? " has-img" : ""}">
+      ${still ? `<img class="poster-img" src="${tmdb(still, big ? "w1280" : "w780")}" alt="" loading="${big ? "eager" : "lazy"}" decoding="async">` : ""}
       <span class="lang-pill">${langLabel(m.lang)} · ${m.year}</span>
       ${PARENT_NOTES[m.id] ? `<span class="age-pill" title="Family Pick">👪 ${PARENT_NOTES[m.id].age}+</span>` : ""}
       <span class="poster-icon" aria-hidden="true">${icon}</span>
@@ -317,6 +322,7 @@ function initReview() {
         </div>
       </article>
       <aside>
+        ${IMAGES[m.id] && IMAGES[m.id].poster ? `<img class="side-poster" src="${tmdb(IMAGES[m.id].poster, "w342")}" alt="${esc(m.title)} poster" loading="lazy" decoding="async">` : ""}
         <div class="side panel-watch">
           <h3>📺 Where to watch</h3>
           ${watch.stream.length
@@ -481,5 +487,187 @@ function initFamily() {
   draw();
 }
 
+/* ---------- Group Pick ----------
+   No server: the room is the link. ?d= holds the 10 film ids, and each ?v=Name~10110… holds one
+   person's yes/no votes. Every share link carries all the votes collected so far, so the latest
+   link posted in the WhatsApp group has everyone's. Votes are kept on this device per room. */
+function initGroup() {
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  const deck = (params.get("d") || "").split(".").map(movieById).filter(Boolean);
+
+  if (!deck.length) return groupCreate($);
+  document.body.classList.add("gp-active"); // compact header so the card fits on a phone
+
+  const roomKey = "group:" + deck.map((m) => m.id).join(".");
+  const room = store.get(roomKey, { me: "", votes: {} });
+  for (const v of params.getAll("v")) {
+    const [name, bits] = v.split("~");
+    if (name && bits && /^[01]+$/.test(bits) && bits.length === deck.length) room.votes[name.slice(0, 20)] = bits;
+  }
+  store.set(roomKey, room);
+  if (params.has("v")) {
+    try { history.replaceState(null, "", `${location.pathname}?d=${deck.map((m) => m.id).join(".")}`); } catch {}
+  }
+
+  const linkFor = (withVotes) => {
+    const p = new URLSearchParams({ d: deck.map((m) => m.id).join(".") });
+    if (withVotes) Object.entries(room.votes).forEach(([n, b]) => p.append("v", `${n}~${b}`));
+    return `${location.origin}${location.pathname}?${p.toString().replace(/%7E/gi, "~").replace(/%2E/gi, ".")}`;
+  };
+
+  const showResults = () => {
+    $("gp-swipe").hidden = true;
+    groupResults($("gp-results"), deck, room, linkFor, () => {
+      delete room.votes[room.me]; store.set(roomKey, room); startSwipe();
+    });
+  };
+
+  const startSwipe = () => {
+    $("gp-results").hidden = true;
+    $("gp-swipe").hidden = false;
+    $("gp-name").value = room.me || "";
+    $("gp-name-box").hidden = false;
+    $("gp-deck").hidden = true;
+    const go = () => {
+      const name = $("gp-name").value.trim().replace(/~/g, "").slice(0, 20);
+      if (!name) { $("gp-name").focus(); return; }
+      room.me = name; store.set(roomKey, room);
+      $("gp-name-box").hidden = true;
+      $("gp-deck").hidden = false;
+      groupSwipe($, deck, (bits) => { room.votes[name] = bits; store.set(roomKey, room); showResults(); });
+    };
+    $("gp-go").onclick = go;
+    $("gp-name").onkeydown = (e) => { if (e.key === "Enter") go(); };
+  };
+
+  if (room.me && room.votes[room.me]) showResults(); else startSwipe();
+}
+
+function groupCreate($) {
+  $("gp-create").hidden = false;
+  let mood = null;
+  const langs = new Set();
+  chips($("gp-moods"), MOODS.map((m) => [m.id, `${m.emoji} ${m.label}`]), (v) => v === mood, (v) => { mood = mood === v ? null : v; });
+  chips($("gp-langs"), LANGUAGES.map((l) => [l, langLabel(l)]), (v) => langs.has(v), (v) => { langs.has(v) ? langs.delete(v) : langs.add(v); });
+
+  $("gp-start").addEventListener("click", () => {
+    const kids = $("gp-family").checked;
+    const ok = (m, useMood) =>
+      (!langs.size || m.audio.some((a) => langs.has(a))) &&
+      (!kids || PARENT_NOTES[m.id]) &&
+      (!useMood || !mood || m.moods.includes(mood));
+    let pool = MOVIES.filter((m) => ok(m, true));
+    if (pool.length < 6) pool = MOVIES.filter((m) => ok(m, false)); // too narrow: drop the mood
+    if (!pool.length) pool = MOVIES.slice();
+    // Good films first, with a shuffle so every room is different.
+    const picks = pool.map((m) => [m, m.quality + m.masala * 0.3 + Math.random() * 3])
+      .sort((a, b) => b[1] - a[1]).slice(0, 10).map(([m]) => m.id);
+    location.search = `?d=${picks.join(".")}`;
+  });
+}
+
+function groupSwipe($, deck, done) {
+  let i = 0;
+  let bits = "";
+  const cardEl = $("gp-card");
+  const paint = () => {
+    const m = deck[i];
+    $("gp-progress").textContent = `Film ${i + 1} of ${deck.length}`;
+    cardEl.style.transform = "";
+    cardEl.className = "gp-card";
+    cardEl.innerHTML = `
+      ${poster(m, true)}
+      <div class="gp-card-body">
+        <p>${esc(m.tagline)}</p>
+        <p class="muted small">${m.genres.map(esc).join(" · ")} · ${fmtRuntime(m.runtime)}${m.audio.length > 1 ? ` · Also in ${m.audio.filter((a) => a !== m.lang).map(esc).join(", ")}` : ""}</p>
+        ${platformChips(streamsOn(m), 5)}
+      </div>`;
+  };
+  const vote = (yes) => {
+    if (i >= deck.length) return;
+    cardEl.classList.add(yes ? "out-yes" : "out-no");
+    bits += yes ? "1" : "0";
+    i++;
+    setTimeout(() => (i < deck.length ? paint() : finish()), 220);
+  };
+  const finish = () => { document.removeEventListener("keydown", onKey); done(bits); };
+  const onKey = (e) => {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "ArrowRight") vote(true);
+    if (e.key === "ArrowLeft") vote(false);
+  };
+  document.addEventListener("keydown", onKey);
+  $("gp-yes").onclick = () => vote(true);
+  $("gp-no").onclick = () => vote(false);
+
+  // Drag to swipe (touch or mouse).
+  let startX = null;
+  cardEl.onpointerdown = (e) => { startX = e.clientX; cardEl.setPointerCapture(e.pointerId); cardEl.classList.add("dragging"); };
+  cardEl.onpointermove = (e) => {
+    if (startX === null) return;
+    const dx = e.clientX - startX;
+    cardEl.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`;
+    cardEl.dataset.lean = dx > 40 ? "yes" : dx < -40 ? "no" : "";
+  };
+  cardEl.onpointerup = cardEl.onpointercancel = (e) => {
+    if (startX === null) return;
+    const dx = e.clientX - startX;
+    startX = null;
+    cardEl.classList.remove("dragging");
+    cardEl.dataset.lean = "";
+    if (Math.abs(dx) > 90) vote(dx > 0); else cardEl.style.transform = "";
+  };
+  paint();
+}
+
+function groupResults(el, deck, room, linkFor, redo) {
+  el.hidden = false;
+  const people = Object.keys(room.votes);
+  const n = people.length;
+  const ranked = deck.map((m, idx) => ({ m, yes: people.filter((p) => room.votes[p][idx] === "1") }))
+    .sort((a, b) => b.yes.length - a.yes.length || b.m.quality - a.m.quality);
+  const top = ranked[0];
+  const all = ranked.filter((r) => n > 1 && r.yes.length === n);
+  const headline = n < 2
+    ? `<h2>Your picks are in 🎉</h2><p class="lead">Now get the others to swipe. Post the link below in your WhatsApp group.</p>`
+    : all.length
+      ? `<h2>🎉 Everyone's in: ${esc(all[0].m.title)}</h2><p class="lead">${all.length > 1 ? `${all.length} films got a yes from all ${n} of you.` : `All ${n} of you said yes.`}</p>`
+      : top.yes.length
+        ? `<h2>Closest match: ${esc(top.m.title)}</h2><p class="lead">${top.yes.length} of ${n} said yes. No film got everyone, so here's the best compromise.</p>`
+        : `<h2>Tough crowd 😅</h2><p class="lead">Nobody agreed on anything. Start a new room with a different vibe?</p>`;
+
+  const shareText = n < 2
+    ? `🎬 Help pick tonight's film! Swipe yes or no on 10 films, then post your link back here: ${linkFor(true)}`
+    : `🎬 Group Pick update: ${n} of us have voted. Tap to see the match or add your votes: ${linkFor(true)}`;
+
+  el.innerHTML = `
+    <div class="gp-head">${headline}</div>
+    <div class="share-row">
+      <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText)}">Share on WhatsApp</a>
+      <button class="btn" id="gp-copy" type="button">Copy link</button>
+      <button class="btn" id="gp-redo" type="button">Swipe again</button>
+      <a class="btn" href="group.html">New room</a>
+    </div>
+    <p class="muted small">Voted so far: ${people.map((p) => `<span class="gp-voter${p === room.me ? " me" : ""}">${esc(p)}</span>`).join(" ")}</p>
+    <ol class="gp-ranked">
+      ${ranked.map((r) => `
+        <li class="${n > 1 && r.yes.length === n ? "all" : ""}">
+          <a href="review.html?id=${encodeURIComponent(r.m.id)}">${esc(r.m.title)}</a>
+          <span class="gp-bar" style="--pct:${n ? Math.round((r.yes.length / n) * 100) : 0}%"><span></span></span>
+          <span class="gp-count">${r.yes.length}/${n} yes</span>
+          <span class="gp-who muted small">${r.yes.map(esc).join(", ")}</span>
+          ${platformChips(streamsOn(r.m), 3)}
+        </li>`).join("")}
+    </ol>`;
+
+  el.querySelector("#gp-redo").onclick = redo;
+  el.querySelector("#gp-copy").onclick = async (e) => {
+    try { await navigator.clipboard.writeText(linkFor(true)); e.target.textContent = "Copied!"; }
+    catch { prompt("Copy this link:", linkFor(true)); }
+  };
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 renderChrome();
-({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily }[document.body.dataset.page] || (() => {}))();
+({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup }[document.body.dataset.page] || (() => {}))();

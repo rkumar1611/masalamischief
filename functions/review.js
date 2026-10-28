@@ -12,7 +12,7 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 export async function onRequestGet(context) {
   const page = await context.next();
   try {
-    const { MOVIES, WATCH, PARENT_NOTES, LANG_LABELS } = globalThis.MM_DATA;
+    const { MOVIES, WATCH, PARENT_NOTES, LANG_LABELS, IMAGES } = globalThis.MM_DATA;
     const id = new URL(context.request.url).searchParams.get("id");
     const m = MOVIES.find((x) => x.id === id);
     if (!m) return page;
@@ -60,7 +60,16 @@ export async function onRequestGet(context) {
     }).replace(/</g, "\\u003c");
 
     const setContent = (value) => ({ element(el) { el.setAttribute("content", value); } });
-    return new HTMLRewriter()
+    const still = IMAGES && IMAGES[m.id] && IMAGES[m.id].backdrop;
+    const rewriter = new HTMLRewriter();
+    if (still) {
+      // The film's own still for the preview card (TMDB w1280 is 1280x720).
+      rewriter
+        .on('meta[property="og:image"]', setContent(`https://image.tmdb.org/t/p/w1280${still}`))
+        .on('meta[property="og:image:width"]', setContent("1280"))
+        .on('meta[property="og:image:height"]', setContent("720"));
+    }
+    return rewriter
       .on("title", { element(el) { el.setInnerContent(title); } })
       .on('meta[name="description"]', setContent(desc))
       .on('meta[property="og:title"]', setContent(ogTitle))

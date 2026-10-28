@@ -1260,5 +1260,9 @@ const PARENT_NOTES = {
     note: "A father's death and a few scuffles. Inspiring for older kids who love planes or business stories." },
 };
 
+// Film images from TMDB (themoviedb.org): backdrop = wide still for cards, poster = portrait for the review page.
+// Paths only; the site loads them from image.tmdb.org. Films without an entry keep the coloured tile.
+const IMAGES = {};
+
 // Lets the Cloudflare functions (functions/) read the same data. Harmless in the browser.
-globalThis.MM_DATA = { MOVIES, WATCH, WATCH_LINKS, PARENT_NOTES, LANG_LABELS, MOODS };
+globalThis.MM_DATA = { MOVIES, WATCH, WATCH_LINKS, PARENT_NOTES, LANG_LABELS, MOODS, IMAGES };
