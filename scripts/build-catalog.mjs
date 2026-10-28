@@ -352,6 +352,9 @@ function writeLists(all) {
   const today = new Date().toISOString().slice(0, 10);
   const released = all.filter((f) => !f.rd || f.rd <= today);
   const index = { ott: [], best: {} };
+  // previews.json: four posters per list, keyed by the list page's link, for the homepage tiles.
+  const previews = {};
+  const posters = (items) => items.filter((f) => f.p).slice(0, 4).map((f) => f.p);
 
   // New on each app: newest releases first (TMDB doesn't say when a title arrived on the app).
   const ott = {};
@@ -362,6 +365,7 @@ function writeLists(all) {
     if (on.length < LIST_MIN) continue;
     ott[slugOf(app)] = { name: app, count: on.length, items: on.slice(0, OTT_SIZE).map(compact) };
     index.ott.push([slugOf(app), app, on.length]);
+    previews[`ott.html?app=${slugOf(app)}`] = posters(on);
   }
   writeIfChanged(new URL("ott.json", dir), JSON.stringify(ott));
 
@@ -372,13 +376,19 @@ function writeLists(all) {
     const info = { kinds: [], genres: [], years: [] };
     for (const kind of ["movie", "tv"]) {
       const ranked = weightedRank(mine.filter((f) => (kind === "tv" ? f.k === "tv" : f.k !== "tv")));
-      if (ranked.length >= LIST_MIN) { out.all[kind] = ranked.slice(0, LIST_SIZE).map(compact); info.kinds.push(kind); }
+      const tvq = kind === "tv" ? "&k=tv" : "";
+      if (ranked.length >= LIST_MIN) {
+        out.all[kind] = ranked.slice(0, LIST_SIZE).map(compact);
+        info.kinds.push(kind);
+        previews[`best.html?l=${lang}${tvq}`] = posters(ranked);
+      }
       const genres = [...new Set(ranked.flatMap((f) => f.g || []))];
       for (const g of genres) {
         const list = ranked.filter((f) => (f.g || []).includes(g));
         if (list.length < LIST_MIN) continue;
         const s = slugOf(g);
         (out.genres[s] = out.genres[s] || { name: g })[kind] = list.slice(0, LIST_SIZE).map(compact);
+        previews[`best.html?l=${lang}&g=${s}${tvq}`] = posters(list);
         const row = info.genres.find((r) => r[0] === s) || (info.genres.push([s, g, 0, 0]), info.genres[info.genres.length - 1]);
         row[kind === "tv" ? 3 : 2] = list.length;
       }
@@ -387,6 +397,7 @@ function writeLists(all) {
           const list = ranked.filter((f) => f.y === y);
           if (list.length < LIST_MIN) continue;
           out.years[y] = list.slice(0, LIST_SIZE).map(compact);
+          previews[`best.html?l=${lang}&y=${y}`] = posters(list);
           info.years.push([y, list.length]);
         }
       }
@@ -396,6 +407,7 @@ function writeLists(all) {
     index.best[lang] = info;
   }
   writeIfChanged(new URL("index.json", dir), JSON.stringify(index));
+  writeIfChanged(new URL("previews.json", dir), JSON.stringify(previews));
   console.log(`Lists: ${index.ott.length} apps, ${Object.values(index.best).reduce((s, b) => s + b.genres.length + b.years.length + b.kinds.length, 0)} best-of lists.`);
 }
 

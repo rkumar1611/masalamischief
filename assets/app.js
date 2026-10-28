@@ -415,9 +415,30 @@ function initHome() {
     document.getElementById("saved").innerHTML = saved.slice(0, 4).map((m) => card(m)).join("");
   }
 
+  renderListTiles();
   renderTonight(featured);
   renderTrending();
   renderAudienceHome();
+}
+
+// Popular lists: the links are plain HTML in index.html (so search engines see them); this adds four
+// posters from inside each list (assets/catalog/lists/previews.json, built daily) to make them tiles.
+async function renderListTiles() {
+  const box = document.querySelector(".popular-lists");
+  if (!box) return;
+  const [previews, upcoming] = await Promise.all([loadCatalog("lists/previews"), loadCatalog("upcoming")]);
+  if (!previews) return;
+  const soon = upcoming ? upcoming.items.filter((f) => f.p).slice(0, 4).map((f) => f.p) : [];
+  box.querySelectorAll("a").forEach((a) => {
+    const key = a.getAttribute("href");
+    const pics = key.startsWith("upcoming.html") ? soon : previews[key];
+    if (!pics || !pics.length) return;
+    const label = a.textContent.trim();
+    a.classList.add("ptile");
+    a.innerHTML = `<span class="ptile-posters">${pics.map((p) => `<img src="${tmdb(p, "w154")}" alt="" loading="lazy" decoding="async">`).join("")}</span>
+      <span class="ptile-label">${esc(label)}</span>`;
+  });
+  box.classList.add("tiles");
 }
 
 // Tonight's pick: one of our reviewed films that's streaming, the same for everyone all day (India time),
