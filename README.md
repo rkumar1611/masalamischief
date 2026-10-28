@@ -40,8 +40,12 @@ Open `assets/data.js`, copy an existing film object, and change the fields. The 
 Other things you can edit in `assets/data.js`:
 
 - `FEATURED_ID` – the film shown as "Pick of the week" on the home page.
-- `NEW_ON_OTT` – the "New on OTT this week" strip. Refresh it weekly from JustWatch India's "New" page
-  (update `checked`). If it's more than 10 days old, the heading changes to "Recently added" by itself.
+- `NEW_ON_OTT` – the "New on OTT this week" strip. It updates itself: every morning GitHub runs
+  `scripts/refresh-new-on-ott.mjs` (see `.github/workflows/refresh-new-on-ott.yml`), which adds the day's
+  notable arrivals on Netflix, Prime Video, JioHotstar, ZEE5, SonyLIV, Sun NXT, aha and ManoramaMAX from
+  JustWatch India, keeps 7 days, and commits only if something changed. You can still edit the list by
+  hand, for example to write a better note; the script keeps existing items as they are. If the list is
+  more than 10 days old, the heading changes to "Recently added" by itself.
 - `WATCH` – where each film streams in India (from JustWatch India). Update `WATCH_CHECKED` when you re-check.
 - `PARENT_NOTES` – adding an entry puts a film into Family Picks. Levels are 0 none, 1 mild, 2 some, 3 strong.
 
