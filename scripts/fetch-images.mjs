@@ -78,7 +78,22 @@ async function main() {
     }
     await sleep(250);
   }
-  if (!added) { console.log("No new images."); return; }
+  // IMDb ids, for the "View on IMDb" link. "" means TMDB has none, so we don't ask again.
+  let linked = 0;
+  for (const m of MOVIES) {
+    const img = images[m.id];
+    if (!img || !img.tmdb || "imdb" in img) continue;
+    try {
+      const ids = await tmdb(`/movie/${img.tmdb}/external_ids`);
+      img.imdb = ids.imdb_id || "";
+      linked++;
+    } catch (e) {
+      if (/rejected the token/.test(e.message)) throw e;
+      console.log(`no IMDb id for ${m.title}: ${e.message}`);
+    }
+    await sleep(100);
+  }
+  if (!added && !linked) { console.log("No new images."); return; }
 
   // Same order as MOVIES, one line per film.
   const order = MOVIES.map((m) => m.id).filter((id) => images[id]);
@@ -87,7 +102,7 @@ async function main() {
     JSON.stringify(images[id]).replace(/"(\w+)":/g, "$1: ").replace(/,(\w+: )/g, ", $1").replace(/^\{/, "{ ").replace(/\}$/, " }") + ",");
   writeFileSync(DATA, src.replace(BLOCK_RE, `const IMAGES = {\n${lines.join("\n")}\n};`));
   const v = bumpVersion();
-  console.log(`Added images for ${added} films, assets v=${v}.`);
+  console.log(`Added images for ${added} films and IMDb ids for ${linked}, assets v=${v}.`);
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1); });

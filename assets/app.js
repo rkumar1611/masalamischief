@@ -165,6 +165,9 @@ function score(q) {
 
 // Film images from TMDB (IMAGES in data.js). Films without one keep the coloured tile.
 const tmdb = (path, size) => `https://image.tmdb.org/t/p/${size}${path}`;
+// "View on IMDb" button: a plain link to the title's IMDb page (id from TMDB), no IMDb data is used.
+const imdbBtn = (id) => (/^tt\d+$/.test(id || "")
+  ? `<a class="btn" target="_blank" rel="noopener" href="https://www.imdb.com/title/${id}/">IMDb ↗</a>` : "");
 
 function poster(m, big = false) {
   const icon = GENRE_ICONS[m.genres[0]] || "🎬";
@@ -483,6 +486,7 @@ function initReview() {
 
         <div class="share-row">
           <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${m.title} ${m.year} official trailer`)}">▶ Watch trailer</a>
+          ${imdbBtn(IMAGES[m.id] && IMAGES[m.id].imdb)}
           <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="save" type="button"></button>
           <button class="btn" id="copy" type="button">Copy link</button>
@@ -1276,6 +1280,7 @@ async function initFilm() {
         </div>
         <div class="share-row">
           <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${f.t} ${f.y || ""} ${tv ? "series" : ""} official trailer`)}">▶ Watch trailer</a>
+          ${imdbBtn(f.im)}
           <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
@@ -1299,6 +1304,7 @@ async function initFilm() {
             ${f.g.length ? `<dt>Genre</dt><dd>${esc(f.g.join(", "))}</dd>` : ""}
             ${f.c ? `<dt>Certificate</dt><dd>${esc(f.c)}</dd>` : ""}
             <dt>TMDB</dt><dd>${f.v}/10 · <a href="https://www.themoviedb.org/${tv ? `tv/${String(f.id).slice(2)}` : `movie/${f.id}`}" target="_blank" rel="noopener">${f.n.toLocaleString("en-IN")} votes</a></dd>
+            ${/^tt\d+$/.test(f.im || "") ? `<dt>IMDb</dt><dd><a href="https://www.imdb.com/title/${f.im}/" target="_blank" rel="noopener">See rating on IMDb ↗</a></dd>` : ""}
           </dl>
         </div>
       </aside>

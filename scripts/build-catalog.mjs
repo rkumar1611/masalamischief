@@ -98,6 +98,7 @@ function toFilm(d, lang) {
     p: d.poster_path,
     ...(d.backdrop_path ? { b: d.backdrop_path } : {}),
     ...(cert ? { c: cert } : {}),
+    ...(d.external_ids?.imdb_id ? { im: d.external_ids.imdb_id } : {}),
     w: apps,
     ov: shorten(d.overview),
   };
@@ -126,6 +127,7 @@ function toSeries(d, lang) {
     p: d.poster_path,
     ...(d.backdrop_path ? { b: d.backdrop_path } : {}),
     ...(cert ? { c: cert } : {}),
+    ...(d.external_ids?.imdb_id ? { im: d.external_ids.imdb_id } : {}),
     w: appsOf(d),
     ov: shorten(d.overview),
   };
@@ -192,10 +194,10 @@ async function main() {
   tvPicks.push(...animeSeries.map((id) => [id, ANIME]));
   console.log(`anime: ${animeMovies.length} films, ${animeSeries.length} series`);
 
-  const films = await details(moviePicks, "movie", "watch/providers,release_dates", toFilm);
+  const films = await details(moviePicks, "movie", "watch/providers,release_dates,external_ids", toFilm);
   // Long-running daily soaps swamp Indian TV on TMDB; keep web and prime-time series. Long-running
   // anime (One Piece, Detective Conan) is the real thing, so the episode limit doesn't apply there.
-  const series = (await details(tvPicks, "tv", "watch/providers,content_ratings", toSeries,
+  const series = (await details(tvPicks, "tv", "watch/providers,content_ratings,external_ids", toSeries,
     (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES))
     .sort((a, b) => b.n - a.n);
   const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : PLAN[lang].tv);
@@ -212,7 +214,7 @@ async function main() {
     const mine = all.filter((f) => f.l === lang);
     if (!mine.length) continue;
     counts[lang] = mine.length;
-    writeFileSync(new URL(`list-${lang}.json`, OUT), JSON.stringify({ built, films: mine.map(({ ov, b, o, ...rest }) => rest) }));
+    writeFileSync(new URL(`list-${lang}.json`, OUT), JSON.stringify({ built, films: mine.map(({ ov, b, o, im, ...rest }) => rest) }));
     writeFileSync(new URL(`${lang}.json`, OUT), JSON.stringify({ built, films: Object.fromEntries(mine.map((f) => [f.id, f])) }));
   }
   writeFileSync(new URL("manifest.json", OUT), JSON.stringify({ built, count: all.length, langs: counts }));
