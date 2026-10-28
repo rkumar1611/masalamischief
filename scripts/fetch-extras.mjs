@@ -1,7 +1,8 @@
 // Trailer, cast, director and Wikipedia link for each of our reviewed films, from TMDB, into
 // assets/catalog/reviewed.json ({ "<our film id>": { tr, cast, dir, wd } }). Review pages and actor
 // pages load it. Run by the daily GitHub workflow with the TMDB_TOKEN secret; the file is only
-// rewritten when something changed, so most days there's nothing to commit.
+// rewritten when something changed, so most days there's nothing to commit. Catalogue titles get the
+// same fields from build-catalog.mjs (weekly).
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { EXTRA_APPEND, VIDEO_LANGS, extrasOf } from "./tmdb-extras.mjs";
