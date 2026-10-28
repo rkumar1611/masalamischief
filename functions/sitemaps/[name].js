@@ -21,6 +21,25 @@ export async function onRequestGet(context) {
     const reviews = MOVIES.map((m) => `<url><loc>${SITE}/review?id=${encodeURIComponent(m.id)}</loc><lastmod>${m.reviewed}</lastmod></url>`);
     return xmlResponse([...pages, ...reviews]);
   }
+  if (name === "lists") {
+    // New on <app>, best-of lists and upcoming releases (assets/catalog/lists/index.json, upcoming.json).
+    const get = (p) => context.env.ASSETS.fetch(new URL(p, context.request.url)).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const [index, upcoming] = await Promise.all([get("/assets/catalog/lists/index.json"), get("/assets/catalog/upcoming.json")]);
+    if (!index) return new Response("Not found", { status: 404 });
+    const paths = ["/ott", "/best", ...index.ott.map(([s]) => `/ott?app=${s}`)];
+    for (const [l, b] of Object.entries(index.best)) {
+      b.kinds.forEach((k) => paths.push(`/best?l=${l}${k === "tv" ? "&k=tv" : ""}`));
+      b.genres.forEach(([g, , movies, tv]) => {
+        if (movies) paths.push(`/best?l=${l}&g=${g}`);
+        if (tv) paths.push(`/best?l=${l}&g=${g}&k=tv`);
+      });
+      b.years.forEach(([y]) => paths.push(`/best?l=${l}&y=${y}`));
+    }
+    if (upcoming && upcoming.items.length) {
+      paths.push("/upcoming", ...[...new Set(upcoming.items.map((f) => f.l))].map((l) => `/upcoming?l=${l}`));
+    }
+    return xmlResponse(paths.map((p) => `<url><loc>${SITE}${p.replace(/&/g, "&amp;")}</loc></url>`));
+  }
   if (name === "people") {
     // Actor and director pages, for people with at least 3 titles (fewer makes a thin page).
     const shards = await Promise.all(Array.from({ length: PEOPLE_SHARDS }, (_, i) =>

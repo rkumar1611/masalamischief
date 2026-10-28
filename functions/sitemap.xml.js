@@ -22,7 +22,7 @@ export async function onRequestGet(context) {
   const entry = (name) => `<sitemap><loc>${SITE}/sitemaps/${name}.xml</loc>${built ? `<lastmod>${built}</lastmod>` : ""}</sitemap>`;
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${["main", ...langs, ...(langs.length && langs[0] !== "all" ? ["people"] : [])].map(entry).join("\n")}
+${["main", ...langs, ...(langs.length && langs[0] !== "all" ? ["people", "lists"] : [])].map(entry).join("\n")}
 </sitemapindex>`;
   return new Response(xml, { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
 }

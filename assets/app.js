@@ -92,6 +92,7 @@ function renderChrome() {
           <a href="reviews.html">Our reviews</a><a href="films.html">Movies & series</a>
           <a href="films.html?view=top-movie">Top 50 movies</a><a href="films.html?view=top-tv">Top 50 series</a>
           <a href="films.html?view=top-anime">Anime</a>
+          <a href="ott.html">New on OTT</a><a href="upcoming.html">Upcoming movies</a><a href="best.html">Best-of lists</a>
         </nav>
         <nav class="footer-col" aria-label="Pick something">
           <h4>Pick something</h4>
@@ -363,15 +364,17 @@ function renderNewOnOtt() {
   const ageDays = (Date.now() - new Date(NEW_ON_OTT.checked + "T00:00:00")) / 864e5;
   if (ageDays > 10) document.getElementById("new-ott-head").textContent = "📺 Recently added to OTT";
   document.getElementById("new-ott-checked").textContent = `Updated ${fmtDate(NEW_ON_OTT.checked)}`;
-  el.innerHTML = NEW_ON_OTT.items.map((n) => `
+  el.innerHTML = NEW_ON_OTT.items.map(newOttItem).join("");
+}
+
+const newOttItem = (n) => `
     <a class="new-item" href="${esc(n.url)}" target="_blank" rel="noopener" title="Watch ${esc(n.title)} on ${esc(n.app)}">
       <span class="ott ott-${slug(n.app)}">${esc(n.app)} ↗</span>
       <strong>${esc(n.title)}</strong>
       <span class="muted small">${n.lang ? `${esc(langLabel(n.lang))} · ` : ""}${n.year}${n.kids ? " · 👪 Kids" : ""}</span>
       ${n.note ? `<span class="new-note">${esc(n.note)}</span>` : ""}
       <span class="muted small new-date">Added ${new Date(n.added + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
-    </a>`).join("");
-}
+    </a>`;
 
 function initHome() {
   const byDate = [...MOVIES].sort((a, b) => b.reviewed.localeCompare(a.reviewed));
@@ -1522,5 +1525,174 @@ async function initPerson() {
   paint();
 }
 
+/* ---------- List pages: New on <app>, Best-of lists, Upcoming ---------- */
+// Built ahead of time by scripts/build-catalog.mjs into assets/catalog/lists/ (and upcoming.json), so
+// each page loads one small file. functions/ott.js, best.js and upcoming.js put the same lists into the
+// HTML for search engines.
+const notReadyYet = (el) => { el.innerHTML = `<div class="empty">These lists are being prepared. Try again in a little while, or <a href="films.html">browse movies & series</a>.</div>`; };
+const listLang = (l) => (l === "en" ? "Hollywood" : l === "ja" ? "anime" : CAT_LANGS[l] || "");
+
+// "Best Malayalam thriller movies", "Best Tamil movies of 2025", "Best Korean drama series".
+// Same wording as lib/lists.js (used for the page titles on the server).
+function bestTitle(l, genre, year, kind) {
+  const what = kind === "tv" ? "series" : "movies";
+  const lang = listLang(l);
+  if (year) return `Best ${lang} movies of ${year}`;
+  return `Best ${lang}${genre ? ` ${genre.toLowerCase()}` : ""} ${what}`;
+}
+
+function addFilmControls(el, items, render) {
+  const kinds = [...new Set(items.map((f) => (f.k === "tv" ? "tv" : "movie")))];
+  const langs = [...new Set(items.map((f) => f.l))];
+  const state = { k: "", l: "" };
+  const paint = () => render(items.filter((f) => (!state.k || (state.k === "tv") === (f.k === "tv")) && (!state.l || f.l === state.l)));
+  const opts = [
+    ...(kinds.length > 1 ? [["k:", "All"], ["k:movie", "Movies"], ["k:tv", "Series"]] : []),
+    ...(langs.length > 1 ? [["l:", "All languages"], ...langs.map((l) => [`l:${l}`, langLabel(CAT_LANGS[l])])] : []),
+  ];
+  if (opts.length) {
+    chips(el, opts, (v) => { const [key, val] = v.split(":"); return state[key] === val; },
+      (v) => { const [key, val] = v.split(":"); state[key] = val; paint(); });
+  }
+  paint();
+}
+
+async function initOtt() {
+  const root = document.getElementById("ott");
+  const appSlug = new URLSearchParams(location.search).get("app") || "";
+  const [lists, index] = await Promise.all([loadCatalog("lists/ott"), loadCatalog("lists/index")]);
+  if (!lists || !index) return notReadyYet(root);
+  const byTmdb = reviewedByTmdb();
+  const withMine = (f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] });
+  const tabs = `<nav class="chips app-tabs" aria-label="Streaming apps">${index.ott.map(([s, name]) =>
+    `<a class="chip" href="ott.html?app=${s}" aria-pressed="${s === appSlug}">${esc(name)}</a>`).join("")}</nav>`;
+  const L = lists[appSlug];
+
+  if (!L) {
+    document.title = "What's new on OTT in India: Netflix, Prime Video, JioHotstar and more · Masala Mischief";
+    root.innerHTML = `
+      <div class="page-head"><p class="eyebrow">📺 Streaming in India</p><h1>What's new on OTT</h1>
+        <p class="lead">The newest movies and series on every big streaming app in India. Pick an app.</p></div>
+      <div class="app-grid">${index.ott.map(([s, name, count]) => `
+        <a class="app-tile" href="ott.html?app=${s}">
+          <span class="ott ott-${slug(name)}">${esc(name)}</span>
+          <span class="app-posters">${(lists[s]?.items || []).slice(0, 4).map((f) => f.p ? `<img src="${tmdb(f.p, "w154")}" alt="" loading="lazy">` : "").join("")}</span>
+          <strong>New on ${esc(name)}</strong><span class="muted small">${count.toLocaleString("en-IN")} titles</span>
+        </a>`).join("")}</div>`;
+    return;
+  }
+  document.title = `New on ${L.name} India: latest movies & series · Masala Mischief`;
+  const justAdded = NEW_ON_OTT.items.filter((n) => n.app === L.name);
+  root.innerHTML = `
+    <div class="page-head"><p class="eyebrow">📺 Streaming in India</p><h1>New on ${esc(L.name)}</h1>
+      <p class="lead">The newest movies and series you can stream on ${esc(L.name)} in India, latest releases first. ${L.count.toLocaleString("en-IN")} titles on ${esc(L.name)} in all.</p></div>
+    ${tabs}
+    ${justAdded.length ? `<section><div class="section-head"><h2>🆕 Just added this week</h2></div><div class="new-ott">${justAdded.map(newOttItem).join("")}</div></section>` : ""}
+    <section>
+      <div class="section-head"><h2>Latest releases on ${esc(L.name)}</h2></div>
+      <div class="chips list-filter" id="ott-filter"></div>
+      <div class="fgrid" id="ott-grid"></div>
+      <div class="cta-row list-more">
+        <a class="btn primary" href="films.html?a=${encodeURIComponent(L.name)}&s=rating">Top rated on ${esc(L.name)} →</a>
+        <a class="btn" href="films.html?a=${encodeURIComponent(L.name)}">All ${L.count.toLocaleString("en-IN")} titles on ${esc(L.name)}</a>
+      </div>
+    </section>`;
+  addFilmControls(document.getElementById("ott-filter"), L.items.map(withMine),
+    (items) => { document.getElementById("ott-grid").innerHTML = items.map((f) => filmCard(f)).join("") || `<div class="empty">Nothing here.</div>`; });
+}
+
+async function initBest() {
+  const root = document.getElementById("best");
+  const p = new URLSearchParams(location.search);
+  const l = p.get("l") || "";
+  const g = p.get("g") || "";
+  const y = p.get("y") || "";
+  const k = p.get("k") === "tv" ? "tv" : "movie";
+  const index = await loadCatalog("lists/index");
+  if (!index) return notReadyYet(root);
+  const info = index.best[l];
+  const link = (q, text) => `<a href="best.html?${q}">${esc(text)}</a>`;
+
+  if (!info) {
+    document.title = "Best movies and series lists: Hindi, Tamil, Telugu, Malayalam, Korean and more · Masala Mischief";
+    root.innerHTML = `
+      <div class="page-head"><p class="eyebrow">🏆 Best-of lists</p><h1>Best movies & series</h1>
+        <p class="lead">Ranked lists by language, genre and year, from thousands of ratings. Pick a list.</p></div>
+      <div class="list-hub">${Object.entries(index.best).map(([code, b]) => `
+        <div class="chart-box">
+          <h3>${esc(langLabel(CAT_LANGS[code]))}</h3>
+          <p class="hub-links">
+            ${b.kinds.includes("movie") ? link(`l=${code}`, bestTitle(code, "", "", "movie")) : ""}
+            ${b.kinds.includes("tv") ? link(`l=${code}&k=tv`, bestTitle(code, "", "", "tv")) : ""}
+          </p>
+          <p class="hub-links small">${b.genres.filter((r) => r[2]).slice(0, 8).map(([s, name]) => link(`l=${code}&g=${s}`, name)).join("")}</p>
+          <p class="hub-links small">${b.years.slice(0, 6).map(([yr]) => link(`l=${code}&y=${yr}`, String(yr))).join("")}</p>
+        </div>`).join("")}</div>`;
+    return;
+  }
+  const data = await loadCatalog(`lists/best-${l}`);
+  const gInfo = g && data && data.genres[g];
+  const list = !data ? null : y ? data.years[y] : g ? gInfo && gInfo[k] : data.all[k];
+  if (!list) { root.innerHTML = `<div class="empty">We couldn't find that list. <a href="best.html">See all lists</a>.</div>`; return; }
+  const heading = bestTitle(l, gInfo ? gInfo.name : "", y, k);
+  document.title = `${heading}${y ? "" : " of all time"} · top ${list.length} · Masala Mischief`;
+  const byTmdb = reviewedByTmdb();
+  const lang = langLabel(CAT_LANGS[l]);
+  const kindRows = info.genres.filter((r) => r[k === "tv" ? 3 : 2]);
+  root.innerHTML = `
+    <div class="page-head"><p class="eyebrow">🏆 ${esc(lang)} · top ${list.length}</p><h1>${esc(heading)}</h1>
+      <p class="lead">Ranked by a weighted TMDB rating, so a film with a handful of perfect votes can't beat a well-loved classic.
+        Tap any title for the trailer, cast and where to stream it in India.</p></div>
+    <div class="fgrid">${list.map((f, i) => filmCard({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }, i + 1)).join("")}</div>
+    <section class="more-lists">
+      <h2>More ${esc(lang)} lists</h2>
+      <p class="hub-links">
+        ${info.kinds.map((kind) => link(`l=${l}${kind === "tv" ? "&k=tv" : ""}`, bestTitle(l, "", "", kind))).join("")}
+        ${kindRows.map(([s, name]) => link(`l=${l}&g=${s}${k === "tv" ? "&k=tv" : ""}`, bestTitle(l, name, "", k))).join("")}
+        ${info.years.map(([yr]) => link(`l=${l}&y=${yr}`, bestTitle(l, "", yr, "movie"))).join("")}
+      </p>
+      ${g ? `<h2>${esc(gInfo.name)} in other languages</h2><p class="hub-links">${Object.entries(index.best)
+        .filter(([code, b]) => code !== l && b.genres.some((r) => r[0] === g && r[k === "tv" ? 3 : 2]))
+        .map(([code]) => link(`l=${code}&g=${g}${k === "tv" ? "&k=tv" : ""}`, bestTitle(code, gInfo.name, "", k))).join("")}</p>` : ""}
+      <p><a href="best.html">All best-of lists →</a></p>
+    </section>`;
+}
+
+async function initUpcoming() {
+  const root = document.getElementById("upcoming");
+  const l = new URLSearchParams(location.search).get("l") || "";
+  const data = await loadCatalog("upcoming");
+  if (!data) return notReadyYet(root);
+  const langs = [...new Set(data.items.map((f) => f.l))];
+  const lang = CAT_LANGS[l] ? langLabel(CAT_LANGS[l]) : "";
+  const heading = `Upcoming ${lang ? `${lang} ` : ""}movies`;
+  document.title = `${heading}: release dates and trailers · Masala Mischief`;
+  const items = data.items.filter((f) => !l || f.l === l);
+  const month = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  const groups = {};
+  items.forEach((f) => (groups[month(f.d)] = groups[month(f.d)] || []).push(f));
+  root.innerHTML = `
+    <div class="page-head"><p class="eyebrow">🗓️ Coming soon</p><h1>${esc(heading)}</h1>
+      <p class="lead">The most-awaited ${lang ? `${esc(lang)} ` : ""}films of the next few months, with release dates and trailers. Dates can move, so check closer to release.</p></div>
+    <nav class="chips app-tabs" aria-label="Languages">
+      <a class="chip" href="upcoming.html" aria-pressed="${!l}">All</a>
+      ${langs.map((c) => `<a class="chip" href="upcoming.html?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
+    </nav>
+    ${Object.entries(groups).map(([m, list]) => `
+      <section><div class="section-head"><h2>${esc(m)}</h2></div>
+        <div class="ulist">${list.map((f) => `
+          <article class="ucard" id="u-${f.l}-${f.id}">
+            ${f.p ? `<img src="${tmdb(f.p, "w185")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
+            <div class="ucard-body">
+              <span class="udate">${new Date(f.d + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}</span>
+              <strong>${esc(f.t)}</strong>
+              <span class="muted small">${esc(langLabel(CAT_LANGS[f.l]))}${f.g.length ? ` · ${esc(f.g.slice(0, 2).join(", "))}` : ""}</span>
+              ${f.cast.length ? `<span class="small">With ${f.cast.map(([id, name]) => `<a href="person.html?id=${id}">${esc(name)}</a>`).join(", ")}</span>` : ""}
+              ${f.tr ? trailerBtn(f.tr, f.t) : ""}
+            </div>
+          </article>`).join("")}</div>
+      </section>`).join("") || `<div class="empty">No upcoming films found right now.</div>`}`;
+}
+
 renderChrome();
-({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson }[document.body.dataset.page] || (() => {}))();
+({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming }[document.body.dataset.page] || (() => {}))();
