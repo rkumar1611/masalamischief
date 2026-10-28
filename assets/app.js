@@ -2,7 +2,7 @@
 
 const NAV = [
   { href: "index.html", label: "Home", page: "home" },
-  { href: "reviews.html", label: "Reviews", page: "reviews" },
+  { href: "reviews.html", label: "Our reviews", page: "reviews" },
   { href: "films.html", label: "Movies & series", page: "films" },
   { href: "suggest.html", label: "What should I watch?", page: "suggest" },
   { href: "family.html", label: "Family Picks", page: "family" },
@@ -81,7 +81,7 @@ function renderChrome() {
         <p>Indian and Hollywood film reviews with extra chilli.</p>
       </div>
       <div class="footer-links">
-        <a href="reviews.html">Reviews</a><a href="suggest.html">What should I watch?</a>
+        <a href="reviews.html">Our reviews</a><a href="suggest.html">What should I watch?</a>
         <a href="family.html">Family Picks</a><a href="reviews.html?saved=1">My watchlist</a>
         <a href="privacy.html">Privacy & community rules</a>
       </div>
