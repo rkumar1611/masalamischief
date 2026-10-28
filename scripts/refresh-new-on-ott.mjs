@@ -5,7 +5,8 @@
 // list with a direct link to the film on that app, drops anything older than 7 days, and rewrites the
 // NEW_ON_OTT block. If nothing changed it leaves the files alone, so no commit and no deploy.
 
-import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { bumpVersion } from "./bump-version.mjs";
 
 const ROOT = new URL("..", import.meta.url);
 const DATA = new URL("assets/data.js", ROOT);
@@ -157,19 +158,9 @@ async function main() {
   const next = src.replace(BLOCK_RE, block);
   if (next === src) { console.log("No change."); return; }
 
-  // Bump the asset version everywhere so browsers fetch the new data.js.
-  const files = readdirSync(ROOT).filter((f) => f.endsWith(".html"));
-  const v = Math.max(...files.map((f) => +(readFileSync(new URL(f, ROOT), "utf8").match(/\?v=(\d+)/) || [, 0])[1]));
-  for (const f of files) {
-    const p = new URL(f, ROOT);
-    writeFileSync(p, readFileSync(p, "utf8").replace(/\?v=\d+/g, `?v=${v + 1}`));
-  }
-  const readme = new URL("README.md", ROOT);
-  writeFileSync(readme, readFileSync(readme, "utf8")
-    .replace(/bump the `\?v=\d+` number/, `bump the \`?v=${v + 1}\` number`)
-    .replace(/\(e\.g\. to `\?v=\d+`\)/, `(e.g. to \`?v=${v + 2}\`)`));
   writeFileSync(DATA, next);
-  console.log(`Updated: ${fresh.length} new, ${items.length} in the strip, assets v=${v + 1}.`);
+  const v = bumpVersion();
+  console.log(`Updated: ${fresh.length} new, ${items.length} in the strip, assets v=${v}.`);
 }
 
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split(/[\\/]/).pop())) {
