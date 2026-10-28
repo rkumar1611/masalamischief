@@ -76,16 +76,39 @@ function renderChrome() {
     </div></header>`);
   document.body.insertAdjacentHTML("beforeend", `
     <footer class="site-footer"><div class="wrap">
-      <div>
-        <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">🌶️</span>Masala <span>Mischief</span></a>
-        <p>Indian and Hollywood film reviews with extra chilli.</p>
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">🌶️</span>Masala <span>Mischief</span></a>
+          <p>Indian and Hollywood film reviews with extra chilli, and where to stream them in India.</p>
+          <div class="how-rate">
+            <span><b>🌶️ Masala Meter</b> how much fun, 1 to 5</span>
+            <span><b>★ Score</b> how well it's made, out of 10</span>
+          </div>
+          <a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("Film reviews, what to watch tonight and where to stream it: https://masalamischief.in")}">Share Masala Mischief on WhatsApp</a>
+        </div>
+        <nav class="footer-col" aria-label="Explore">
+          <h4>Explore</h4>
+          <a href="reviews.html">Our reviews</a><a href="films.html">Movies & series</a>
+          <a href="films.html?view=top-movie">Top 50 movies</a><a href="films.html?view=top-tv">Top 50 series</a>
+          <a href="films.html?view=top-anime">Anime</a>
+        </nav>
+        <nav class="footer-col" aria-label="Pick something">
+          <h4>Pick something</h4>
+          <a href="suggest.html">What should I watch?</a><a href="family.html">Family Picks</a>
+          <a href="group.html">Group Pick</a><a href="reviews.html?saved=1">My watchlist</a>
+        </nav>
+        <nav class="footer-col" aria-label="About">
+          <h4>About</h4>
+          <a href="privacy.html">Privacy & community rules</a>
+          <a href="privacy.html#rules">How audience reviews work</a>
+        </nav>
       </div>
-      <div class="footer-links">
-        <a href="reviews.html">Our reviews</a><a href="suggest.html">What should I watch?</a>
-        <a href="family.html">Family Picks</a><a href="reviews.html?saved=1">My watchlist</a>
-        <a href="privacy.html">Privacy & community rules</a>
+      <div class="footer-bottom">
+        <p>📺 Where-to-watch info from <a href="https://www.justwatch.com/in" target="_blank" rel="noopener">JustWatch</a> and TMDB, last checked ${fmtDate(WATCH_CHECKED)}. Apps add and remove films often, so check the app before you subscribe.</p>
+        <p class="credits"><a class="tmdb-badge" href="https://www.themoviedb.org/" target="_blank" rel="noopener" aria-label="TMDB">TMDB</a>
+          Film details, images, cast and trailers from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB. Trailers play from YouTube.</p>
+        <p>© ${new Date().getFullYear()} Masala Mischief · Made in India 🇮🇳</p>
       </div>
-      <p class="fine">🌶️ Masala Meter = entertainment · score out of 10 = craft. Streaming info from JustWatch India, checked ${fmtDate(WATCH_CHECKED)}; availability changes, so confirm in the app.<br>${Object.keys(IMAGES).length ? `Film images from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.<br>` : ""}© ${new Date().getFullYear()} Masala Mischief.</p>
     </div></footer>`);
 
   const btn = document.getElementById("theme-btn");

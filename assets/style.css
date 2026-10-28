@@ -428,14 +428,24 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 .why { font-size: 0.82rem; color: var(--saffron); font-weight: 700; }
 
 /* Footer */
-.site-footer { border-top: 1px solid var(--line); padding: 36px 0; font-size: 0.92rem; color: var(--ink-soft); background: var(--surface); }
-.site-footer .wrap { display: grid; gap: 20px; grid-template-columns: 1fr auto; }
+.site-footer { border-top: 1px solid var(--line); padding: 40px 0 28px; font-size: 0.92rem; color: var(--ink-soft); background: var(--surface); }
 .site-footer p { margin: 6px 0 0; }
-.footer-links { display: flex; flex-wrap: wrap; gap: 8px 20px; align-content: start; }
-.footer-links a { text-decoration: none; font-weight: 600; color: var(--ink); }
-.footer-links a:hover { color: var(--chilli); }
-.site-footer .fine { grid-column: 1 / -1; }
-@media (max-width: 640px) { .site-footer .wrap { grid-template-columns: 1fr; } }
+.footer-top { display: grid; gap: 28px; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); }
+.footer-brand { display: grid; gap: 10px; align-content: start; justify-items: start; }
+.footer-brand p { margin: 0; max-width: 34ch; }
+.how-rate { display: grid; gap: 4px; font-size: 0.85rem; }
+.how-rate b { color: var(--ink); margin-right: 6px; }
+.btn.small { font-size: 0.85rem; padding: 7px 14px; }
+.footer-col { display: grid; gap: 8px; align-content: start; }
+.footer-col h4 { margin: 0 0 4px; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.footer-col a { text-decoration: none; font-weight: 600; color: var(--ink); }
+.footer-col a:hover { color: var(--chilli); }
+.footer-bottom { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 0.8rem; display: grid; gap: 4px; }
+.footer-bottom a { color: var(--ink); }
+.credits { display: flex; gap: 10px; align-items: center; }
+.tmdb-badge { flex: none; font-weight: 800; font-size: 0.75rem; letter-spacing: 0.04em; text-decoration: none; color: #fff !important; padding: 3px 8px; border-radius: 6px; background: linear-gradient(90deg, #90cea1, #01b4e4); }
+@media (max-width: 860px) { .footer-top { grid-template-columns: repeat(3, minmax(0, 1fr)); } .footer-brand { grid-column: 1 / -1; } }
+@media (max-width: 520px) { .footer-top { grid-template-columns: 1fr 1fr; gap: 22px; } .credits { align-items: flex-start; } }
 
 /* Group Pick */
 .center { text-align: center; }

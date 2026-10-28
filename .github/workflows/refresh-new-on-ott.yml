@@ -56,7 +56,8 @@ jobs:
 
       - name: Commit and push if anything changed
         run: |
-          if git diff --quiet; then
+          # status (not diff) so brand-new files, like assets/catalog/reviewed.json, count too
+          if [ -z "$(git status --porcelain)" ]; then
             echo "Nothing new today."
             exit 0
           fi
