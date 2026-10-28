@@ -581,3 +581,37 @@ body.gp-active .page-head h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 .aud-quote:hover { border-color: var(--saffron); }
 .aud-quote p { margin: 0; line-height: 1.5; }
 .aud-q-rating { display: flex; gap: 10px; align-items: center; }
+/* Trailer player */
+.tmodal { position: fixed; inset: 0; z-index: 100; background: rgba(10, 6, 4, 0.82); display: grid; place-items: center; padding: 16px; }
+.tmodal-box { width: min(960px, 100%); background: #000; border-radius: var(--radius); overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+.tmodal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; color: #fff; background: #111; }
+.tmodal-head strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tmodal-x { background: none; border: 0; color: #fff; font-size: 1.3rem; cursor: pointer; padding: 4px 8px; border-radius: 8px; }
+.tmodal-x:hover, .tmodal-x:focus-visible { background: rgba(255, 255, 255, 0.15); }
+.tframe { position: relative; aspect-ratio: 16 / 9; }
+.tframe iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+body.no-scroll { overflow: hidden; }
+
+/* "Also on" links */
+.ext-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 12px 0 0; }
+.ext-links a { font-weight: 700; font-size: 0.9rem; }
+
+/* Cast & crew row */
+.cast { margin: 22px 0; }
+.cast h3 { margin: 0 0 12px; }
+.cast-row { display: grid; grid-auto-flow: column; grid-auto-columns: 104px; gap: 14px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; }
+.cast-item { display: grid; gap: 4px; justify-items: center; text-align: center; text-decoration: none; color: inherit; scroll-snap-align: start; }
+.cast-item img, .cast-none { width: 84px; height: 84px; border-radius: 50%; object-fit: cover; background: var(--surface-2); border: 2px solid var(--line); }
+.cast-none { display: grid; place-items: center; font-weight: 800; color: var(--ink-soft); }
+.cast-item strong { font-size: 0.85rem; line-height: 1.2; }
+.cast-item span:not(.cast-none) { font-size: 0.75rem; color: var(--ink-soft); line-height: 1.2; }
+.cast-item:hover img, .cast-item:hover .cast-none { border-color: var(--saffron); }
+
+/* Actor / director page */
+.person-head { display: grid; grid-template-columns: 140px 1fr; gap: 24px; align-items: center; margin: 8px 0 24px; }
+.person-head h1 { margin: 0; }
+.person-head .lead { margin: 6px 0 0; }
+.person-photo { width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--line); }
+span.person-photo { font-size: 2.4rem; }
+@media (max-width: 560px) { .person-head { grid-template-columns: 96px 1fr; gap: 16px; } .person-photo { width: 96px; height: 96px; } span.person-photo { font-size: 1.6rem; } }
+#pview { margin-bottom: 16px; }

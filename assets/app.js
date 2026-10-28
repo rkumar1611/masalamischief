@@ -96,6 +96,7 @@ function renderChrome() {
     applyTheme(next); store.set("theme", next); paint();
   });
   initSiteSearch();
+  initTrailers();
 }
 
 // Header search over our reviews and the whole catalogue. The catalogue loads on first use only.
@@ -165,9 +166,74 @@ function score(q) {
 
 // Film images from TMDB (IMAGES in data.js). Films without one keep the coloured tile.
 const tmdb = (path, size) => `https://image.tmdb.org/t/p/${size}${path}`;
-// "View on IMDb" button: a plain link to the title's IMDb page (id from TMDB), no IMDb data is used.
-const imdbBtn = (id) => (/^tt\d+$/.test(id || "")
-  ? `<a class="btn" target="_blank" rel="noopener" href="https://www.imdb.com/title/${id}/">IMDb ↗</a>` : "");
+// "Watch trailer": plays the official trailer on the page when TMDB knows it (key), otherwise opens a
+// YouTube search. Clicks are handled once for the whole site in initTrailers().
+function trailerBtn(key, title, query) {
+  return key
+    ? `<button class="btn" type="button" data-trailer="${esc(key)}" data-title="${esc(title)}">▶ Watch trailer</button>`
+    : `<a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(query)}">▶ Watch trailer</a>`;
+}
+
+function initTrailers() {
+  let box = null;
+  const close = () => { if (box) { box.remove(); box = null; document.body.classList.remove("no-scroll"); } };
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-trailer]");
+    if (b) {
+      e.preventDefault();
+      close();
+      box = document.createElement("div");
+      box.className = "tmodal";
+      box.setAttribute("role", "dialog");
+      box.setAttribute("aria-label", `${b.dataset.title} trailer`);
+      box.innerHTML = `
+        <div class="tmodal-box">
+          <div class="tmodal-head"><strong>▶ ${esc(b.dataset.title)}</strong><button class="tmodal-x" type="button" aria-label="Close trailer">✕</button></div>
+          <div class="tframe"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.trailer)}?autoplay=1&rel=0&modestbranding=1"
+            title="${esc(b.dataset.title)} trailer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>
+        </div>`;
+      document.body.append(box);
+      document.body.classList.add("no-scroll");
+      box.querySelector(".tmodal-x").focus();
+      return;
+    }
+    if (box && (e.target === box || e.target.closest(".tmodal-x"))) close();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+}
+
+// Small "Also on" links under the share buttons: IMDb, Wikipedia (via Wikidata) and TMDB. Plain links,
+// no data from those sites is shown here.
+function extLinks({ im, wd, tmdbUrl }) {
+  const links = [
+    /^tt\d+$/.test(im || "") && [`https://www.imdb.com/title/${im}/`, "IMDb"],
+    /^Q\d+$/.test(wd || "") && [`https://www.wikidata.org/wiki/Special:GoToLinkedPage/enwiki/${wd}`, "Wikipedia"],
+    tmdbUrl && [tmdbUrl, "TMDB"],
+  ].filter(Boolean);
+  return links.length
+    ? `<p class="ext-links"><span class="muted small">Also on</span>${links.map(([u, l]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${l} ↗</a>`).join("")}</p>`
+    : "";
+}
+
+// Top cast and director (or series creators), each linking to their page on our site.
+function castRow(x) {
+  if (!x || (!(x.cast || []).length && !(x.dir || []).length)) return "";
+  const face = (name, photo) => photo
+    ? `<img src="${tmdb(photo, "w185")}" alt="" loading="lazy" decoding="async">`
+    : `<span class="cast-none">${esc(name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(""))}</span>`;
+  const item = (id, name, role, photo) => `
+    <a class="cast-item" href="person.html?id=${id}">
+      ${face(name, photo)}<strong>${esc(name)}</strong>${role ? `<span>${esc(role)}</span>` : ""}
+    </a>`;
+  return `
+    <div class="cast">
+      <h3>🎭 Cast & crew</h3>
+      <div class="cast-row">
+        ${(x.dir || []).map(([id, name, photo]) => item(id, name, x.kind === "tv" ? "Creator" : "Director", photo)).join("")}
+        ${(x.cast || []).map(([id, name, role, photo]) => item(id, name, role, photo)).join("")}
+      </div>
+    </div>`;
+}
 
 function poster(m, big = false) {
   const icon = GENRE_ICONS[m.genres[0]] || "🎬";
@@ -484,13 +550,15 @@ function initReview() {
           <p id="rate-msg" class="rate-msg"></p>
         </div>
 
+        <div id="cast-slot"></div>
+
         <div class="share-row">
-          <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${m.title} ${m.year} official trailer`)}">▶ Watch trailer</a>
-          ${imdbBtn(IMAGES[m.id] && IMAGES[m.id].imdb)}
+          <span id="trailer-slot">${trailerBtn("", m.title, `${m.title} ${m.year} official trailer`)}</span>
           <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="save" type="button"></button>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
+        <div id="ext-slot">${extLinks({ im: IMAGES[m.id] && IMAGES[m.id].imdb, tmdbUrl: IMAGES[m.id] && IMAGES[m.id].tmdb ? `https://www.themoviedb.org/movie/${IMAGES[m.id].tmdb}` : "" })}</div>
       </article>
       <aside>
         ${IMAGES[m.id] && IMAGES[m.id].poster ? `<img class="side-poster" src="${tmdb(IMAGES[m.id].poster, "w342")}" alt="${esc(m.title)} poster" loading="lazy" decoding="async">` : ""}
@@ -544,6 +612,16 @@ function initReview() {
 
   root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
   initCommunity(`r:${m.id}`, document.getElementById("community"), m.title);
+
+  // Trailer, cast and Wikipedia link arrive separately (reviewed.json, refreshed daily).
+  loadCatalog("reviewed").then((all) => {
+    const x = all && all[m.id];
+    if (!x) return;
+    if (x.tr) document.getElementById("trailer-slot").innerHTML = trailerBtn(x.tr, m.title);
+    document.getElementById("cast-slot").innerHTML = castRow(x);
+    const img = IMAGES[m.id] || {};
+    document.getElementById("ext-slot").innerHTML = extLinks({ im: img.imdb, wd: x.wd, tmdbUrl: img.tmdb ? `https://www.themoviedb.org/movie/${img.tmdb}` : "" });
+  });
 
   // Watchlist
   const save = document.getElementById("save");
@@ -1274,16 +1352,17 @@ async function initFilm() {
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appSearchUrl(a, f.t))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
+        ${castRow({ ...f, kind: f.k })}
         <div class="panel not-reviewed">
           <h3>🌶️ Not reviewed yet</h3>
           <p class="muted">We haven't given this one the Masala Meter treatment. Summary and rating are from TMDB.</p>
         </div>
         <div class="share-row">
-          <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${f.t} ${f.y || ""} ${tv ? "series" : ""} official trailer`)}">▶ Watch trailer</a>
-          ${imdbBtn(f.im)}
+          ${trailerBtn(f.tr, f.t, `${f.t} ${f.y || ""} ${tv ? "series" : ""} official trailer`)}
           <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
+        ${extLinks({ im: f.im, wd: f.wd, tmdbUrl: `https://www.themoviedb.org/${tv ? `tv/${String(f.id).slice(2)}` : `movie/${f.id}`}` })}
       </article>
       <aside>
         ${f.p ? `<img class="side-poster" src="${tmdb(f.p, "w342")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : ""}
@@ -1335,5 +1414,71 @@ async function initFilm() {
   }
 }
 
+/* ---------- Actor / director page ---------- */
+// person.html?id=<TMDB person id>. Their titles come from the catalogue's people index
+// (assets/catalog/people/<id % 64>.json, built weekly) plus our reviewed films (reviewed.json).
+const PEOPLE_SHARDS = 64; // must match scripts/build-catalog.mjs
+
+async function initPerson() {
+  const root = document.getElementById("person");
+  const pid = (new URLSearchParams(location.search).get("id") || "").match(/^\d{1,9}$/)?.[0];
+  const notFound = () => { root.innerHTML = `<div class="empty">We couldn't find that person. <a href="films.html">Browse movies & series</a>.</div>`; };
+  if (!pid) return notFound();
+  const [shard, reviewed] = await Promise.all([loadCatalog(`people/${pid % PEOPLE_SHARDS}`), loadCatalog("reviewed")]);
+  let p = shard && shard[pid];
+
+  // Our reviewed films with this person, as catalogue-style entries.
+  const roleIn = (x) => {
+    const c = (x.cast || []).find((c) => String(c[0]) === pid);
+    if (c) return { role: c[2], name: c[1], photo: c[3] };
+    const d = (x.dir || []).find((d) => String(d[0]) === pid);
+    return d ? { role: "Director", name: d[1], photo: d[2] } : null;
+  };
+  const ours = Object.entries(reviewed || {}).map(([id, x]) => ({ m: movieById(id), r: roleIn(x) })).filter((o) => o.m && o.r);
+  if (!p && !ours.length) return notFound();
+  const name = p ? p[0] : ours[0].r.name;
+  const photo = (p && p[1]) || (ours.find((o) => o.r.photo) || {}).r?.photo || "";
+
+  const keys = p ? p[2] : [];
+  const index = keys.length ? await loadIndex([...new Set(keys.map((k) => k.split("-")[0]))]) : { films: [] };
+  const byKey = Object.fromEntries(index.films.map((f) => [`${f.l}-${f.id}`, f]));
+  const byTmdb = reviewedByTmdb();
+  const titles = keys.map((k) => byKey[k]).filter(Boolean).map((f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }));
+  // Add reviewed films the catalogue doesn't have.
+  const have = new Set(titles.filter((f) => f.mine).map((f) => f.mine.id));
+  ours.filter((o) => !have.has(o.m.id)).forEach(({ m }) => {
+    const img = IMAGES[m.id] || {};
+    titles.push({ id: img.tmdb || m.id, l: LANG_CODE[m.lang], t: m.title, y: m.year, g: m.genres, v: m.quality, n: 0, p: img.poster, w: streamsOn(m), mine: m });
+  });
+  titles.sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || (b.y || 0) - (a.y || 0));
+
+  const directs = ours.some((o) => o.r.role === "Director");
+  const movies = titles.filter((f) => f.k !== "tv").length;
+  const series = titles.length - movies;
+  const langs = [...new Set(titles.map((f) => langLabel(CAT_LANGS[f.l] || "")).filter(Boolean))];
+  document.title = `${name}: movies, series and where to watch · Masala Mischief`;
+  root.innerHTML = `
+    <div class="person-head">
+      ${photo ? `<img class="person-photo" src="${tmdb(photo, "w342")}" alt="${esc(name)}" decoding="async">` : `<span class="person-photo cast-none">${esc(name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(""))}</span>`}
+      <div>
+        <p class="eyebrow">Cast & crew</p>
+        <h1>${esc(name)}</h1>
+        <p class="lead">${movies ? `${movies} movie${movies === 1 ? "" : "s"}` : ""}${movies && series ? " and " : ""}${series ? `${series} series` : ""} on Masala Mischief${langs.length ? ` · ${esc(langs.join(", "))}` : ""}. ${have.size || ours.length ? "Our reviews first, then newest." : "Newest first."}</p>
+        ${extLinks({ tmdbUrl: `https://www.themoviedb.org/person/${pid}` })}
+      </div>
+    </div>
+    <div class="view-tabs chips" id="pview"></div>
+    <div class="fgrid" id="pgrid"></div>`;
+  const kinds = [["all", `All (${titles.length})`], ...(movies && series ? [["movie", `Movies (${movies})`], ["tv", `Series (${series})`]] : [])];
+  let view = "all";
+  const paint = () => {
+    document.getElementById("pgrid").innerHTML = titles
+      .filter((f) => view === "all" || (view === "tv" ? f.k === "tv" : f.k !== "tv"))
+      .map((f) => filmCard(f)).join("") || `<div class="empty">Nothing here yet.</div>`;
+  };
+  if (kinds.length > 1) chips(document.getElementById("pview"), kinds, (v) => v === view, (v) => { view = v; paint(); });
+  paint();
+}
+
 renderChrome();
-({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm }[document.body.dataset.page] || (() => {}))();
+({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson }[document.body.dataset.page] || (() => {}))();

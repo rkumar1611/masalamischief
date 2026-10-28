@@ -9,6 +9,7 @@
 // Plain Node 20, no dependencies.
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { EXTRA_APPEND, VIDEO_LANGS, extrasOf } from "./tmdb-extras.mjs";
 
 const OUT = new URL("../assets/catalog/", import.meta.url);
 const TOKEN = process.env.TMDB_TOKEN;
@@ -36,6 +37,7 @@ const WORKERS = 8;
 const TREND_LANGS = ["hi", "ta", "te", "ml", "kn", "en"];
 const TREND_DAYS = 120;
 const TREND_PER_LANG = 4;
+const PEOPLE_SHARDS = 64;  // must match the site (assets/app.js)
 
 // TMDB provider names (India) → our app names. Anything else is left out.
 const APP_RULES = [
@@ -101,6 +103,7 @@ function toFilm(d, lang) {
     ...(d.external_ids?.imdb_id ? { im: d.external_ids.imdb_id } : {}),
     w: apps,
     ov: shorten(d.overview),
+    ...extrasOf(d, "movie"),
   };
 }
 
@@ -130,6 +133,7 @@ function toSeries(d, lang) {
     ...(d.external_ids?.imdb_id ? { im: d.external_ids.imdb_id } : {}),
     w: appsOf(d),
     ov: shorten(d.overview),
+    ...extrasOf(d, "tv"),
   };
 }
 
@@ -140,7 +144,7 @@ async function details(picks, kind, append, toItem, keep = () => true) {
   await Promise.all(Array.from({ length: WORKERS }, async () => {
     while (next < picks.length) {
       const [id, lang] = picks[next++];
-      const d = await tmdb(`/${kind}/${id}`, { append_to_response: append });
+      const d = await tmdb(`/${kind}/${id}`, { append_to_response: `${append},${EXTRA_APPEND}`, include_video_language: VIDEO_LANGS });
       if (d && d.poster_path && keep(d, lang)) out.push(toItem(d, lang));
       await sleep(60);
     }
@@ -194,10 +198,10 @@ async function main() {
   tvPicks.push(...animeSeries.map((id) => [id, ANIME]));
   console.log(`anime: ${animeMovies.length} films, ${animeSeries.length} series`);
 
-  const films = await details(moviePicks, "movie", "watch/providers,release_dates,external_ids", toFilm);
+  const films = await details(moviePicks, "movie", "watch/providers,release_dates", toFilm);
   // Long-running daily soaps swamp Indian TV on TMDB; keep web and prime-time series. Long-running
   // anime (One Piece, Detective Conan) is the real thing, so the episode limit doesn't apply there.
-  const series = (await details(tvPicks, "tv", "watch/providers,content_ratings,external_ids", toSeries,
+  const series = (await details(tvPicks, "tv", "watch/providers,content_ratings", toSeries,
     (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES))
     .sort((a, b) => b.n - a.n);
   const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : PLAN[lang].tv);
@@ -214,10 +218,27 @@ async function main() {
     const mine = all.filter((f) => f.l === lang);
     if (!mine.length) continue;
     counts[lang] = mine.length;
-    writeFileSync(new URL(`list-${lang}.json`, OUT), JSON.stringify({ built, films: mine.map(({ ov, b, o, im, ...rest }) => rest) }));
+    writeFileSync(new URL(`list-${lang}.json`, OUT), JSON.stringify({ built, films: mine.map(({ ov, b, o, im, tr, cast, dir, wd, ...rest }) => rest) }));
     writeFileSync(new URL(`${lang}.json`, OUT), JSON.stringify({ built, films: Object.fromEntries(mine.map((f) => [f.id, f])) }));
   }
   writeFileSync(new URL("manifest.json", OUT), JSON.stringify({ built, count: all.length, langs: counts }));
+
+  // Actor pages: people/<n>.json, where n = person id % PEOPLE_SHARDS, so a page loads one small file.
+  // Each person: [name, photo path, ["<lang>-<id>", ...] titles they lead or direct].
+  const people = {};
+  for (const f of all) {
+    for (const [pid, name, , photo] of [...(f.cast || []), ...(f.dir || []).map(([i, n, ph]) => [i, n, "", ph])]) {
+      const p = (people[pid] = people[pid] || [name, "", []]);
+      if (photo && !p[1]) p[1] = photo;
+      const key = `${f.l}-${f.id}`;
+      if (!p[2].includes(key)) p[2].push(key);
+    }
+  }
+  mkdirSync(new URL("people/", OUT), { recursive: true });
+  const shards = Array.from({ length: PEOPLE_SHARDS }, () => ({}));
+  for (const [pid, p] of Object.entries(people)) shards[pid % PEOPLE_SHARDS][pid] = p;
+  shards.forEach((s, i) => writeFileSync(new URL(`people/${i}.json`, OUT), JSON.stringify(s)));
+  console.log(`People: ${Object.keys(people).length}.`);
 
   // trending.json: [{l, id}] taking turns between languages, only titles that made it into the catalogue.
   const have = new Set(films.map((f) => `${f.l}-${f.id}`));

@@ -47,6 +47,13 @@ jobs:
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
         run: node scripts/fetch-images.mjs
 
+      - name: Trailers and cast for our reviews
+        id: extras
+        continue-on-error: true
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+        run: node scripts/fetch-extras.mjs
+
       - name: Commit and push if anything changed
         run: |
           if git diff --quiet; then
@@ -82,7 +89,7 @@ jobs:
 
       # Still publish what worked, but mark the run failed (GitHub emails you) if a step broke.
       - name: Report failures
-        if: steps.ott.outcome == 'failure' || steps.images.outcome == 'failure' || steps.live.outcome == 'failure'
+        if: steps.ott.outcome == 'failure' || steps.images.outcome == 'failure' || steps.extras.outcome == 'failure' || steps.live.outcome == 'failure'
         run: |
-          echo "New on OTT: ${{ steps.ott.outcome }} · Images: ${{ steps.images.outcome }} · Live check: ${{ steps.live.outcome }}"
+          echo "New on OTT: ${{ steps.ott.outcome }} · Images: ${{ steps.images.outcome }} · Extras: ${{ steps.extras.outcome }} · Live check: ${{ steps.live.outcome }}"
           exit 1
