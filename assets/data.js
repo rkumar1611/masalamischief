@@ -1192,6 +1192,7 @@ const PLATFORM_HOME = {
   "MX Player": "https://www.mxplayer.in/",
   "Apple TV": "https://tv.apple.com/in",
   "Amazon": "https://www.primevideo.com/",
+  "Crunchyroll": "https://www.crunchyroll.com/",
 };
 
 // The OTT apps people can tick on the Suggest page.

@@ -4,7 +4,7 @@
 // If anything goes wrong, the plain page is served as before.
 
 const SITE = "https://masalamischief.in";
-const LANGS = { hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", en: "Hollywood" };
+const LANGS = { hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", en: "Hollywood", ja: "Anime" };
 
 const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 

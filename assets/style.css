@@ -538,3 +538,5 @@ body.gp-active .page-head h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 .sr-all { display: block; padding: 8px; font-weight: 700; color: var(--chilli); text-decoration: none; }
 .sr-empty { padding: 6px 8px; margin: 0; }
 @media (max-width: 1100px) { .search-btn { order: 1; margin-left: auto; } .theme-btn:not(.search-btn) { margin-left: 0; } }
+.ott-crunchyroll { background: #f47521; color: #fff; }
+.lang-Anime { background: linear-gradient(135deg, #ff5f8f, #6b3df5); }

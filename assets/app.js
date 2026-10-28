@@ -803,7 +803,8 @@ function groupResults(el, deck, room, linkFor, redo) {
 }
 
 /* ---------- All films catalogue (TMDB, built weekly by scripts/build-catalog.mjs) ---------- */
-const CAT_LANGS = { hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", en: "English" };
+// "ja" holds anime only (Japanese animation), so it's shown as "Anime".
+const CAT_LANGS = { hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", en: "English", ja: "Anime" };
 const LANG_CODE = Object.fromEntries(Object.entries(CAT_LANGS).map(([c, l]) => [l, c]));
 
 // Catalogue films only know which app has them, not the exact page, so we open the app's search.
@@ -814,6 +815,7 @@ const APP_SEARCH = {
   "ZEE5": "https://www.zee5.com/search?q=",
   "aha": "https://www.aha.video/search?q=",
   "SonyLIV": "https://www.sonyliv.com/search",
+  "Crunchyroll": "https://www.crunchyroll.com/search?q=",
 };
 const appSearchUrl = (app, title) =>
   APP_SEARCH[app] ? (APP_SEARCH[app].endsWith("=") ? APP_SEARCH[app] + encodeURIComponent(title) : APP_SEARCH[app]) : PLATFORM_HOME[app];
@@ -926,11 +928,11 @@ async function initFilms() {
 
   const params = new URLSearchParams(location.search);
   const state = {
-    view: ["top-movie", "top-tv"].includes(params.get("view")) ? params.get("view") : "all",
+    view: ["top-movie", "top-tv", "top-anime"].includes(params.get("view")) ? params.get("view") : "all",
     q: params.get("q") || "", t: params.get("t") || "", l: params.get("l") || "", g: params.get("g") || "", a: params.get("a") || "",
     s: params.get("s") || "popular", r: params.get("r") === "1" || !cat, k: params.get("k") === "1", w: params.get("w") === "1",
   };
-  const paintView = chips($("fview"), [["all", "All"], ["top-movie", "🏆 Top 50 movies"], ["top-tv", "🏆 Top 50 series"]],
+  const paintView = chips($("fview"), [["all", "All"], ["top-movie", "🏆 Top 50 movies"], ["top-tv", "🏆 Top 50 series"], ["top-anime", "🎌 Top 50 anime"]],
     (v) => v === state.view, (v) => { state.view = v; apply(); });
   const count = (arr) => arr.reduce((o, x) => ((o[x] = (o[x] || 0) + 1), o), {});
   $("fl").insertAdjacentHTML("beforeend", Object.entries(CAT_LANGS).map(([c, l]) => `<option value="${c}">${esc(langLabel(l))}</option>`).join(""));
@@ -961,13 +963,17 @@ async function initFilms() {
   };
   const apply = () => {
     const q = norm(state.q.trim());
-    const type = isTop() ? state.view.slice(4) : state.t;
+    // Top 50 anime covers films and series together, so it sets the language rather than the type.
+    const animeTop = state.view === "top-anime";
+    const type = animeTop ? "" : isTop() ? state.view.slice(4) : state.t;
+    const lang = animeTop ? "ja" : state.l;
     $("ft").disabled = $("fs").disabled = isTop();
+    $("fl").disabled = animeTop;
     paintView();
     results = list.filter((f) =>
       (!q || norm(f.t).includes(q) || norm(f.o).includes(q)) &&
       (!type || (type === "tv" ? f.k === "tv" : f.k !== "tv")) &&
-      (!state.l || f.l === state.l) &&
+      (!lang || f.l === lang) &&
       (!state.g || (f.g || []).includes(state.g)) &&
       (!state.a || (f.w || []).includes(state.a)) &&
       (!state.r || f.mine) &&
@@ -977,8 +983,10 @@ async function initFilms() {
     if (isTop()) results = topRanked(results);
     shown = PAGE;
     const noun = type === "tv" ? ["series", "series"] : type === "movie" ? ["movie", "movies"] : ["title", "titles"];
-    const where = [state.l && langLabel(CAT_LANGS[state.l]), state.g].filter(Boolean).join(" ");
-    $("fcount").textContent = isTop()
+    const where = [!animeTop && state.l && langLabel(CAT_LANGS[state.l]), state.g].filter(Boolean).join(" ");
+    $("fcount").textContent = animeTop
+      ? `🎌 Top ${results.length} ${where ? where + " " : ""}anime`
+      : isTop()
       ? `🏆 Top ${results.length} ${where ? where + " " : ""}${type === "tv" ? "series" : "movies"}`
       : `${results.length.toLocaleString("en-IN")} ${results.length === 1 ? noun[0] : noun[1]}`;
     paint();
