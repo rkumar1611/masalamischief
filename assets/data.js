@@ -630,6 +630,227 @@ const MOVIES = [
     misses: ["Scary for under-7s", "Songs feel squeezed in"],
     reviewed: "2026-10-23",
   },
+  {
+    id: "jai-bhim", title: "Jai Bhim", year: 2021, lang: "Tamil", audio: ["Tamil", "Telugu"],
+    genres: ["Drama", "Thriller"], runtime: 164,
+    moods: ["edge-of-seat", "rainy-sunday"], masala: 2, quality: 9,
+    tagline: "A courtroom drama that will make you angry, then make you hope.",
+    review: [
+      "When an Irular tribal man vanishes from police custody, his pregnant wife Sengeni turns to a lawyer, Chandru (Suriya), who takes on the system for free. It's based on a real 1990s case, and the custody scenes are hard to watch.",
+      "Suriya underplays it beautifully, but it's Lijomol Jose as Sengeni who you'll remember. One of the most important Indian films of the decade."
+    ],
+    hits: ["Lijomol Jose", "Gripping courtroom scenes", "Says something that matters"],
+    misses: ["Custody violence is brutal", "A bit long"],
+    reviewed: "2026-10-28",
+  },
+  {
+    id: "vikram", title: "Vikram", year: 2022, lang: "Tamil", audio: ["Tamil", "Telugu", "Hindi", "Malayalam", "Kannada"],
+    genres: ["Action", "Thriller"], runtime: 174,
+    moods: ["go-big", "friends-night", "edge-of-seat"], masala: 5, quality: 8,
+    tagline: "Kamal Haasan, Fahadh Faasil, Vijay Sethupathi, and one cameo that broke the internet.",
+    review: [
+      "A black-ops team led by Amar (Fahadh Faasil) hunts a masked gang killing cops, and the trail leads to a drug lord (Vijay Sethupathi) and a grieving old man who isn't what he seems. Lokesh Kanagaraj ties it to his earlier film Kaithi.",
+      "When Kamal finally takes over, the film becomes a full-blown mass celebration. Anirudh's score does half the work, gladly."
+    ],
+    hits: ["Kamal in full swagger", "Anirudh's background score", "That final cameo"],
+    misses: ["Watch Kaithi first to get it all", "Very violent"],
+    reviewed: "2026-10-28",
+  },
+  {
+    id: "soorarai-pottru", title: "Soorarai Pottru", year: 2020, lang: "Tamil", audio: ["Tamil", "Telugu"],
+    genres: ["Drama", "Biography"], runtime: 153,
+    moods: ["feel-good", "rainy-sunday", "family-time"], masala: 3, quality: 8.5,
+    tagline: "A village boy wants to make flying cheap. Everyone laughs, until they don't.",
+    review: [
+      "Inspired by Air Deccan founder G. R. Gopinath, Suriya plays Maara, a former air force officer who dreams of a one-rupee airline for ordinary people. Sudha Kongara directs with real fire.",
+      "The airport and boardroom fights are thrilling, and Aparna Balamurali as Bommi, his equally stubborn wife, is a delight. It goes straight for the heart and gets there."
+    ],
+    hits: ["Suriya's best in years", "Aparna Balamurali's Bommi", "Rousing underdog story"],
+    misses: ["Villains are one-note", "Emotional beats are pushed hard"],
+    reviewed: "2026-10-27",
+  },
+  {
+    id: "jailer", title: "Jailer", year: 2023, lang: "Tamil", audio: ["Tamil", "Telugu"],
+    genres: ["Action", "Comedy"], runtime: 168,
+    moods: ["go-big", "friends-night"], masala: 5, quality: 7,
+    tagline: "A retired jailer, a mild-mannered grandpa, a Thalaivar-sized secret.",
+    review: [
+      "Muthuvel Pandian is a quiet retiree who does the dishes and gets teased by his grandson. Then his cop son crosses an idol-smuggling gang, and Rajinikanth gets to remind everyone why he is who he is.",
+      "Nelson's dark humour keeps it fun, Vinayakan is a fine villain, and the star cameos in the last act are pure fan service. Kaavaalaa was everywhere for a reason."
+    ],
+    hits: ["Rajinikanth's slow-burn swagger", "Star cameos", "Anirudh's songs"],
+    misses: ["Second half sags", "Women barely matter"],
+    reviewed: "2026-10-27",
+  },
+  {
+    id: "jathi-ratnalu", title: "Jathi Ratnalu", year: 2021, lang: "Telugu", audio: ["Telugu"],
+    genres: ["Comedy"], runtime: 148,
+    moods: ["friends-night", "feel-good"], masala: 4, quality: 7.5,
+    tagline: "Three small-town idiots, one big-city frame-up, zero brain cells between them.",
+    review: [
+      "Srikanth, Shekar and Ravi are lovable goofballs from Jogipet who move to Hyderabad and somehow end up accused of trying to kill a minister. Naveen Polishetty's motor-mouth timing carries the whole thing.",
+      "The plot is silly and the courtroom climax is gloriously absurd. Watch it with friends who'll quote it back to you for weeks."
+    ],
+    hits: ["Naveen Polishetty", "Courtroom climax", "Endless one-liners"],
+    misses: ["Thin plot", "Some jokes need Telugu context"],
+    reviewed: "2026-10-26",
+  },
+  {
+    id: "mahanati", title: "Mahanati", year: 2018, lang: "Telugu", audio: ["Telugu", "Tamil"],
+    genres: ["Drama", "Biography"], runtime: 177,
+    moods: ["rainy-sunday", "post-breakup"], masala: 2, quality: 8.5,
+    tagline: "The rise and heartbreaking fall of Savitri, South India's greatest star.",
+    review: [
+      "Keerthy Suresh won a National Award for playing Savitri, the actress who ruled Telugu and Tamil cinema and then lost almost everything. A young journalist (Samantha) pieces her life together decades later.",
+      "Gorgeous to look at and deeply sad. Dulquer Salmaan is charming and frustrating as Gemini Ganesan. Keep tissues near."
+    ],
+    hits: ["Keerthy Suresh", "Old-Madras period detail", "Respectful but honest"],
+    misses: ["Journalist track is weaker", "Long and slow"],
+    reviewed: "2026-10-26",
+  },
+  {
+    id: "aavesham", title: "Aavesham", year: 2024, lang: "Malayalam", audio: ["Malayalam"],
+    genres: ["Comedy", "Action"], runtime: 158,
+    moods: ["friends-night", "go-big"], masala: 5, quality: 8,
+    tagline: "Three freshers hire a Bengaluru gangster. The gangster adopts them.",
+    review: [
+      "Three Malayali engineering students in Bengaluru get ragged by seniors and go looking for local muscle. They find Ranga, a white-suited, gold-chained, wildly unpredictable gangster who decides they're his boys now.",
+      "Fahadh Faasil goes completely, gloriously over the top and is clearly having the time of his life. Sushin Shyam's music is a party."
+    ],
+    hits: ["Fahadh as Ranga", "Sushin Shyam's songs", "Funny and oddly sweet"],
+    misses: ["Plot is loose", "Runs long"],
+    reviewed: "2026-10-25",
+  },
+  {
+    id: "premalu", title: "Premalu", year: 2024, lang: "Malayalam", audio: ["Malayalam", "Telugu"],
+    genres: ["Romance", "Comedy"], runtime: 156,
+    moods: ["first-date", "feel-good", "post-breakup"], masala: 3, quality: 8,
+    tagline: "A Malayali boy in Hyderabad, a girl way out of his league, and a lot of bad decisions.",
+    review: [
+      "Sachin (Naslen) moves to Hyderabad after a heartbreak and falls hard for Reenu (Mamitha Baiju), a confident IT professional who sees him as a friend. That's the whole plot, and it's plenty.",
+      "Girish A.D. fills it with modern, very online humour, and the supporting cast is hilarious. The breeziest romcom in years."
+    ],
+    hits: ["Naslen and Mamitha", "Genuinely funny", "No toxic romance clichés"],
+    misses: ["Slight story", "Could lose 20 minutes"],
+    reviewed: "2026-10-25",
+  },
+  {
+    id: "minnal-murali", title: "Minnal Murali", year: 2021, lang: "Malayalam", audio: ["Malayalam", "Hindi", "Tamil", "Telugu", "Kannada"],
+    genres: ["Superhero", "Comedy"], runtime: 158,
+    moods: ["feel-good", "family-time", "go-big"], masala: 4, quality: 8,
+    tagline: "Lightning strikes a village tailor. Kerala gets its own desi superhero.",
+    review: [
+      "In a small Kerala village in the 1990s, tailor Jaison (Tovino Thomas) is struck by lightning and wakes up with powers. So does someone else, and that's where it gets interesting.",
+      "Guru Somasundaram's lonely, heartbroken villain is the film's secret weapon. It's funny, local and full of heart: the superhero film Indian cinema needed."
+    ],
+    hits: ["Guru Somasundaram", "Village superhero charm", "Works for the whole family"],
+    misses: ["Slow start", "Effects are modest"],
+    reviewed: "2026-10-24",
+  },
+  {
+    id: "charlie-777", title: "777 Charlie", year: 2022, lang: "Kannada", audio: ["Kannada", "Hindi", "Tamil", "Telugu", "Malayalam"],
+    genres: ["Drama", "Adventure"], runtime: 164,
+    moods: ["rainy-sunday", "family-time", "feel-good"], masala: 2, quality: 8,
+    tagline: "A grumpy loner, a runaway Labrador, and a road trip to the snow.",
+    review: [
+      "Dharma (Rakshit Shetty) lives alone with his cigarettes and his idli routine until a mischievous stray Labrador forces her way into his life. When Charlie falls ill, he takes her on the trip of a lifetime.",
+      "It's shamelessly sentimental and you will cry, especially if you've ever loved a dog. The dog's performance is unreal."
+    ],
+    hits: ["Charlie herself", "Rakshit Shetty", "Beautiful road-trip scenery"],
+    misses: ["Very long", "Milks every tear"],
+    reviewed: "2026-10-24",
+  },
+  {
+    id: "dangal", title: "Dangal", year: 2016, lang: "Hindi", audio: ["Hindi", "Tamil", "Telugu"],
+    genres: ["Sports", "Drama"], runtime: 161,
+    moods: ["feel-good", "family-time", "go-big"], masala: 4, quality: 8.5,
+    tagline: "Mhari choriyan choron se kam hai ke?",
+    review: [
+      "Aamir Khan plays wrestler Mahavir Singh Phogat, who wanted a gold medal for India and, with no sons, trained his daughters Geeta and Babita instead, against the whole village's mockery.",
+      "The bouts are shot like real sport, and the young cast is terrific. Some of the father's methods are tough to watch today, which makes it a great family discussion film."
+    ],
+    hits: ["Wrestling scenes", "Young Geeta and Babita", "Rousing final"],
+    misses: ["Coach villain is a cartoon", "Father's strictness is never questioned"],
+    reviewed: "2026-10-23",
+  },
+  {
+    id: "bajrangi-bhaijaan", title: "Bajrangi Bhaijaan", year: 2015, lang: "Hindi", audio: ["Hindi"],
+    genres: ["Drama", "Comedy"], runtime: 163,
+    moods: ["feel-good", "family-time", "rainy-sunday"], masala: 4, quality: 7.5,
+    tagline: "Salman Khan walks a lost little girl home. Home is in Pakistan.",
+    review: [
+      "Pawan, a simple, honest Hanuman devotee, finds a little girl who can't speak, lost in Delhi. When he learns she's from Pakistan, he decides to take her back himself, visa or no visa.",
+      "Salman has rarely been this gentle, little Harshaali Malhotra is adorable, and Nawazuddin Siddiqui's reporter is a joy. Mainstream Bollywood at its kindest."
+    ],
+    hits: ["Harshaali Malhotra", "Nawazuddin Siddiqui", "That ending"],
+    misses: ["Simplistic politics", "Songs slow it down"],
+    reviewed: "2026-10-23",
+  },
+  {
+    id: "tumbbad", title: "Tumbbad", year: 2018, lang: "Hindi", audio: ["Hindi"],
+    genres: ["Horror", "Folklore"], runtime: 104,
+    moods: ["edge-of-seat", "mind-bender"], masala: 3, quality: 9,
+    tagline: "Greed, gold coins and a god who should never have been worshipped.",
+    review: [
+      "In a rain-soaked Maharashtra village, Vinayak learns the secret of a cursed treasure guarded by Hastar, a forgotten god. He goes back for more, and then brings his son.",
+      "Few Indian horror films look this good or feel this original. It's more dread than jump scares, and the folklore will stay with you. Watch it with the lights off."
+    ],
+    hits: ["Stunning look and sound", "Original folklore", "Short and tight"],
+    misses: ["Very grim", "Not for the squeamish"],
+    reviewed: "2026-10-22",
+  },
+  {
+    id: "dark-knight", title: "The Dark Knight", year: 2008, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Superhero", "Thriller"], runtime: 152,
+    moods: ["edge-of-seat", "go-big", "mind-bender"], masala: 4, quality: 9.5,
+    tagline: "Why so serious? Because this is still the best superhero film ever made.",
+    review: [
+      "Batman, Commissioner Gordon and the new district attorney Harvey Dent are winning the war on Gotham's mob, until the Joker arrives with no plan, no rules and a lot of gasoline.",
+      "Heath Ledger's Joker is one of the great screen villains. It plays more like a crime thriller than a comic-book film, and nearly two decades later nothing in the genre has topped it."
+    ],
+    hits: ["Heath Ledger's Joker", "The truck chase", "Big moral dilemmas"],
+    misses: ["Batman's growl voice", "Rushed final act"],
+    reviewed: "2026-10-22",
+  },
+  {
+    id: "top-gun-maverick", title: "Top Gun: Maverick", year: 2022, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Action", "Drama"], runtime: 131,
+    moods: ["go-big", "friends-night", "feel-good"], masala: 5, quality: 8.5,
+    tagline: "Tom Cruise, real fighter jets, and the most fun you'll have with your speakers up.",
+    review: [
+      "Thirty years after the first film, Maverick is called back to train a squad of young pilots for an impossible mission, including the son of his late best friend Goose.",
+      "The flying was shot in real jets and you can feel every G. It's old-fashioned in the best way: big, sincere and crowd-pleasing. No need to have seen the original."
+    ],
+    hits: ["Real aerial stunts", "Crowd-pleasing finale", "Tom Cruise's star power"],
+    misses: ["Predictable", "Thin villains"],
+    reviewed: "2026-10-21",
+  },
+  {
+    id: "frozen", title: "Frozen", year: 2013, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Animation", "Musical"], runtime: 102,
+    moods: ["family-time", "feel-good"], masala: 3, quality: 7.5,
+    tagline: "Two sisters, one ice palace, and a song you'll hear 400 times.",
+    review: [
+      "Princess Elsa has icy powers she can't control. When they plunge her kingdom into endless winter, her fearless sister Anna sets out to find her, with an ice-seller, his reindeer and a snowman called Olaf.",
+      "The twist on the 'true love' fairy tale is still lovely, and the songs are proper earworms. Grown-ups, consider yourselves warned."
+    ],
+    hits: ["Let It Go", "Olaf", "Sisterly love over romance"],
+    misses: ["Middle sags", "You'll be singing it for weeks"],
+    reviewed: "2026-10-21",
+  },
+  {
+    id: "finding-nemo", title: "Finding Nemo", year: 2003, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Animation", "Adventure"], runtime: 100,
+    moods: ["family-time", "feel-good"], masala: 3, quality: 9,
+    tagline: "An anxious clownfish dad crosses the ocean. Just keep swimming.",
+    review: [
+      "Marlin, an over-protective clownfish, loses his son Nemo to a diver and sets off across the ocean to find him, with Dory, a cheerful blue tang who can't remember anything for more than a few seconds.",
+      "Funny, gorgeous and quietly wise about letting kids grow up. Parents may get more out of it than the kids."
+    ],
+    hits: ["Dory", "Beautiful underwater world", "Great for all ages"],
+    misses: ["Sad, sudden opening", "Sharks may scare little ones"],
+    reviewed: "2026-10-20",
+  },
 ];
 
 // Where to watch in India, from JustWatch India on WATCH_CHECKED.
@@ -682,6 +903,23 @@ const WATCH = {
   "dune-part-two": { stream: ["Netflix"], rent: ["Amazon", "Apple TV"] },
   "inside-out-2": { stream: ["JioHotstar"], rent: [] },
   "jungle-book": { stream: ["JioHotstar"], rent: [] },
+  "jai-bhim": { stream: ["Prime Video", "ManoramaMAX", "MX Player"], rent: [] },
+  "vikram": { stream: ["JioHotstar"], rent: [] },
+  "soorarai-pottru": { stream: ["Prime Video", "MX Player"], rent: [] },
+  "jailer": { stream: ["Prime Video", "Sun NXT"], rent: [] },
+  "jathi-ratnalu": { stream: ["Prime Video", "MX Player"], rent: [] },
+  "mahanati": { stream: ["Prime Video"], rent: ["Amazon"] },
+  "aavesham": { stream: ["Prime Video", "JioHotstar"], rent: [] },
+  "premalu": { stream: ["aha"], rent: [] },
+  "minnal-murali": { stream: ["Netflix"], rent: [] },
+  "charlie-777": { stream: ["Prime Video", "JioHotstar"], rent: ["Apple TV"] },
+  "dangal": { stream: ["Netflix", "JioHotstar"], rent: ["Apple TV"] },
+  "bajrangi-bhaijaan": { stream: ["Netflix"], rent: [] },
+  "tumbbad": { stream: ["Prime Video"], rent: [] },
+  "dark-knight": { stream: ["Prime Video", "JioHotstar"], rent: ["Apple TV"] },
+  "top-gun-maverick": { stream: ["JioHotstar", "ZEE5"], rent: ["Amazon", "Apple TV"] },
+  "frozen": { stream: ["JioHotstar"], rent: [] },
+  "finding-nemo": { stream: ["JioHotstar"], rent: [] },
 };
 
 // Direct links to each film's page on the streaming app (from JustWatch India, WATCH_CHECKED).
@@ -872,6 +1110,73 @@ const WATCH_LINKS = {
   "jungle-book": {
     "JioHotstar": "https://www.hotstar.com/in/1260018310",
   },
+  "jai-bhim": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.fbf03970-02ad-4c3f-acc7-50fa6956121b",
+    "ManoramaMAX": "https://www.manoramamax.com/movies/detail/140683/jai-bhim",
+    "MX Player": "https://www.mxplayer.in/movie/watch-jai-bhim-tamil-movie-online-f4c84df710233f0a911888475f7a9fc2",
+  },
+  "vikram": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/vikram/1260106598",
+  },
+  "soorarai-pottru": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.4eba92e4-9715-baed-4904-203569bc0dfa",
+    "MX Player": "https://www.mxplayer.in/movie/watch-aakaasam-nee-haddhu-ra-telugu-movie-online-36a220a925ceef018023dce73b37f8fd",
+  },
+  "jailer": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.e6c3bee4-fea9-4d10-ac7b-61dd7f026d47",
+    "Sun NXT": "https://www.sunnxt.com/movie/detail/194350/jailer/",
+  },
+  "jathi-ratnalu": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.36bc5571-9f2a-f458-09ed-45682c240ad7",
+    "MX Player": "https://www.mxplayer.in/movie/watch-jathi-ratnalu-movie-online-0c208bd14bf6a86b6e23cbb65c9e25f2",
+  },
+  "mahanati": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.aaa1e7bf-dc06-4a08-ba72-f14b5d9fccd0",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.26b5d879-a5c0-b811-bf61-1a94cc4cc132",
+  },
+  "aavesham": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.1744bdf3-351d-4617-a849-43bc7f9e8f41",
+    "JioHotstar": "https://www.hotstar.com/in/movies/aavesham/1271320425",
+  },
+  "premalu": {
+    "aha": "https://www.aha.video/movie/premalu",
+  },
+  "minnal-murali": {
+    "Netflix": "https://www.netflix.com/title/81497215",
+  },
+  "charlie-777": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.c04f713b-7781-4292-8065-91ca32c3532d",
+    "JioHotstar": "https://www.hotstar.com/in/movies/777-charlie/1971000420",
+    "Apple TV": "https://tv.apple.com/in/movie/777-charlie/umc.cmc.2917grfp55icjaxkqozwwi2s1",
+  },
+  "dangal": {
+    "Netflix": "https://www.netflix.com/title/80166185",
+    "JioHotstar": "https://www.hotstar.com/in/movies/dangal/1271659734",
+    "Apple TV": "https://tv.apple.com/in/movie/dangal/umc.cmc.7krouhrf9iikjdbsqlvwa7wbh",
+  },
+  "bajrangi-bhaijaan": {
+    "Netflix": "https://www.netflix.com/title/80065328",
+  },
+  "tumbbad": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.4cb3965f-e34d-3f49-a60c-acc2bc1f9065",
+  },
+  "dark-knight": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.4aa9f68b-5e9d-1955-a451-d4d0087ef56c",
+    "JioHotstar": "https://www.hotstar.com/in/1971000395",
+    "Apple TV": "https://tv.apple.com/in/movie/the-dark-knight/umc.cmc.1uf4c3neuc9yxhnjv7t4rd5wa",
+  },
+  "top-gun-maverick": {
+    "JioHotstar": "https://www.hotstar.com/in/1271399288",
+    "ZEE5": "https://www.zee5.com/movies/details/top-gun-maverick/0-0-1z5754713",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.874d1f8d-4abf-4c1a-af2b-ae6680aee4b0",
+    "Apple TV": "https://tv.apple.com/in/movie/top-gun-maverick/umc.cmc.670544bajp6s4pysx4rvctczz",
+  },
+  "frozen": {
+    "JioHotstar": "https://www.hotstar.com/in/1260018197",
+  },
+  "finding-nemo": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/finding-nemo/1660010114",
+  },
 };
 
 const PLATFORM_HOME = {
@@ -937,4 +1242,20 @@ const PARENT_NOTES = {
     note: "Dowry and a controlling husband come up, and a corrupt cop shakes people down. Warm, funny and a great conversation-starter." },
   "12th-fail": { age: 10, violence: 1, romance: 1, language: 1, scary: 0,
     note: "Some roughing-up by police and a gentle romance. Lots of exam stress: inspiring for teens, but talk about failure afterwards." },
+  "finding-nemo": { age: 5, violence: 1, romance: 0, language: 0, scary: 1,
+    note: "Nemo's mum dies off-screen in the first minutes, and a few sharks and an anglerfish give jumps. Otherwise sunny." },
+  "frozen": { age: 5, violence: 1, romance: 1, language: 0, scary: 1,
+    note: "A snow monster and some wolves, plus a sweet romance. Parents in the story die in a shipwreck early on." },
+  "charlie-777": { age: 7, violence: 1, romance: 0, language: 1, scary: 0,
+    note: "A dog falls seriously ill and there are some tough scenes at a dog-breeding farm. Expect tears and a chat about pets." },
+  "bajrangi-bhaijaan": { age: 8, violence: 1, romance: 1, language: 0, scary: 1,
+    note: "A lost child is nearly sold to traffickers and there are some police beatings. The heart of it is kindness across borders." },
+  "minnal-murali": { age: 8, violence: 2, romance: 1, language: 0, scary: 1,
+    note: "Superhero fights, some burns and a villain whose sad backstory includes a death. Funny and warm overall." },
+  "dangal": { age: 8, violence: 1, romance: 0, language: 1, scary: 0,
+    note: "Lots of wrestling and a very strict father who pushes his daughters hard. A good one for talking about dreams and pressure." },
+  "top-gun-maverick": { age: 10, violence: 1, romance: 1, language: 2, scary: 1,
+    note: "Tense dogfights without blood, a little kissing and some swearing. A pilot's death in the backstory is a big theme." },
+  "soorarai-pottru": { age: 10, violence: 1, romance: 1, language: 1, scary: 0,
+    note: "A father's death and a few scuffles. Inspiring for older kids who love planes or business stories." },
 };
