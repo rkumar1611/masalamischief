@@ -1,12 +1,21 @@
-# Rebuilds the "All films" catalogue from TMDB once a week (scripts/build-catalog.mjs, TMDB_TOKEN secret).
+# Keeps the "Movies & series" catalogue up to date from TMDB (scripts/build-catalog.mjs, TMDB_TOKEN secret):
+#   - every day (Mon–Sat): a quick run that adds new releases and refreshes Trending (a few minutes)
+#   - Sundays: the full rebuild that re-ranks everything and refreshes ratings, cast and apps (about 30 min)
 # Commits only if something changed; Cloudflare Pages publishes it as usual.
-# Run it by hand from GitHub → Actions → "Weekly catalogue" → Run workflow.
-name: Weekly catalogue
+# Run it by hand from GitHub → Actions → "Catalogue" → Run workflow (choose quick or full).
+name: Catalogue
 
 on:
   schedule:
-    - cron: "0 2 * * 0" # Sundays, 07:30 IST
+    - cron: "0 2 * * 0"   # Sundays 07:30 IST: full rebuild
+    - cron: "0 2 * * 1-6" # other days 07:30 IST: new releases only
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "quick = add new releases only, full = rebuild everything"
+        type: choice
+        options: [quick, full]
+        default: quick
   push:
     branches: [main]
     paths:
@@ -23,7 +32,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
 
@@ -31,9 +40,20 @@ jobs:
         with:
           node-version: 24
 
-      - name: Build the catalogue
+      # Full on the Sunday schedule or when chosen by hand; quick otherwise (daily schedule, pushes).
+      - name: Choose quick or full
+        id: mode
+        run: |
+          if [ "${{ github.event.schedule }}" = "0 2 * * 0" ] || [ "${{ inputs.mode }}" = "full" ]; then
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=daily" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update the catalogue (${{ steps.mode.outputs.mode }})
         env:
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+          CATALOG_MODE: ${{ steps.mode.outputs.mode }}
         run: node scripts/build-catalog.mjs
 
       - name: Commit and push if it changed
@@ -45,6 +65,7 @@ jobs:
           fi
           git config user.name "masala-mischief-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Weekly catalogue ($(date -u +%Y-%m-%d))"
+          if [ "${{ steps.mode.outputs.mode }}" = "full" ]; then what="Weekly catalogue"; else what="New releases"; fi
+          git commit -m "$what ($(date -u +%Y-%m-%d))"
           git pull --rebase origin main
           git push origin main

@@ -8,7 +8,7 @@
 // plus assets/catalog/manifest.json listing the languages and counts.
 // Plain Node 20, no dependencies.
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { EXTRA_APPEND, VIDEO_LANGS, extrasOf } from "./tmdb-extras.mjs";
 
 const OUT = new URL("../assets/catalog/", import.meta.url);
@@ -38,6 +38,7 @@ const TREND_LANGS = ["hi", "ta", "te", "ml", "kn", "en"];
 const TREND_DAYS = 120;
 const TREND_PER_LANG = 4;
 const PEOPLE_SHARDS = 64;  // must match the site (assets/app.js)
+const DAILY_DAYS = 45;     // the daily run looks for titles released in this many days
 
 // TMDB provider names (India) → our app names. Anything else is left out.
 const APP_RULES = [
@@ -154,6 +155,7 @@ async function details(picks, kind, append, toItem, keep = () => true) {
 
 async function main() {
   if (!TOKEN) { console.log("No TMDB_TOKEN set; skipping catalogue."); return; }
+  if (process.env.CATALOG_MODE === "daily") return daily();
   const since = new Date(Date.now() - 2 * 365 * 864e5).toISOString().slice(0, 10);
   const today = new Date().toISOString().slice(0, 10);
   const trendSince = new Date(Date.now() - TREND_DAYS * 864e5).toISOString().slice(0, 10);
@@ -208,20 +210,79 @@ async function main() {
   const keptSeries = OUT_LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, tvLimit(lang)));
   if (films.length < LANGS.length * 50) throw new Error(`Only ${films.length} films came back; not writing a broken catalogue.`);
 
+  writeCatalogue([...films, ...keptSeries], trendIds, { full: true });
+  console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series.`);
+}
+
+// Daily run (CATALOG_MODE=daily): a few minutes instead of half an hour. Adds films and series released
+// in the last DAILY_DAYS days that aren't in the catalogue yet, refreshes the trending films (so "where to
+// watch" is current), and rebuilds Trending. Nothing is removed; the Sunday rebuild trims and re-ranks.
+async function daily() {
+  const today = new Date().toISOString().slice(0, 10);
+  const newSince = new Date(Date.now() - DAILY_DAYS * 864e5).toISOString().slice(0, 10);
+  const trendSince = new Date(Date.now() - TREND_DAYS * 864e5).toISOString().slice(0, 10);
+
+  const existing = [];
+  for (const lang of OUT_LANGS) {
+    const file = new URL(`${lang}.json`, OUT);
+    if (existsSync(file)) existing.push(...Object.values(JSON.parse(readFileSync(file, "utf8")).films));
+  }
+  if (existing.length < LANGS.length * 50) { console.log("No catalogue yet; the weekly run builds it first."); return; }
+  const have = new Set(existing.map((f) => `${f.l}-${f.id}`));
+
+  const moviePicks = [];
+  const tvPicks = [];
+  const trendIds = {};
+  const queue = (list, picks, lang, refresh = false) => list.forEach((id) => {
+    const key = `${lang}-${picks === tvPicks ? `tv${id}` : id}`;
+    if ((refresh || !have.has(key)) && !picks.some(([x, l]) => x === id && l === lang)) picks.push([id, lang]);
+  });
+  for (const lang of [...LANGS, ANIME]) {
+    const plan = PLAN[lang] || {};
+    const base = lang === ANIME ? { with_genres: ANIMATION } : plan.noAnimation ? { without_genres: ANIMATION } : {};
+    const tvBase = lang === ANIME ? base : { without_genres: TV_SKIP_GENRES + (plan.noAnimation ? `,${ANIMATION}` : "") };
+    if (TREND_LANGS.includes(lang)) {
+      trendIds[lang] = (await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": trendSince, "primary_release_date.lte": today, "vote_count.gte": 3 }, 1)).slice(0, TREND_PER_LANG + 2);
+      queue(trendIds[lang], moviePicks, lang, true);
+    }
+    queue(await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, 2), moviePicks, lang);
+    queue(await discover("tv", lang, { ...tvBase, sort_by: "popularity.desc", "first_air_date.gte": newSince, "first_air_date.lte": today }, 1), tvPicks, lang);
+  }
+  console.log(`Daily: ${moviePicks.length} films and ${tvPicks.length} series to fetch.`);
+
+  const films = await details(moviePicks, "movie", "watch/providers,release_dates", toFilm);
+  const series = await details(tvPicks, "tv", "watch/providers,content_ratings", toSeries,
+    (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES);
+  const fresh = new Map([...films, ...series].map((f) => [`${f.l}-${f.id}`, f]));
+  const added = [...fresh.keys()].filter((k) => !have.has(k));
+  console.log(`New titles: ${added.length}${added.length ? ` (${added.slice(0, 20).join(", ")}${added.length > 20 ? "…" : ""})` : ""}.`);
+  writeCatalogue([...existing.filter((f) => !fresh.has(`${f.l}-${f.id}`)), ...fresh.values()], trendIds, { full: false });
+}
+
+// Writes the per-language files, people index and trending list from every title. With full: false
+// (the daily run), a language's files are only rewritten when its titles changed, so unchanged files
+// keep their date and there's nothing to commit for them.
+function writeCatalogue(titles, trendIds, { full }) {
   // Per language: list-<lang>.json (compact, for browsing, search and the sitemap) and <lang>.json
   // (full details, for each title's page). manifest.json says which languages exist.
-  const all = [...films, ...keptSeries].sort((a, b) => b.n - a.n);
+  const all = [...titles].sort((a, b) => b.n - a.n);
   mkdirSync(OUT, { recursive: true });
   const built = new Date().toISOString().slice(0, 10);
   const counts = {};
+  const changed = [];
   for (const lang of OUT_LANGS) {
     const mine = all.filter((f) => f.l === lang);
     if (!mine.length) continue;
     counts[lang] = mine.length;
+    const films = Object.fromEntries(mine.map((f) => [f.id, f]));
+    const fullFile = new URL(`${lang}.json`, OUT);
+    if (!full && existsSync(fullFile) && JSON.stringify(JSON.parse(readFileSync(fullFile, "utf8")).films) === JSON.stringify(films)) continue;
+    changed.push(lang);
     writeFileSync(new URL(`list-${lang}.json`, OUT), JSON.stringify({ built, films: mine.map(({ ov, b, o, im, tr, cast, dir, wd, ...rest }) => rest) }));
-    writeFileSync(new URL(`${lang}.json`, OUT), JSON.stringify({ built, films: Object.fromEntries(mine.map((f) => [f.id, f])) }));
+    writeFileSync(fullFile, JSON.stringify({ built, films }));
   }
-  writeFileSync(new URL("manifest.json", OUT), JSON.stringify({ built, count: all.length, langs: counts }));
+  if (full || changed.length) writeFileSync(new URL("manifest.json", OUT), JSON.stringify({ built, count: all.length, langs: counts }));
+  console.log(`Languages written: ${changed.join(", ") || "none"}.`);
 
   // Actor pages: people/<n>.json, where n = person id % PEOPLE_SHARDS, so a page loads one small file.
   // Each person: [name, photo path, ["<lang>-<id>", ...] titles they lead or direct].
@@ -237,18 +298,25 @@ async function main() {
   mkdirSync(new URL("people/", OUT), { recursive: true });
   const shards = Array.from({ length: PEOPLE_SHARDS }, () => ({}));
   for (const [pid, p] of Object.entries(people)) shards[pid % PEOPLE_SHARDS][pid] = p;
-  shards.forEach((s, i) => writeFileSync(new URL(`people/${i}.json`, OUT), JSON.stringify(s)));
+  shards.forEach((s, i) => writeIfChanged(new URL(`people/${i}.json`, OUT), JSON.stringify(s)));
   console.log(`People: ${Object.keys(people).length}.`);
 
   // trending.json: [{l, id}] taking turns between languages, only titles that made it into the catalogue.
-  const have = new Set(films.map((f) => `${f.l}-${f.id}`));
+  const have = new Set(all.filter((f) => f.k !== "tv").map((f) => `${f.l}-${f.id}`));
   const perLang = TREND_LANGS.map((l) => (trendIds[l] || []).filter((id) => have.has(`${l}-${id}`)).slice(0, TREND_PER_LANG));
   const trending = [];
   for (let i = 0; i < TREND_PER_LANG; i++) perLang.forEach((ids, j) => ids[i] && trending.push({ l: TREND_LANGS[j], id: ids[i] }));
-  writeFileSync(new URL("trending.json", OUT), JSON.stringify({ built, items: trending }));
+  const trendFile = new URL("trending.json", OUT);
+  const oldTrend = existsSync(trendFile) ? JSON.parse(readFileSync(trendFile, "utf8")).items : null;
+  if (JSON.stringify(oldTrend) !== JSON.stringify(trending)) writeFileSync(trendFile, JSON.stringify({ built, items: trending }));
   console.log(`Trending: ${trending.length} films.`);
   rmSync(new URL("index.json", OUT), { force: true }); // replaced by the per-language lists
-  console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series, built ${built}.`, counts);
+  console.log(`Total: ${all.length} titles.`, counts);
+}
+
+function writeIfChanged(file, text) {
+  if (existsSync(file) && readFileSync(file, "utf8") === text) return;
+  writeFileSync(file, text);
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1); });
