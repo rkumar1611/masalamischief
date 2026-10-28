@@ -24,7 +24,8 @@ const movieById = (id) => MOVIES.find((m) => m.id === id);
 const fmtRuntime = (min) => `${Math.floor(min / 60)}h ${min % 60}m`;
 const langLabel = (l) => LANG_LABELS[l] || l;
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-const streamsOn = (m) => (WATCH[m.id] && WATCH[m.id].stream) || [];
+// Catalogue titles (see catToMovie) carry their apps; reviewed films use WATCH.
+const streamsOn = (m) => m.apps || (WATCH[m.id] && WATCH[m.id].stream) || [];
 const fmtDate = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 // Per-device storage for ratings, watchlist and theme. Works without it (private mode etc.).
@@ -63,8 +64,15 @@ function renderChrome() {
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="site-header"><div class="wrap">
       <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">🌶️</span>Masala <span>Mischief</span></a>
+      <button class="theme-btn search-btn" id="search-btn" type="button" aria-label="Search movies and series" aria-expanded="false">🔍</button>
       <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch light or dark mode"></button>
       <nav class="nav" aria-label="Main">${links}</nav>
+      <div class="site-search" id="site-search" hidden>
+        <form id="site-search-form" role="search">
+          <input type="search" id="site-q" placeholder="Search movies & series…" autocomplete="off" aria-label="Search movies and series">
+        </form>
+        <div class="site-results" id="site-results"></div>
+      </div>
     </div></header>`);
   document.body.insertAdjacentHTML("beforeend", `
     <footer class="site-footer"><div class="wrap">
@@ -86,6 +94,61 @@ function renderChrome() {
     const next = currentTheme() === "dark" ? "light" : "dark";
     applyTheme(next); store.set("theme", next); paint();
   });
+  initSiteSearch();
+}
+
+// Header search over our reviews and the whole catalogue. The catalogue loads on first use only.
+function initSiteSearch() {
+  const box = document.getElementById("site-search");
+  const btn = document.getElementById("search-btn");
+  const q = document.getElementById("site-q");
+  const out = document.getElementById("site-results");
+  const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, "");
+  let items = null;
+
+  async function load() {
+    if (items) return items;
+    const cat = await loadCatalog("index");
+    const byTmdb = reviewedByTmdb();
+    const list = (cat ? cat.films : []).map((f) => ({ ...f, mine: byTmdb[f.id] }));
+    const have = new Set(list.filter((f) => f.mine).map((f) => f.mine.id));
+    MOVIES.forEach((m) => { if (!have.has(m.id)) list.push({ id: m.id, l: LANG_CODE[m.lang], t: m.title, y: m.year, n: 1e9, p: (IMAGES[m.id] || {}).poster, mine: m }); });
+    return (items = list.map((f) => ({ ...f, key: norm(`${f.t} ${f.o || ""}`) })));
+  }
+  const open = (show) => {
+    box.hidden = !show;
+    btn.setAttribute("aria-expanded", show);
+    if (show) { q.focus(); load(); } else { q.value = ""; out.innerHTML = ""; }
+  };
+  btn.addEventListener("click", () => open(box.hidden));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !box.hidden) open(false);
+    if (e.key === "/" && box.hidden && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { e.preventDefault(); open(true); }
+  });
+  document.getElementById("site-search-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (q.value.trim()) location.href = `films.html?q=${encodeURIComponent(q.value.trim())}`;
+  });
+  let t;
+  q.addEventListener("input", () => {
+    clearTimeout(t);
+    t = setTimeout(async () => {
+      const term = norm(q.value.trim());
+      if (term.length < 2) { out.innerHTML = ""; return; }
+      const all = await load();
+      const hits = all.filter((f) => f.key.includes(term))
+        .sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || (b.key.startsWith(term) ? 1 : 0) - (a.key.startsWith(term) ? 1 : 0) || b.n - a.n)
+        .slice(0, 8);
+      out.innerHTML = hits.length
+        ? hits.map((f) => `
+            <a class="sr" href="${filmHref(f)}">
+              ${f.p ? `<img src="${tmdb(f.p, "w92")}" alt="" loading="lazy">` : `<span class="sr-none">🎬</span>`}
+              <span><strong>${esc(f.t)}</strong>
+              <span class="muted small">${esc(langLabel(CAT_LANGS[f.l] || ""))}${f.k === "tv" ? " · Series" : ""}${f.y ? ` · ${f.y}` : ""}${f.mine ? " · 🌶️ Reviewed" : ""}</span></span>
+            </a>`).join("") + `<a class="sr-all" href="films.html?q=${encodeURIComponent(q.value.trim())}">See all results →</a>`
+        : `<p class="muted small sr-empty">No matches. Try another spelling.</p>`;
+    }, 120);
+  });
 }
 
 /* ---------- Building blocks ---------- */
@@ -104,11 +167,11 @@ const tmdb = (path, size) => `https://image.tmdb.org/t/p/${size}${path}`;
 
 function poster(m, big = false) {
   const icon = GENRE_ICONS[m.genres[0]] || "🎬";
-  const still = IMAGES[m.id] && IMAGES[m.id].backdrop;
+  const still = m.still || (IMAGES[m.id] && IMAGES[m.id].backdrop);
   return `<div class="poster lang-${m.lang}${big ? " big" : ""}${still ? " has-img" : ""}">
       ${still ? `<img class="poster-img" src="${tmdb(still, big ? "w1280" : "w780")}" alt="" loading="${big ? "eager" : "lazy"}" decoding="async">` : ""}
       <span class="lang-pill">${langLabel(m.lang)} · ${m.year}</span>
-      ${PARENT_NOTES[m.id] ? `<span class="age-pill" title="Family Pick">👪 ${PARENT_NOTES[m.id].age}+</span>` : ""}
+      ${PARENT_NOTES[m.id] ? `<span class="age-pill" title="Family Pick">👪 ${PARENT_NOTES[m.id].age}+</span>` : m.cert ? `<span class="age-pill" title="Indian certificate">${esc(m.cert)}</span>` : ""}
       <span class="poster-icon" aria-hidden="true">${icon}</span>
       <div class="poster-foot">
         ${posterRating(m)}
@@ -119,6 +182,7 @@ function poster(m, big = false) {
 
 // Score badges over the poster: our quality and Masala Meter, plus the visitor's own chillies if they rated it.
 function posterRating(m) {
+  if (m.catalog) return `<div class="poster-rating"><span class="pr" title="TMDB rating">★ ${m.quality}<small>/10 TMDB</small></span></div>`;
   const mine = store.get("ratings", {})[m.id];
   return `<div class="poster-rating">
       <span class="pr" title="Quality score">★ ${m.quality}<small>/10</small></span>
@@ -147,13 +211,13 @@ function platformLinks(m, list) {
 
 function card(m, extra = "") {
   return `
-    <a class="card" href="review.html?id=${encodeURIComponent(m.id)}">
+    <a class="card" href="${m.href || `review.html?id=${encodeURIComponent(m.id)}`}">
       ${poster(m)}
       <div class="card-body">
         ${extra}
         <p>${esc(m.tagline)}</p>
         ${platformChips(streamsOn(m))}
-        <div class="card-meta">${meter(m.masala)}${score(m.quality)}</div>
+        <div class="card-meta">${m.catalog ? `<span class="muted small">Not reviewed yet</span>` : meter(m.masala)}${score(m.quality)}</div>
       </div>
     </a>`;
 }
@@ -473,6 +537,33 @@ function initSuggest() {
     if (state.langs.size) qs.set("lang", [...state.langs].join(","));
     // Keeps the URL shareable; some browsers block this on file:// pages.
     try { history.replaceState(null, "", qs.toString() ? `?${qs}` : location.pathname); } catch {}
+    drawCatalogue();
+  }
+
+  // Beyond our reviews: catalogue movies and series that fit the same choices. The catalogue has no
+  // dub info, so languages match the original language only, and runtime limits apply to movies.
+  async function drawCatalogue() {
+    const cat = await loadCatalog("index");
+    const section = document.getElementById("cat-section");
+    if (!cat) { section.hidden = true; return; }
+    const byTmdb = reviewedByTmdb();
+    const codes = new Set([...state.langs].map((l) => LANG_CODE[l]));
+    const picks = weightedRank(cat.films.filter((f) =>
+      !byTmdb[f.id] &&
+      fitsMood(f, state.mood) &&
+      (!codes.size || codes.has(f.l)) &&
+      (!state.apps.size || f.w.some((a) => state.apps.has(a))) &&
+      (!state.family || kidSafe(f)) &&
+      (!state.maxTime || f.k === "tv" || (f.r && f.r <= state.maxTime))
+    ), 20).slice(0, 24);
+    section.hidden = !picks.length;
+    const mood = moodById(state.mood);
+    document.getElementById("cat-head").textContent = mood ? `More ${mood.label.toLowerCase()} picks` : "More to watch";
+    const p = new URLSearchParams();
+    if (codes.size === 1) p.set("l", [...codes][0]);
+    if (state.apps.size === 1) p.set("a", [...state.apps][0]);
+    document.getElementById("cat-more").href = `films.html${p.toString() ? "?" + p : ""}`;
+    document.getElementById("cat-results").innerHTML = picks.map((f) => filmCard(f)).join("");
   }
   draw();
 }
@@ -511,10 +602,11 @@ function initFamily() {
    No server: the room is the link. ?d= holds the 10 film ids, and each ?v=Name~10110… holds one
    person's yes/no votes. Every share link carries all the votes collected so far, so the latest
    link posted in the WhatsApp group has everyone's. Votes are kept on this device per room. */
-function initGroup() {
+async function initGroup() {
   const $ = (id) => document.getElementById(id);
   const params = new URLSearchParams(location.search);
-  const deck = (params.get("d") || "").split(".").map(movieById).filter(Boolean);
+  const ids = (params.get("d") || "").split(".").filter(Boolean);
+  const deck = (await Promise.all(ids.map(resolveDeckId))).filter(Boolean);
 
   if (!deck.length) return groupCreate($);
   document.body.classList.add("gp-active"); // compact header so the card fits on a phone
@@ -571,8 +663,9 @@ function groupCreate($) {
   chips($("gp-moods"), MOODS.map((m) => [m.id, `${m.emoji} ${m.label}`]), (v) => v === mood, (v) => { mood = mood === v ? null : v; });
   chips($("gp-langs"), LANGUAGES.map((l) => [l, langLabel(l)]), (v) => langs.has(v), (v) => { langs.has(v) ? langs.delete(v) : langs.add(v); });
 
-  $("gp-start").addEventListener("click", () => {
+  $("gp-start").addEventListener("click", async () => {
     const kids = $("gp-family").checked;
+    const more = $("gp-more").checked;
     const ok = (m, useMood) =>
       (!langs.size || m.audio.some((a) => langs.has(a))) &&
       (!kids || PARENT_NOTES[m.id]) &&
@@ -581,8 +674,28 @@ function groupCreate($) {
     if (pool.length < 6) pool = MOVIES.filter((m) => ok(m, false)); // too narrow: drop the mood
     if (!pool.length) pool = MOVIES.slice();
     // Good films first, with a shuffle so every room is different.
-    const picks = pool.map((m) => [m, m.quality + m.masala * 0.3 + Math.random() * 3])
-      .sort((a, b) => b[1] - a[1]).slice(0, 10).map(([m]) => m.id);
+    const shuffled = (arr, score) => arr.map((x) => [x, score(x) + Math.random() * 3]).sort((a, b) => b[1] - a[1]).map(([x]) => x);
+    const ours = shuffled(pool, (m) => m.quality + m.masala * 0.3).map((m) => m.id);
+
+    // Bigger mix: up to 5 of ours, the rest well-loved catalogue movies that fit the same choices.
+    let theirs = [];
+    if (more) {
+      $("gp-start").disabled = true;
+      const cat = await loadCatalog("index");
+      if (cat) {
+        const byTmdb = reviewedByTmdb();
+        const codes = new Set([...langs].map((l) => LANG_CODE[l]));
+        const fits = (f, useMood) => f.k !== "tv" && !byTmdb[f.id] && f.n >= (f.l === "en" ? 2000 : 100) &&
+          (!codes.size || codes.has(f.l)) && (!kids || kidSafe(f)) && (!useMood || fitsMood(f, mood));
+        let catPool = cat.films.filter((f) => fits(f, true));
+        if (catPool.length < 10) catPool = cat.films.filter((f) => fits(f, false));
+        theirs = shuffled(catPool, (f) => f.v).slice(0, 10).map((f) => `_${f.l}-${f.id}`);
+      }
+    }
+    // At least 5 of ours (more if the catalogue came up short), topped up to 10 from the catalogue.
+    const mineCount = Math.min(ours.length, Math.max(5, 10 - theirs.length));
+    const picks = [...ours.slice(0, mineCount), ...theirs].slice(0, 10)
+      .map((id) => [id, Math.random()]).sort((a, b) => a[1] - b[1]).map(([id]) => id);
     location.search = `?d=${picks.join(".")}`;
   });
 }
@@ -600,7 +713,7 @@ function groupSwipe($, deck, done) {
       ${poster(m, true)}
       <div class="gp-card-body">
         <p>${esc(m.tagline)}</p>
-        <p class="muted small">${m.genres.map(esc).join(" · ")} · ${fmtRuntime(m.runtime)}${m.audio.length > 1 ? ` · Also in ${m.audio.filter((a) => a !== m.lang).map(esc).join(", ")}` : ""}</p>
+        <p class="muted small">${m.genres.map(esc).join(" · ")}${m.runtime ? ` · ${fmtRuntime(m.runtime)}` : ""}${m.catalog ? " · not reviewed yet" : ""}${m.audio.length > 1 ? ` · Also in ${m.audio.filter((a) => a !== m.lang).map(esc).join(", ")}` : ""}</p>
         ${platformChips(streamsOn(m), 5)}
       </div>`;
   };
@@ -673,7 +786,7 @@ function groupResults(el, deck, room, linkFor, redo) {
     <ol class="gp-ranked">
       ${ranked.map((r) => `
         <li class="${n > 1 && r.yes.length === n ? "all" : ""}">
-          <a href="review.html?id=${encodeURIComponent(r.m.id)}">${esc(r.m.title)}</a>
+          <a href="${r.m.href || `review.html?id=${encodeURIComponent(r.m.id)}`}">${esc(r.m.title)}</a>
           <span class="gp-bar" style="--pct:${n ? Math.round((r.yes.length / n) * 100) : 0}%"><span></span></span>
           <span class="gp-count">${r.yes.length}/${n} yes</span>
           <span class="gp-who muted small">${r.yes.map(esc).join(", ")}</span>
@@ -721,6 +834,59 @@ function reviewedByTmdb() {
   return map;
 }
 const filmHref = (f) => (f.mine ? `review.html?id=${encodeURIComponent(f.mine.id)}` : `film.html?id=${f.l}-${f.id}`);
+
+// Moods → TMDB genres (film and TV names), so catalogue titles can match a mood.
+const MOOD_GENRES = {
+  "rainy-sunday": ["Drama", "Romance", "Family"],
+  "post-breakup": ["Comedy", "Romance", "Drama"],
+  "first-date": ["Romance", "Comedy"],
+  "friends-night": ["Comedy", "Action", "Action & Adventure"],
+  "edge-of-seat": ["Thriller", "Crime", "Mystery", "Horror"],
+  "feel-good": ["Comedy", "Family", "Animation", "Music"],
+  "go-big": ["Action", "Adventure", "Fantasy", "Science Fiction", "War", "Action & Adventure", "Sci-Fi & Fantasy"],
+  "mind-bender": ["Science Fiction", "Mystery", "Thriller", "Sci-Fi & Fantasy"],
+  "family-time": ["Family", "Animation", "Kids"],
+};
+const fitsMood = (f, mood) => !mood || (f.g || []).some((g) => (MOOD_GENRES[mood] || []).includes(g));
+// Kid-friendly enough for "Kids are watching": tagged Family or Kids, no adult or 16+ certificate, not
+// horror. Animation alone isn't enough (Primal, Invincible), and a "U" alone isn't either.
+const kidSafe = (f) => {
+  const g = f.g || [];
+  return g.some((x) => x === "Family" || x === "Kids") && !g.includes("Horror") && !/^A$|16|18/.test(f.c || "");
+};
+
+// TMDB rating pulled towards the average when few people voted (an IMDb-style weighted rating), so a
+// 10/10 from five votes can't outrank a well-loved classic. Used for Top 50s and catalogue picks.
+function weightedRank(arr, minVotes = 3) {
+  const voted = arr.filter((f) => f.n > 0);
+  if (!voted.length) return [];
+  const C = voted.reduce((s, f) => s + f.v, 0) / voted.length;
+  const ns = voted.map((f) => f.n).sort((a, b) => a - b);
+  const m = Math.max(20, ns[Math.floor(ns.length / 2)]);
+  const score = (f) => (f.n / (f.n + m)) * f.v + (m / (f.n + m)) * C;
+  return voted.filter((f) => f.n >= minVotes).sort((a, b) => score(b) - score(a));
+}
+
+// A catalogue entry shaped like one of our MOVIES, so cards, posters and Group Pick can show it.
+// `full` is the entry from assets/catalog/<lang>.json, which adds the still and summary.
+function catToMovie(f, full) {
+  const d = { ...f, ...(full || {}) };
+  const blurb = d.ov ? (d.ov.length > 150 ? d.ov.slice(0, 150).replace(/\s+\S*$/, "") + "…" : d.ov) : d.g.join(" · ");
+  return {
+    id: `_${d.l}-${d.id}`, catalog: true, kind: d.k, title: d.t, year: d.y, lang: CAT_LANGS[d.l], audio: [CAT_LANGS[d.l]],
+    genres: d.g.length ? d.g : ["Drama"], runtime: d.r || 0, quality: d.v, masala: null, moods: [], tagline: blurb,
+    apps: d.w, still: d.b, cert: d.c, href: `film.html?id=${d.l}-${d.id}`,
+  };
+}
+
+// Resolves a Group Pick deck id: ours ("rrr") or a catalogue one ("_hi-12345").
+async function resolveDeckId(id) {
+  if (id[0] !== "_") return movieById(id);
+  const [code, raw] = id.slice(1).split("-");
+  const data = CAT_LANGS[code] ? await loadCatalog(code) : null;
+  const f = data && data.films[raw];
+  return f ? catToMovie(f) : null;
+}
 
 // "2019–2023", "2021–" (still running) or "2024" for series; just the year for films.
 const yearsOf = (f) => (f.k === "tv" && f.y ? (f.end ? (f.ye ? `${f.y}–${f.ye}` : `${f.y}`) : `${f.y}–`) : f.y ? `${f.y}` : "");
@@ -785,17 +951,8 @@ async function initFilms() {
     new: (a, b) => (b.y || 0) - (a.y || 0) || b.n - a.n,
     old: (a, b) => (a.y || 9999) - (b.y || 9999) || b.n - a.n,
   };
-  // Top 50: TMDB rating pulled towards the average for titles with few votes (an IMDb-style weighted
-  // rating), so a 10/10 from five votes can't top the list. m adapts to the language/genre chosen.
-  const topRanked = (arr) => {
-    const voted = arr.filter((f) => f.n > 0);
-    if (!voted.length) return [];
-    const C = voted.reduce((s, f) => s + f.v, 0) / voted.length;
-    const sortedN = voted.map((f) => f.n).sort((a, b) => a - b);
-    const m = Math.max(20, sortedN[Math.floor(sortedN.length / 2)]);
-    const score = (f) => (f.n / (f.n + m)) * f.v + (m / (f.n + m)) * C;
-    return voted.filter((f) => f.n >= 3).sort((a, b) => score(b) - score(a)).slice(0, 50);
-  };
+  // Top 50 uses the weighted rating, which adapts to the language/genre chosen.
+  const topRanked = (arr) => weightedRank(arr).slice(0, 50);
   const isTop = () => state.view !== "all";
   const paint = () => {
     $("fgrid").innerHTML = results.slice(0, shown).map((f, i) => filmCard(f, isTop() ? i + 1 : 0)).join("") ||
