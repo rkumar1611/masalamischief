@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>All films · Masala Mischief</title>
-  <meta name="description" content="Browse thousands of Hindi, Tamil, Telugu, Malayalam, Kannada and Hollywood films, with where to stream them in India.">
-  <meta property="og:title" content="All films · Masala Mischief">
-  <meta property="og:description" content="Browse thousands of Indian and Hollywood films, and see which apps stream them in India.">
+  <title>Movies & series · Masala Mischief</title>
+  <meta name="description" content="Browse thousands of Hindi, Tamil, Telugu, Malayalam, Kannada and Hollywood movies and series, with Top 50 lists and where to stream them in India.">
+  <meta property="og:title" content="Movies & series · Top 50s and where to watch · Masala Mischief">
+  <meta property="og:description" content="Thousands of Indian and Hollywood movies and series, Top 50 lists by language, and which apps stream them in India.">
   <meta property="og:image" content="https://masalamischief.in/assets/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -16,18 +16,29 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=13">
+  <link rel="stylesheet" href="assets/style.css?v=14">
 </head>
 <body data-page="films">
   <main class="wrap">
     <div class="page-head">
-      <h1>🎞️ All films</h1>
-      <p class="lead" id="films-lead">Thousands of Indian and Hollywood films, and where to stream them in India. The ones with a 🌶️ badge have our full review.</p>
+      <h1>🎞️ Movies & series</h1>
+      <p class="lead" id="films-lead">Thousands of Indian and Hollywood movies and series, and where to stream them in India. The ones with a 🌶️ badge have our full review.</p>
+    </div>
+
+    <div class="chips view-tabs" id="fview" role="tablist" aria-label="View">
+      <button class="chip" type="button" data-v="all">All</button>
+      <button class="chip" type="button" data-v="top-movie">🏆 Top 50 movies</button>
+      <button class="chip" type="button" data-v="top-tv">🏆 Top 50 series</button>
     </div>
 
     <div class="filters">
       <div class="toolbar" style="margin:0">
-        <input type="search" id="fq" placeholder="Search a film…" aria-label="Search films">
+        <input type="search" id="fq" placeholder="Search a movie or series…" aria-label="Search movies and series">
+        <select id="ft" aria-label="Type">
+          <option value="">Movies & series</option>
+          <option value="movie">Movies only</option>
+          <option value="tv">Series only</option>
+        </select>
         <select id="fl" aria-label="Language"><option value="">All languages</option></select>
         <select id="fg" aria-label="Genre"><option value="">All genres</option></select>
         <select id="fa" aria-label="Streaming app"><option value="">Any app</option></select>
@@ -52,10 +63,10 @@
     </section>
 
     <section>
-      <p class="muted small">Film details, posters and streaming info for films we haven't reviewed come from TMDB, updated weekly. Streaming changes often, so check the app.</p>
+      <p class="muted small">Details, posters and streaming info for titles we haven't reviewed come from TMDB, updated weekly. Top 50s rank by TMDB rating, weighted by how many people voted, so a 10/10 from five votes can't top the list. Streaming changes often, so check the app.</p>
     </section>
   </main>
-  <script src="assets/data.js?v=13"></script>
-  <script src="assets/app.js?v=13"></script>
+  <script src="assets/data.js?v=14"></script>
+  <script src="assets/app.js?v=14"></script>
 </body>
 </html>

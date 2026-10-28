@@ -3,7 +3,7 @@
 const NAV = [
   { href: "index.html", label: "Home", page: "home" },
   { href: "reviews.html", label: "Reviews", page: "reviews" },
-  { href: "films.html", label: "All films", page: "films" },
+  { href: "films.html", label: "Movies & series", page: "films" },
   { href: "suggest.html", label: "What should I watch?", page: "suggest" },
   { href: "family.html", label: "Family Picks", page: "family" },
   { href: "group.html", label: "Group Pick", page: "group" },
@@ -722,18 +722,22 @@ function reviewedByTmdb() {
 }
 const filmHref = (f) => (f.mine ? `review.html?id=${encodeURIComponent(f.mine.id)}` : `film.html?id=${f.l}-${f.id}`);
 
-function filmCard(f) {
+// "2019–2023", "2021–" (still running) or "2024" for series; just the year for films.
+const yearsOf = (f) => (f.k === "tv" && f.y ? (f.end ? (f.ye ? `${f.y}–${f.ye}` : `${f.y}`) : `${f.y}–`) : f.y ? `${f.y}` : "");
+
+function filmCard(f, rank) {
   const m = f.mine;
   return `
     <a class="fcard" href="${filmHref(f)}">
       <div class="fposter">
         ${f.p ? `<img src="${tmdb(f.p, "w342")}" alt="" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
+        ${rank ? `<span class="fbadge rank">#${rank}</span>` : ""}
         ${m ? `<span class="fbadge mine" title="Reviewed by Masala Mischief">🌶️ ${m.masala}/5</span>` : ""}
         <span class="fbadge score" title="${m ? "Our score" : "TMDB rating"}">★ ${m ? m.quality : f.v}</span>
       </div>
       <div class="fbody">
         <strong>${esc(f.t)}</strong>
-        <span class="muted small">${esc(langLabel(CAT_LANGS[f.l] || ""))}${f.y ? ` · ${f.y}` : ""}</span>
+        <span class="muted small">${esc(langLabel(CAT_LANGS[f.l] || ""))}${f.k === "tv" ? " · Series" : ""}${yearsOf(f) ? ` · ${yearsOf(f)}` : ""}</span>
         ${f.w && f.w.length ? `<span class="fapps">${f.w.slice(0, 2).map((a) => `<span class="ott ott-${slug(a)}">${esc(a)}</span>`).join("")}${f.w.length > 2 ? `<span class="ott more">+${f.w.length - 2}</span>` : ""}</span>` : ""}
       </div>
     </a>`;
@@ -756,16 +760,19 @@ async function initFilms() {
 
   const params = new URLSearchParams(location.search);
   const state = {
-    q: params.get("q") || "", l: params.get("l") || "", g: params.get("g") || "", a: params.get("a") || "",
+    view: ["top-movie", "top-tv"].includes(params.get("view")) ? params.get("view") : "all",
+    q: params.get("q") || "", t: params.get("t") || "", l: params.get("l") || "", g: params.get("g") || "", a: params.get("a") || "",
     s: params.get("s") || "popular", r: params.get("r") === "1" || !cat, k: params.get("k") === "1", w: params.get("w") === "1",
   };
+  const paintView = chips($("fview"), [["all", "All"], ["top-movie", "🏆 Top 50 movies"], ["top-tv", "🏆 Top 50 series"]],
+    (v) => v === state.view, (v) => { state.view = v; apply(); });
   const count = (arr) => arr.reduce((o, x) => ((o[x] = (o[x] || 0) + 1), o), {});
   $("fl").insertAdjacentHTML("beforeend", Object.entries(CAT_LANGS).map(([c, l]) => `<option value="${c}">${esc(langLabel(l))}</option>`).join(""));
   const genres = Object.entries(count(list.flatMap((f) => f.g || []))).sort((a, b) => b[1] - a[1]).map(([g]) => g);
   $("fg").insertAdjacentHTML("beforeend", genres.map((g) => `<option>${esc(g)}</option>`).join(""));
   const apps = Object.entries(count(list.flatMap((f) => f.w || []))).sort((a, b) => b[1] - a[1]).map(([a]) => a);
   $("fa").insertAdjacentHTML("beforeend", apps.map((a) => `<option>${esc(a)}</option>`).join(""));
-  $("fq").value = state.q; $("fl").value = state.l; $("fg").value = state.g; $("fa").value = state.a; $("fs").value = state.s;
+  $("fq").value = state.q; $("ft").value = state.t; $("fl").value = state.l; $("fg").value = state.g; $("fa").value = state.a; $("fs").value = state.s;
   $("fr").checked = state.r; $("fk").checked = state.k; $("fw").checked = state.w;
 
   const PAGE = 60;
@@ -778,14 +785,31 @@ async function initFilms() {
     new: (a, b) => (b.y || 0) - (a.y || 0) || b.n - a.n,
     old: (a, b) => (a.y || 9999) - (b.y || 9999) || b.n - a.n,
   };
+  // Top 50: TMDB rating pulled towards the average for titles with few votes (an IMDb-style weighted
+  // rating), so a 10/10 from five votes can't top the list. m adapts to the language/genre chosen.
+  const topRanked = (arr) => {
+    const voted = arr.filter((f) => f.n > 0);
+    if (!voted.length) return [];
+    const C = voted.reduce((s, f) => s + f.v, 0) / voted.length;
+    const sortedN = voted.map((f) => f.n).sort((a, b) => a - b);
+    const m = Math.max(20, sortedN[Math.floor(sortedN.length / 2)]);
+    const score = (f) => (f.n / (f.n + m)) * f.v + (m / (f.n + m)) * C;
+    return voted.filter((f) => f.n >= 3).sort((a, b) => score(b) - score(a)).slice(0, 50);
+  };
+  const isTop = () => state.view !== "all";
   const paint = () => {
-    $("fgrid").innerHTML = results.slice(0, shown).map(filmCard).join("") || `<div class="empty">No films match. Try fewer filters.</div>`;
-    $("fmore").hidden = shown >= results.length;
+    $("fgrid").innerHTML = results.slice(0, shown).map((f, i) => filmCard(f, isTop() ? i + 1 : 0)).join("") ||
+      `<div class="empty">Nothing matches. Try fewer filters.</div>`;
+    $("fmore").hidden = isTop() || shown >= results.length;
   };
   const apply = () => {
     const q = norm(state.q.trim());
+    const type = isTop() ? state.view.slice(4) : state.t;
+    $("ft").disabled = $("fs").disabled = isTop();
+    paintView();
     results = list.filter((f) =>
       (!q || norm(f.t).includes(q) || norm(f.o).includes(q)) &&
+      (!type || (type === "tv" ? f.k === "tv" : f.k !== "tv")) &&
       (!state.l || f.l === state.l) &&
       (!state.g || (f.g || []).includes(state.g)) &&
       (!state.a || (f.w || []).includes(state.a)) &&
@@ -793,12 +817,18 @@ async function initFilms() {
       (!state.k || f.c === "U") &&
       (!state.w || (f.w && f.w.length))
     ).sort(sorters[state.s] || sorters.popular);
+    if (isTop()) results = topRanked(results);
     shown = PAGE;
-    $("fcount").textContent = `${results.length.toLocaleString("en-IN")} film${results.length === 1 ? "" : "s"}`;
+    const noun = type === "tv" ? ["series", "series"] : type === "movie" ? ["movie", "movies"] : ["title", "titles"];
+    const where = [state.l && langLabel(CAT_LANGS[state.l]), state.g].filter(Boolean).join(" ");
+    $("fcount").textContent = isTop()
+      ? `🏆 Top ${results.length} ${where ? where + " " : ""}${type === "tv" ? "series" : "movies"}`
+      : `${results.length.toLocaleString("en-IN")} ${results.length === 1 ? noun[0] : noun[1]}`;
     paint();
     try {
       const p = new URLSearchParams();
-      ["q", "l", "g", "a"].forEach((k) => state[k] && p.set(k, state[k]));
+      if (isTop()) p.set("view", state.view);
+      ["q", "t", "l", "g", "a"].forEach((k) => state[k] && p.set(k, state[k]));
       if (state.s !== "popular") p.set("s", state.s);
       ["r", "k", "w"].forEach((k) => state[k] && p.set(k, "1"));
       history.replaceState(null, "", `${location.pathname}${p.toString() ? "?" + p : ""}`);
@@ -806,7 +836,7 @@ async function initFilms() {
   };
   let t;
   $("fq").addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => { state.q = $("fq").value; apply(); }, 150); });
-  [["fl", "l"], ["fg", "g"], ["fa", "a"], ["fs", "s"]].forEach(([id, k]) => $(id).addEventListener("change", () => { state[k] = $(id).value; apply(); }));
+  [["ft", "t"], ["fl", "l"], ["fg", "g"], ["fa", "a"], ["fs", "s"]].forEach(([id, k]) => $(id).addEventListener("change", () => { state[k] = $(id).value; apply(); }));
   [["fr", "r"], ["fk", "k"], ["fw", "w"]].forEach(([id, k]) => $(id).addEventListener("change", () => { state[k] = $(id).checked; apply(); }));
   $("fmore").addEventListener("click", () => { shown += PAGE; paint(); });
   apply();
@@ -815,23 +845,27 @@ async function initFilms() {
 async function initFilm() {
   const root = document.getElementById("film");
   const [code, rawId] = (new URLSearchParams(location.search).get("id") || "").split("-");
-  const id = +rawId;
-  const mine = reviewedByTmdb()[id];
+  // Movies are "<lang>-<tmdb id>", series "<lang>-tv<tmdb id>".
+  const id = /^\d+$/.test(rawId || "") ? +rawId : /^tv\d+$/.test(rawId || "") ? rawId : null;
+  const mine = typeof id === "number" && reviewedByTmdb()[id];
   if (mine) { location.replace(`review.html?id=${encodeURIComponent(mine.id)}`); return; }
   const data = CAT_LANGS[code] && id ? await loadCatalog(code) : null;
   const f = data && data.films[id];
   if (!f) {
-    root.innerHTML = `<div class="empty">We couldn't find that film. <a href="films.html">Browse all films</a>.</div>`;
+    root.innerHTML = `<div class="empty">We couldn't find that title. <a href="films.html">Browse movies & series</a>.</div>`;
     return;
   }
+  const tv = f.k === "tv";
   const lang = langLabel(CAT_LANGS[f.l]);
-  document.title = `${f.t} (${f.y || ""}) · where to watch · Masala Mischief`;
+  const years = yearsOf(f);
+  const seasons = tv && f.s ? `${f.s} season${f.s === 1 ? "" : "s"}` : "";
+  document.title = `${f.t}${years ? ` (${years})` : ""}${tv ? " · series" : ""} · where to watch · Masala Mischief`;
   const pageUrl = location.href;
-  const shareText = `${f.t}${f.y ? ` (${f.y})` : ""}: ${f.w.length ? `streaming on ${f.w.join(", ")}` : "where to watch it"} · via Masala Mischief`;
+  const shareText = `${f.t}${years ? ` (${years})` : ""}: ${f.w.length ? `streaming on ${f.w.join(", ")}` : "where to watch it"} · via Masala Mischief`;
   root.innerHTML = `
     <div class="poster big lang-${CAT_LANGS[f.l]}${f.b ? " has-img" : ""}">
       ${f.b ? `<img class="poster-img" src="${tmdb(f.b, "w1280")}" alt="" decoding="async">` : ""}
-      <span class="lang-pill">${esc(lang)}${f.y ? ` · ${f.y}` : ""}</span>
+      <span class="lang-pill">${esc(lang)}${tv ? " · Series" : ""}${years ? ` · ${years}` : ""}</span>
       ${f.c ? `<span class="age-pill" title="Indian certificate">${esc(f.c)}</span>` : ""}
       <div class="poster-foot">
         <div class="poster-rating"><span class="pr" title="TMDB rating">★ ${f.v}<small>/10 TMDB</small></span></div>
@@ -840,7 +874,7 @@ async function initFilm() {
     </div>
     <div class="review-layout">
       <article>
-        <p class="muted film-meta">${esc(f.g.join(" · "))}${f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
+        <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appSearchUrl(a, f.t))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
         <div class="panel not-reviewed">
@@ -848,7 +882,7 @@ async function initFilm() {
           <p class="muted">We haven't given this one the Masala Meter treatment. Summary and rating are from TMDB.</p>
         </div>
         <div class="share-row">
-          <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${f.t} ${f.y || ""} official trailer`)}">▶ Watch trailer</a>
+          <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${f.t} ${f.y || ""} ${tv ? "series" : ""} official trailer`)}">▶ Watch trailer</a>
           <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
@@ -866,17 +900,18 @@ async function initFilm() {
           <dl>
             <dt>Language</dt><dd>${esc(lang)}</dd>
             ${f.o ? `<dt>Original title</dt><dd>${esc(f.o)}</dd>` : ""}
-            ${f.y ? `<dt>Year</dt><dd>${f.y}</dd>` : ""}
-            ${f.r ? `<dt>Runtime</dt><dd>${fmtRuntime(f.r)}</dd>` : ""}
+            ${years ? `<dt>${tv ? "Years" : "Year"}</dt><dd>${years}${tv && !f.end ? " (still running)" : ""}</dd>` : ""}
+            ${seasons ? `<dt>Seasons</dt><dd>${seasons}</dd>` : ""}
+            ${f.r ? `<dt>${tv ? "Episode" : "Runtime"}</dt><dd>${tv ? `about ${f.r} min` : fmtRuntime(f.r)}</dd>` : ""}
             ${f.g.length ? `<dt>Genre</dt><dd>${esc(f.g.join(", "))}</dd>` : ""}
             ${f.c ? `<dt>Certificate</dt><dd>${esc(f.c)}</dd>` : ""}
-            <dt>TMDB</dt><dd>${f.v}/10 · <a href="https://www.themoviedb.org/movie/${f.id}" target="_blank" rel="noopener">${f.n.toLocaleString("en-IN")} votes</a></dd>
+            <dt>TMDB</dt><dd>${f.v}/10 · <a href="https://www.themoviedb.org/${tv ? `tv/${String(f.id).slice(2)}` : `movie/${f.id}`}" target="_blank" rel="noopener">${f.n.toLocaleString("en-IN")} votes</a></dd>
           </dl>
         </div>
       </aside>
     </div>
     <section id="film-more" hidden>
-      <div class="section-head"><h2>More ${esc(lang)} films like this</h2></div>
+      <div class="section-head"><h2>More ${esc(lang)} ${tv ? "series" : "movies"} like this</h2></div>
       <div class="fgrid" id="film-more-grid"></div>
     </section>`;
 
@@ -887,7 +922,7 @@ async function initFilm() {
   const index = await loadCatalog("index");
   if (index) {
     const byTmdb = reviewedByTmdb();
-    const more = index.films.filter((x) => x.l === f.l && x.id !== f.id && x.g.some((g) => f.g.includes(g)))
+    const more = index.films.filter((x) => x.l === f.l && x.id !== f.id && (x.k === "tv") === tv && x.g.some((g) => f.g.includes(g)))
       .map((x) => ({ ...x, mine: byTmdb[x.id] }))
       .sort((a, b) => b.g.filter((g) => f.g.includes(g)).length - a.g.filter((g) => f.g.includes(g)).length || b.v - a.v)
       .slice(0, 6);

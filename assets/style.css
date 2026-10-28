@@ -116,7 +116,7 @@ main { padding-bottom: 64px; }
 .nav a.active { color: var(--chilli-ink); background: var(--chilli); }
 .nav .soon { font-size: 0.62rem; vertical-align: super; margin-left: 2px; color: var(--saffron); }
 .nav a.active .soon { color: inherit; }
-@media (max-width: 760px) {
+@media (max-width: 1100px) {
   .site-header .wrap { padding-top: 10px; padding-bottom: 8px; gap: 8px; }
   .theme-btn { order: 1; margin-left: auto; }
   .nav { order: 4; margin-left: 0; width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
@@ -508,7 +508,7 @@ body.gp-active .page-head h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 .fposter-none { position: absolute; inset: 0; display: grid; place-items: center; font-size: 2.5rem; }
 .fbadge { position: absolute; font: 800 0.72rem var(--font-body); padding: 3px 8px; border-radius: 999px; color: #fff; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
 .fbadge.score { right: 8px; bottom: 8px; }
-.fbadge.mine { left: 8px; top: 8px; background: var(--turmeric); color: #3a1d00; }
+.fbadge.mine { right: 8px; top: 8px; background: var(--turmeric); color: #3a1d00; }
 .fbody { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
 .fbody strong { font-size: 0.95rem; line-height: 1.2; }
 .fapps { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
@@ -517,3 +517,6 @@ body.gp-active .page-head h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 .panel.not-reviewed { margin-top: 18px; background: color-mix(in srgb, var(--turmeric) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--turmeric) 40%, var(--line)); }
 @media (max-width: 520px) { .fgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } }
 .film-meta { font-weight: 600; margin: 0 0 12px; }
+.fbadge.rank { left: 8px; top: 8px; background: var(--chilli); font-size: 0.85rem; padding: 4px 10px; }
+.view-tabs { margin: 0 0 14px; }
+.view-tabs .chip { font-weight: 800; }

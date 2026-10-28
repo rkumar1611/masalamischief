@@ -22,9 +22,9 @@ everyone swipes yes or no and posts their link back. There's no server: the link
 | `assets/app.js` | Page rendering |
 | `assets/style.css` | Styles (light and dark mode) |
 | `functions/review.js` | Runs on Cloudflare: gives each review its own title, description and review text in the HTML, so WhatsApp previews and Google show the right film |
-| `films.html` | All films: the TMDB catalogue with search and filters |
+| `films.html` | Movies & series: the TMDB catalogue with search, filters and Top 50s |
 | `film.html?id=<lang>-<tmdb id>` | A catalogue film we haven't reviewed (reviewed ones forward to their review) |
-| `assets/catalog/` | The catalogue data, rebuilt every Sunday by `scripts/build-catalog.mjs` (`.github/workflows/weekly-catalog.yml`): 400 films per language |
+| `assets/catalog/` | The catalogue data, rebuilt every Sunday by `scripts/build-catalog.mjs` (`.github/workflows/weekly-catalog.yml`): 400 movies and 150 series per language (300 English series) |
 | `functions/film.js` | Runs on Cloudflare: per-film previews for catalogue pages |
 | `functions/sitemap.xml.js` | Runs on Cloudflare: `/sitemap.xml`, listing every review automatically |
 | `robots.txt` | Points search engines at the sitemap |
@@ -61,8 +61,8 @@ visitor's own browser. Nothing is sent to a server, and nothing is collected abo
 Visit counts come from Cloudflare Web Analytics (turned on in the Cloudflare dashboard): no cookies, no
 personal profiles, just anonymous page-view totals.
 
-After changing anything in `assets/`, bump the `?v=13` number on the `<link>`/`<script>` tags in every
-`.html` file (e.g. to `?v=14`), otherwise returning visitors may keep seeing the old cached version.
+After changing anything in `assets/`, bump the `?v=14` number on the `<link>`/`<script>` tags in every
+`.html` file (e.g. to `?v=15`), otherwise returning visitors may keep seeing the old cached version.
 
 The bundled reviews are starter copy in the house voice: rewrite them in your own words before
 launch, and check the `audio` (dubbed languages) for each film, since that varies by platform.
