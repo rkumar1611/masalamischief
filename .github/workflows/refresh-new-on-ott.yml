@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: refresh-new-on-ott
+  group: site-bot
   cancel-in-progress: false
 
 jobs:

@@ -1,0 +1,50 @@
+# Rebuilds the "All films" catalogue from TMDB once a week (scripts/build-catalog.mjs, TMDB_TOKEN secret).
+# Commits only if something changed; Cloudflare Pages publishes it as usual.
+# Run it by hand from GitHub → Actions → "Weekly catalogue" → Run workflow.
+name: Weekly catalogue
+
+on:
+  schedule:
+    - cron: "0 2 * * 0" # Sundays, 07:30 IST
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/build-catalog.mjs
+      - .github/workflows/weekly-catalog.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: site-bot
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build the catalogue
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+        run: node scripts/build-catalog.mjs
+
+      - name: Commit and push if it changed
+        run: |
+          git add -A assets/catalog
+          if git diff --cached --quiet; then
+            echo "Catalogue unchanged."
+            exit 0
+          fi
+          git config user.name "masala-mischief-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Weekly catalogue ($(date -u +%Y-%m-%d))"
+          git pull --rebase origin main
+          git push origin main
