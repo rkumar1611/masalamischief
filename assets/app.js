@@ -66,7 +66,8 @@ function renderChrome() {
       <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">🌶️</span>Masala <span>Mischief</span></a>
       <button class="theme-btn search-btn" id="search-btn" type="button" aria-label="Search movies and series" aria-expanded="false">🔍</button>
       <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch light or dark mode"></button>
-      <nav class="nav" aria-label="Main">${links}</nav>
+      <button class="theme-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="main-nav">☰</button>
+      <nav class="nav" id="main-nav" aria-label="Main">${links}</nav>
       <div class="site-search" id="site-search" hidden>
         <form id="site-search-form" role="search">
           <input type="search" id="site-q" placeholder="Search movies & series…" autocomplete="off" aria-label="Search movies and series">
@@ -120,6 +121,24 @@ function renderChrome() {
   });
   initSiteSearch();
   initTrailers();
+  initMenu();
+}
+
+// Phones: the main links sit behind a ☰ button and open as a two-column panel (CSS shows the button
+// only on narrow screens). Closes on Esc, a tap outside, or opening search.
+function initMenu() {
+  const btn = document.getElementById("menu-btn");
+  const nav = document.getElementById("main-nav");
+  const set = (open) => {
+    nav.classList.toggle("open", open);
+    btn.setAttribute("aria-expanded", open);
+    btn.textContent = open ? "✕" : "☰";
+    btn.setAttribute("aria-label", open ? "Close menu" : "Menu");
+  };
+  btn.addEventListener("click", () => set(!nav.classList.contains("open")));
+  document.getElementById("search-btn").addEventListener("click", () => set(false));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
+  document.addEventListener("click", (e) => { if (!e.target.closest("#main-nav, #menu-btn")) set(false); });
 }
 
 // Header search over our reviews and the whole catalogue. The catalogue loads on first use only.
