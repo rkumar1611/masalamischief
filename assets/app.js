@@ -104,7 +104,20 @@ function poster(m, big = false) {
       <span class="lang-pill">${langLabel(m.lang)} · ${m.year}</span>
       ${PARENT_NOTES[m.id] ? `<span class="age-pill" title="Family Pick">👪 ${PARENT_NOTES[m.id].age}+</span>` : ""}
       <span class="poster-icon" aria-hidden="true">${icon}</span>
-      <span class="poster-title">${esc(m.title)}</span>
+      <div class="poster-foot">
+        ${posterRating(m)}
+        <span class="poster-title">${esc(m.title)}</span>
+      </div>
+    </div>`;
+}
+
+// Score badges over the poster: our quality and Masala Meter, plus the visitor's own chillies if they rated it.
+function posterRating(m) {
+  const mine = store.get("ratings", {})[m.id];
+  return `<div class="poster-rating">
+      <span class="pr" title="Quality score">★ ${m.quality}<small>/10</small></span>
+      <span class="pr" title="Masala Meter">🌶️ ${m.masala}<small>/5</small></span>
+      ${mine ? `<span class="pr mine" title="Your Masala Meter">You 🌶️ ${mine}</span>` : ""}
     </div>`;
 }
 
@@ -347,6 +360,8 @@ function initReview() {
     const n = +b.dataset.n;
     const all = store.get("ratings", {});
     all[m.id] = n; store.set("ratings", all); paintRate(n);
+    const badges = root.querySelector(".poster.big .poster-rating");
+    if (badges) badges.outerHTML = posterRating(m);
   }));
   paintRate(ratings[m.id] || 0);
 
