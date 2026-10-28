@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Review admin · Masala Mischief</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
+  <link rel="stylesheet" href="assets/style.css?v=19">
+  <style>
+    .adm { max-width: 900px; margin: 32px auto; padding: 0 16px; }
+    .adm-login, .adm-row { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 10px 0; }
+    .adm-login input { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); width: min(320px, 100%); }
+    .adm-row.hidden { opacity: 0.6; border-style: dashed; }
+    .adm-row.pending { border-color: var(--turmeric); }
+    .adm-row .meta { font-size: 0.85rem; color: var(--ink-soft); }
+    .adm-row p { margin: 8px 0; white-space: pre-wrap; }
+    .adm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .adm-actions button { font: inherit; padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+    .adm-actions .danger { color: var(--chilli); }
+  </style>
+</head>
+<body>
+  <main class="adm">
+    <h1>🗣️ Audience review admin</h1>
+    <p class="muted">New reviews wait here until you approve them. Approve the good ones, delete spam or anything that breaks the community rules. Approved reviews with 3 reports are hidden again until you check them.</p>
+    <form class="adm-login" id="login">
+      <label for="pw"><strong>Admin password</strong></label><br>
+      <input type="password" id="pw" autocomplete="current-password">
+      <button class="btn primary" type="submit">Open</button>
+      <span class="small" id="login-msg"></span>
+    </form>
+    <div id="panel" hidden>
+      <div class="chips" id="filters">
+        <button class="chip" type="button" data-f="pending">⏳ Waiting for approval</button>
+        <button class="chip" type="button" data-f="reported">🚩 Reported</button>
+        <button class="chip" type="button" data-f="hidden">🙈 Hidden</button>
+        <button class="chip" type="button" data-f="all">All</button>
+      </div>
+      <p class="small muted" id="totals"></p>
+      <div id="rows"></div>
+    </div>
+  </main>
+  <script>
+    // Password is kept for this tab only (sessionStorage), never in the page.
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    let pw = "";
+    try { pw = sessionStorage.getItem("mm-admin") || ""; } catch {}
+    let filter = "pending";
+    const titleLink = (t) => t.startsWith("r:") ? `review.html?id=${encodeURIComponent(t.slice(2))}` : `film.html?id=${encodeURIComponent(t.slice(2))}`;
+
+    async function api(method, body) {
+      const res = await fetch(method === "GET" ? `/api/admin?filter=${filter}` : "/api/admin", {
+        method, headers: { authorization: `Bearer ${pw}`, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined,
+      });
+      return { status: res.status, data: await res.json().catch(() => ({})) };
+    }
+
+    async function load() {
+      const { status, data } = await api("GET");
+      if (status === 401) { $("panel").hidden = true; $("login").hidden = false; $("login-msg").textContent = "Wrong password."; return; }
+      if (status !== 200) { $("login-msg").textContent = data.error || "Reviews aren't switched on yet."; return; }
+      try { sessionStorage.setItem("mm-admin", pw); } catch {}
+      $("login").hidden = true; $("panel").hidden = false;
+      document.querySelectorAll("#filters [data-f]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.f === filter));
+      const t = data.totals || {};
+      $("totals").textContent = `${t.pending || 0} waiting · ${t.live || 0} live · ${t.reported || 0} reported · ${t.all_reviews || 0} in total`;
+      $("rows").innerHTML = data.reviews.map((r) => `
+        <div class="adm-row${!r.approved ? " pending" : r.hidden ? " hidden" : ""}">
+          <div class="meta"><a href="${titleLink(r.title)}" target="_blank">${esc(r.title)}</a> · <strong>${esc(r.name)}</strong>
+            ${r.masala ? ` · 🌶️ ${r.masala}/5` : ""}${r.score ? ` · ★ ${r.score}/10` : ""} · ${new Date(r.created).toLocaleString("en-IN")}
+            ${r.reports ? ` · 🚩 ${r.reports} report${r.reports > 1 ? "s" : ""}` : ""}${!r.approved ? " · ⏳ waiting" : r.hidden ? " · hidden" : " · live"}</div>
+          ${r.body ? `<p>${esc(r.body)}</p>` : ""}
+          <div class="adm-actions">
+            ${!r.approved || r.hidden ? `<button data-a="approve" data-id="${r.id}">✅ ${r.approved ? "Show again" : "Approve"}</button>` : `<button data-a="hide" data-id="${r.id}">Hide</button>`}
+            <button class="danger" data-a="delete" data-id="${r.id}">Delete</button>
+          </div>
+        </div>`).join("") || `<p class="muted">Nothing here. 🎉</p>`;
+    }
+
+    $("login").addEventListener("submit", (e) => { e.preventDefault(); pw = $("pw").value; load(); });
+    $("filters").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { filter = b.dataset.f; load(); } });
+    $("rows").addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-a]");
+      if (!b) return;
+      if (b.dataset.a === "delete" && !confirm("Delete this review for good?")) return;
+      await api("POST", { action: b.dataset.a, id: +b.dataset.id });
+      load();
+    });
+    if (pw) load();
+  </script>
+</body>
+</html>

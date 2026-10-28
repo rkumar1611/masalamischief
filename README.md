@@ -27,6 +27,9 @@ everyone swipes yes or no and posts their link back. There's no server: the link
 | `assets/catalog/` | The catalogue data, rebuilt every Sunday by `scripts/build-catalog.mjs` (`.github/workflows/weekly-catalog.yml`): 400 movies and 150 series per language (300 English series), plus 200 anime films and 300 anime series |
 | `functions/film.js` | Runs on Cloudflare: per-film previews for catalogue pages |
 | `functions/sitemap.xml.js` | Runs on Cloudflare: `/sitemap.xml`, listing every review automatically |
+| `functions/api/` + `lib/community.js` | Audience ratings and reviews (Cloudflare D1 + Turnstile). New reviews wait for approval at `/admin`; set `REVIEWS_AUTOPUBLISH=1` in Cloudflare to publish without approval |
+| `admin.html` | Private review admin (password = the `ADMIN_PASSWORD` setting in Cloudflare) |
+| `privacy.html` | Privacy note and community rules |
 | `robots.txt` | Points search engines at the sitemap |
 
 The `functions/` files read the same `assets/data.js`, so there's nothing extra to update when you add a

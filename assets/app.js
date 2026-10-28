@@ -83,6 +83,7 @@ function renderChrome() {
       <div class="footer-links">
         <a href="reviews.html">Reviews</a><a href="suggest.html">What should I watch?</a>
         <a href="family.html">Family Picks</a><a href="reviews.html?saved=1">My watchlist</a>
+        <a href="privacy.html">Privacy & community rules</a>
       </div>
       <p class="fine">🌶️ Masala Meter = entertainment · score out of 10 = craft. Streaming info from JustWatch India, checked ${fmtDate(WATCH_CHECKED)}; availability changes, so confirm in the app.<br>${Object.keys(IMAGES).length ? `Film images from <a href="https://www.themoviedb.org/" target="_blank" rel="noopener">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.<br>` : ""}© ${new Date().getFullYear()} Masala Mischief.</p>
     </div></footer>`);
@@ -455,6 +456,9 @@ function initReview() {
   }));
   paintRate(ratings[m.id] || 0);
 
+  root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
+  initCommunity(`r:${m.id}`, document.getElementById("community"), m.title);
+
   // Watchlist
   const save = document.getElementById("save");
   const paintSave = () => (save.textContent = inWatchlist(m.id) ? "✓ Saved" : "♡ Save for later");
@@ -803,6 +807,131 @@ function groupResults(el, deck, room, linkFor, redo) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/* ---------- Audience reviews (Cloudflare D1, see functions/api and lib/community.js) ----------
+   Visitors rate a title and write a short review; it shows once approved in /admin. Until the database
+   and Turnstile are set up in Cloudflare, the box just says reviews are coming. */
+let communityConfig;
+const getCommunityConfig = () => (communityConfig = communityConfig ||
+  fetch("/api/config").then((r) => (r.ok ? r.json() : { reviews: false })).catch(() => ({ reviews: false })));
+
+function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    s.async = true;
+    s.onload = () => resolve(window.turnstile);
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function initCommunity(titleKey, el, label) {
+  el.innerHTML = `<div class="section-head"><h2>🗣️ Audience reviews</h2></div><p class="muted">Loading…</p>`;
+  const cfg = await getCommunityConfig();
+  if (!cfg.reviews) {
+    el.innerHTML = `<div class="section-head"><h2>🗣️ Audience reviews</h2></div>
+      <p class="muted">Audience ratings and reviews are opening soon. Watch this space.</p>`;
+    return;
+  }
+  let masala = 0;
+  const ago = (t) => {
+    const d = (Date.now() - t) / 864e5;
+    return d < 1 ? "today" : d < 2 ? "yesterday" : d < 30 ? `${Math.floor(d)} days ago` : new Date(t).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  };
+
+  el.innerHTML = `
+    <div class="section-head"><h2>🗣️ Audience reviews</h2></div>
+    <div class="aud-summary" id="cm-summary"></div>
+    <form class="cm-form" id="cm-form" novalidate>
+      <h3>Your turn: what did you think of ${esc(label)}?</h3>
+      <div class="cm-row">
+        <span class="cm-label">Masala Meter</span>
+        <span class="cm-chillies" id="cm-masala" role="radiogroup" aria-label="Your Masala Meter">
+          ${[1, 2, 3, 4, 5].map((n) => `<button type="button" data-n="${n}" role="radio" aria-checked="false" aria-label="${n} out of 5">🌶️</button>`).join("")}
+        </span>
+      </div>
+      <div class="cm-row">
+        <label class="cm-label" for="cm-score">Score</label>
+        <select id="cm-score"><option value="">Out of 10…</option>${[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => `<option>${n}</option>`).join("")}</select>
+      </div>
+      <textarea id="cm-body" maxlength="1000" rows="4" placeholder="A few words: what worked, what didn't? (no spoilers, no links)"></textarea>
+      <div class="cm-row cm-bottom">
+        <input id="cm-name" type="text" maxlength="40" placeholder="Display name" autocomplete="nickname">
+        <label class="toggle"><input type="checkbox" id="cm-adult"> I'm 18 or over</label>
+      </div>
+      <div id="cm-ts"></div>
+      <div class="cm-row">
+        <button class="btn primary" type="submit" id="cm-submit">Post review</button>
+        <span class="small" id="cm-msg" role="status"></span>
+      </div>
+      <p class="fine">We read every review before it goes up (usually within a day), then it appears under your display name. Please follow our <a href="privacy.html#rules">community rules</a>. See how we handle your data in our <a href="privacy.html">privacy note</a>.</p>
+    </form>
+    <ol class="cm-list" id="cm-list"></ol>`;
+
+  const $ = (id) => el.querySelector(`#${id}`);
+  try { $("cm-name").value = store.get("reviewName", ""); } catch {}
+  const chillies = [...el.querySelectorAll("#cm-masala button")];
+  const paintChillies = () => chillies.forEach((b) => { const on = +b.dataset.n <= masala; b.classList.toggle("on", on); b.setAttribute("aria-checked", +b.dataset.n === masala); });
+  chillies.forEach((b) => b.addEventListener("click", () => { masala = masala === +b.dataset.n ? 0 : +b.dataset.n; paintChillies(); }));
+
+  let token = "";
+  let widget;
+  loadTurnstile().then((ts) => {
+    widget = ts.render($("cm-ts"), { sitekey: cfg.sitekey, theme: currentTheme(), callback: (t) => (token = t), "expired-callback": () => (token = "") });
+  }).catch(() => { $("cm-msg").textContent = "Couldn't load the spam check. Please refresh."; });
+
+  async function load() {
+    const res = await fetch(`/api/reviews?t=${encodeURIComponent(titleKey)}`).then((r) => r.json()).catch(() => null);
+    if (!res || !res.summary) { $("cm-summary").textContent = ""; return; }
+    const s = res.summary;
+    $("cm-summary").innerHTML = s.count
+      ? `<strong>Audience:</strong> ${s.masalaCount ? `🌶️ ${(+s.masala).toFixed(1)}<small>/5</small>` : ""}${s.masalaCount && s.scoreCount ? " · " : ""}${s.scoreCount ? `★ ${(+s.score).toFixed(1)}<small>/10</small>` : ""}
+         <span class="muted">from ${s.count} ${s.count === 1 ? "review" : "reviews"}</span>`
+      : `<span class="muted">No audience reviews yet. Be the first!</span>`;
+    $("cm-list").innerHTML = res.reviews.map((r) => `
+      <li>
+        <div class="cm-head"><strong>${esc(r.name)}</strong>
+          ${r.masala ? `<span class="pr-inline">🌶️ ${r.masala}/5</span>` : ""}${r.score ? `<span class="pr-inline">★ ${r.score}/10</span>` : ""}
+          <span class="muted small">${ago(r.created)}</span></div>
+        ${r.body ? `<p>${esc(r.body).replace(/\n/g, "<br>")}</p>` : ""}
+        <button class="cm-report" type="button" data-id="${r.id}">Report</button>
+      </li>`).join("");
+  }
+
+  $("cm-list").addEventListener("click", async (e) => {
+    const b = e.target.closest(".cm-report");
+    if (!b || b.disabled) return;
+    if (!confirm("Report this review as spam, abusive or a spoiler?")) return;
+    b.disabled = true;
+    await fetch("/api/reviews/report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: +b.dataset.id }) }).catch(() => {});
+    b.textContent = "Reported. Thanks!";
+  });
+
+  $("cm-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = $("cm-msg");
+    const payload = {
+      t: titleKey, name: $("cm-name").value, masala: masala || null, score: $("cm-score").value || null,
+      body: $("cm-body").value, adult: $("cm-adult").checked, token,
+    };
+    if (!payload.adult) { msg.textContent = "Please confirm you're 18 or over."; return; }
+    if (!token) { msg.textContent = "One moment, the spam check is still running…"; return; }
+    $("cm-submit").disabled = true;
+    msg.textContent = "Posting…";
+    const res = await fetch("/api/reviews", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) })
+      .then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) })).catch(() => ({ ok: false, error: "Network problem. Please try again." }));
+    $("cm-submit").disabled = false;
+    if (window.turnstile && widget !== undefined) { window.turnstile.reset(widget); token = ""; }
+    if (!res.ok) { msg.textContent = res.error || "Something went wrong."; return; }
+    store.set("reviewName", payload.name.trim());
+    msg.textContent = res.published ? "Thanks! Your review is up." : "Thanks! Your review will appear once we've checked it.";
+    $("cm-body").value = ""; $("cm-score").value = ""; masala = 0; paintChillies();
+    load();
+  });
+  load();
+}
+
 /* ---------- All films catalogue (TMDB, built weekly by scripts/build-catalog.mjs) ---------- */
 // "ja" holds anime only (Japanese animation), so it's shown as "Anime".
 const CAT_LANGS = {
@@ -1100,6 +1229,9 @@ async function initFilm() {
   document.getElementById("copy").onclick = async (e) => {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
   };
+
+  root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
+  initCommunity(`c:${code}-${rawId}`, document.getElementById("community"), f.t);
 
   const index = await loadIndex([f.l]);
   if (index) {

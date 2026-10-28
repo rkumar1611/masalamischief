@@ -540,3 +540,26 @@ body.gp-active .page-head h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 @media (max-width: 1100px) { .search-btn { order: 1; margin-left: auto; } .theme-btn:not(.search-btn) { margin-left: 0; } }
 .ott-crunchyroll { background: #f47521; color: #fff; }
 .lang-Anime { background: linear-gradient(135deg, #ff5f8f, #6b3df5); }
+
+/* Audience reviews */
+.community { margin-top: 44px; }
+.aud-summary { font-size: 1.1rem; margin: 0 0 14px; }
+.aud-summary small { opacity: 0.7; }
+.cm-form { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 12px; box-shadow: var(--shadow); }
+.cm-form h3 { margin: 0; }
+.cm-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.cm-label { font-weight: 700; min-width: 110px; }
+.cm-chillies button { font-size: 1.5rem; background: none; border: 0; cursor: pointer; filter: grayscale(1); opacity: 0.4; padding: 2px; transition: transform 0.1s; }
+.cm-chillies button.on { filter: none; opacity: 1; }
+.cm-chillies button:hover { transform: scale(1.15); }
+.cm-form select, .cm-form textarea, .cm-form input[type="text"] { font: inherit; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); }
+.cm-form textarea { width: 100%; resize: vertical; }
+.cm-form input[type="text"] { flex: 1 1 200px; }
+.cm-list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+.cm-list li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; }
+.cm-list p { margin: 8px 0 0; }
+.cm-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.pr-inline { font-weight: 700; font-size: 0.9rem; }
+.cm-report { background: none; border: 0; color: var(--ink-soft); font: inherit; font-size: 0.8rem; cursor: pointer; padding: 0; margin-top: 6px; text-decoration: underline; }
+.prose { max-width: 760px; }
+.prose li { margin-bottom: 8px; }
