@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=20">
+  <link rel="stylesheet" href="assets/style.css?v=21">
 </head>
 <body data-page="home">
   <div class="hero-band">
@@ -62,6 +62,11 @@
       <div class="moods" id="moods"></div>
     </section>
 
+    <section id="tonight-section">
+      <div class="section-head"><h2>🍿 Tonight's pick</h2><span class="muted small">A new one every day</span></div>
+      <div id="tonight"></div>
+    </section>
+
     <section id="saved-section" hidden>
       <div class="section-head"><h2>♡ Your watchlist</h2><a href="reviews.html?saved=1">See all →</a></div>
       <div class="grid" id="saved"></div>
@@ -72,9 +77,22 @@
       <div class="new-ott" id="new-ott"></div>
     </section>
 
+    <section id="trending-section" hidden>
+      <div class="section-head"><h2>🔥 Trending this week</h2><a href="films.html?s=new">More new releases →</a></div>
+      <div class="fgrid" id="trending"></div>
+    </section>
+
     <section>
       <div class="section-head"><h2>Latest reviews</h2><a href="reviews.html">See all →</a></div>
       <div class="grid" id="latest"></div>
+    </section>
+
+    <section id="audience-section" hidden>
+      <div class="section-head"><h2>🗣️ Audience favourites</h2><span class="muted small">Rated by visitors</span></div>
+      <div class="audience-home">
+        <div class="chart-box"><h3>⭐ Top rated by you</h3><ol id="aud-top"></ol></div>
+        <div class="aud-quotes" id="aud-latest"></div>
+      </div>
     </section>
 
     <section>
@@ -102,7 +120,7 @@
       </div>
     </section>
   </main>
-  <script src="assets/data.js?v=20"></script>
-  <script src="assets/app.js?v=20"></script>
+  <script src="assets/data.js?v=21"></script>
+  <script src="assets/app.js?v=21"></script>
 </body>
 </html>

@@ -32,6 +32,10 @@ const ANIME_TV = 300;
 const ANIMATION = "16";    // TMDB genre id, same for films and TV
 const OUT_LANGS = [...LANGS, ANIME];
 const WORKERS = 8;
+// "Trending this week" on the homepage: the most popular new films (last few months) per main language.
+const TREND_LANGS = ["hi", "ta", "te", "ml", "kn", "en"];
+const TREND_DAYS = 120;
+const TREND_PER_LANG = 4;
 
 // TMDB provider names (India) → our app names. Anything else is left out.
 const APP_RULES = [
@@ -145,15 +149,23 @@ async function details(picks, kind, append, toItem, keep = () => true) {
 async function main() {
   if (!TOKEN) { console.log("No TMDB_TOKEN set; skipping catalogue."); return; }
   const since = new Date(Date.now() - 2 * 365 * 864e5).toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+  const trendSince = new Date(Date.now() - TREND_DAYS * 864e5).toISOString().slice(0, 10);
 
   const moviePicks = [];
   const tvPicks = [];
+  const trendIds = {};
   for (const lang of LANGS) {
     const plan = PLAN[lang];
     const movieParams = plan.noAnimation ? { without_genres: ANIMATION } : {};
+    // Trending picks go first so the per-language cap never drops them.
+    const trend = TREND_LANGS.includes(lang)
+      ? (await discover("movie", lang, { ...movieParams, sort_by: "popularity.desc", "primary_release_date.gte": trendSince, "primary_release_date.lte": today, "vote_count.gte": 3 }, 1)).slice(0, TREND_PER_LANG + 2)
+      : [];
+    trendIds[lang] = trend;
     const recent = await discover("movie", lang, { ...movieParams, sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": lang === "en" ? 200 : 10 }, Math.ceil(RECENT / 20));
     const classic = await discover("movie", lang, { ...movieParams, sort_by: "vote_count.desc" }, Math.ceil(plan.movies / 20) + 2);
-    const ids = [...new Set([...recent.slice(0, RECENT), ...classic])].slice(0, plan.movies);
+    const ids = [...new Set([...trend, ...recent.slice(0, RECENT), ...classic])].slice(0, plan.movies);
     moviePicks.push(...ids.map((id) => [id, lang]));
 
     const tvTarget = plan.tv;
@@ -204,6 +216,14 @@ async function main() {
     writeFileSync(new URL(`${lang}.json`, OUT), JSON.stringify({ built, films: Object.fromEntries(mine.map((f) => [f.id, f])) }));
   }
   writeFileSync(new URL("manifest.json", OUT), JSON.stringify({ built, count: all.length, langs: counts }));
+
+  // trending.json: [{l, id}] taking turns between languages, only titles that made it into the catalogue.
+  const have = new Set(films.map((f) => `${f.l}-${f.id}`));
+  const perLang = TREND_LANGS.map((l) => (trendIds[l] || []).filter((id) => have.has(`${l}-${id}`)).slice(0, TREND_PER_LANG));
+  const trending = [];
+  for (let i = 0; i < TREND_PER_LANG; i++) perLang.forEach((ids, j) => ids[i] && trending.push({ l: TREND_LANGS[j], id: ids[i] }));
+  writeFileSync(new URL("trending.json", OUT), JSON.stringify({ built, items: trending }));
+  console.log(`Trending: ${trending.length} films.`);
   rmSync(new URL("index.json", OUT), { force: true }); // replaced by the per-language lists
   console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series, built ${built}.`, counts);
 }

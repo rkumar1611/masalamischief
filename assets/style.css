@@ -563,3 +563,21 @@ body.gp-active .page-head h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 .cm-report { background: none; border: 0; color: var(--ink-soft); font: inherit; font-size: 0.8rem; cursor: pointer; padding: 0; margin-top: 6px; text-decoration: underline; }
 .prose { max-width: 760px; }
 .prose li { margin-bottom: 8px; }
+
+/* Homepage: Tonight's pick, Trending, Audience favourites */
+.tonight { display: grid; grid-template-columns: minmax(240px, 320px) 1fr; gap: 24px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+.tonight .card { box-shadow: none; }
+.tonight-body { display: grid; gap: 10px; align-content: start; }
+.tonight-body h3 { font-family: var(--font-display); font-size: 1.8rem; margin: 0; line-height: 1.1; }
+.tonight-body p { margin: 0; }
+.tonight-body .cta-row { margin-top: 6px; }
+@media (max-width: 700px) { .tonight { grid-template-columns: 1fr; } }
+.audience-home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .audience-home { grid-template-columns: 1fr; } }
+.aud-val { text-align: right; font-weight: 800; white-space: nowrap; }
+.chart-box li .aud-val small { font-weight: 600; }
+.aud-quotes { display: grid; gap: 12px; }
+.aud-quote { display: grid; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; text-decoration: none; color: inherit; box-shadow: var(--shadow); }
+.aud-quote:hover { border-color: var(--saffron); }
+.aud-quote p { margin: 0; line-height: 1.5; }
+.aud-q-rating { display: flex; gap: 10px; align-items: center; }

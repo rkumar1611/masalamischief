@@ -300,6 +300,88 @@ function initHome() {
     document.getElementById("saved-section").hidden = false;
     document.getElementById("saved").innerHTML = saved.slice(0, 4).map((m) => card(m)).join("");
   }
+
+  renderTonight(featured);
+  renderTrending();
+  renderAudienceHome();
+}
+
+// Tonight's pick: one of our reviewed films that's streaming, the same for everyone all day (India time),
+// a different one tomorrow. Days walk through the list in a shuffled order so neighbours aren't alike.
+function renderTonight(featured) {
+  const el = document.getElementById("tonight");
+  const pool = MOVIES.filter((m) => m.id !== featured.id && streamsOn(m).length).sort((a, b) => a.id.localeCompare(b.id));
+  if (!el || !pool.length) { document.getElementById("tonight-section").hidden = true; return; }
+  const day = Math.floor((Date.now() + 5.5 * 36e5) / 864e5);
+  const m = pool[(day * 37) % pool.length];
+  const mood = moodById(m.moods[0]);
+  el.innerHTML = `
+    <div class="tonight">
+      ${card(m)}
+      <div class="tonight-body">
+        ${mood ? `<p class="eyebrow">${mood.emoji} Perfect for: ${esc(mood.label)}</p>` : ""}
+        <h3>${esc(m.title)}</h3>
+        <p class="muted">${esc(langLabel(m.lang))} · ${m.year} · ${fmtRuntime(m.runtime)} · ${esc(m.genres.join(", "))}</p>
+        <div class="card-meta">${meter(m.masala)}${score(m.quality)}</div>
+        <p class="muted small">Watch it now:</p>
+        ${platformLinks(m, streamsOn(m))}
+        <div class="cta-row">
+          <a class="btn primary" href="review.html?id=${encodeURIComponent(m.id)}">Read our review</a>
+          ${mood ? `<a class="btn" href="suggest.html?mood=${mood.id}">Not feeling it? More ${esc(mood.label.toLowerCase())} picks</a>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+// Trending this week: popular new releases per language, from the weekly catalogue build (trending.json).
+async function renderTrending() {
+  const data = await loadCatalog("trending");
+  if (!data || !data.items || !data.items.length) return;
+  const langs = [...new Set(data.items.map((x) => x.l))];
+  const index = await loadIndex(langs);
+  const byKey = Object.fromEntries(index.films.map((f) => [`${f.l}-${f.id}`, f]));
+  const byTmdb = reviewedByTmdb();
+  const films = data.items.map((x) => byKey[`${x.l}-${x.id}`]).filter(Boolean).slice(0, 12).map((f) => ({ ...f, mine: byTmdb[f.id] }));
+  if (!films.length) return;
+  document.getElementById("trending").innerHTML = films.map((f) => filmCard(f)).join("");
+  document.getElementById("trending-section").hidden = false;
+}
+
+// Audience favourites: what visitors rated best, plus a few recent written reviews. Hidden until there
+// are approved reviews (or if reviews aren't switched on).
+async function renderAudienceHome() {
+  let data;
+  try {
+    const res = await fetch("/api/reviews/top");
+    if (!res.ok) return;
+    data = await res.json();
+  } catch { return; }
+  if (!data.top || !data.top.length) return;
+  // Titles are "r:<our id>" or "c:<lang>-<tmdb id>"; look the catalogue ones up in their language list.
+  const codes = [...new Set([...data.top, ...data.latest].map((r) => r.title).filter((t) => t.startsWith("c:")).map((t) => t.slice(2).split("-")[0]))];
+  const index = codes.length ? await loadIndex(codes) : { films: [] };
+  const byKey = Object.fromEntries(index.films.map((f) => [`${f.l}-${f.id}`, f]));
+  const resolve = (t) => {
+    if (t.startsWith("r:")) {
+      const m = movieById(t.slice(2));
+      return m && { name: m.title, sub: `${langLabel(m.lang)} · ${m.year}`, href: `review.html?id=${encodeURIComponent(m.id)}` };
+    }
+    const key = t.slice(2);
+    const f = byKey[key];
+    return f && { name: f.t, sub: `${langLabel(CAT_LANGS[f.l])}${yearsOf(f) ? ` · ${yearsOf(f)}` : ""}`, href: `film.html?id=${key}` };
+  };
+  const top = data.top.map((r) => ({ ...r, film: resolve(r.title) })).filter((r) => r.film).slice(0, 5);
+  if (!top.length) return;
+  const audVal = (r) => `<span class="aud-val">${r.score != null ? `★ ${(+r.score).toFixed(1)}` : `🌶️ ${(+r.masala).toFixed(1)}`}<small>${r.count} review${r.count === 1 ? "" : "s"}</small></span>`;
+  document.getElementById("aud-top").innerHTML = top.map((r, i) =>
+    `<li><a href="${r.film.href}"><b>${i + 1}</b><span>${esc(r.film.name)}<small>${esc(r.film.sub)}</small></span>${audVal(r)}</a></li>`).join("");
+  document.getElementById("aud-latest").innerHTML = data.latest.map((r) => ({ ...r, film: resolve(r.title) })).filter((r) => r.film).map((r) => `
+    <a class="aud-quote" href="${r.film.href}">
+      <span class="muted small">${esc(r.name)} on <strong>${esc(r.film.name)}</strong></span>
+      <span class="aud-q-rating">${r.masala ? meter(r.masala, "Visitor's Masala Meter") : ""}${r.score ? `<span class="pr-inline">★ ${r.score}/10</span>` : ""}</span>
+      <p>${esc(r.body.length > 180 ? r.body.slice(0, 180).replace(/\s+\S*$/, "") + "…" : r.body)}</p>
+    </a>`).join("");
+  document.getElementById("audience-section").hidden = false;
 }
 
 /* ---------- Reviews list ---------- */
