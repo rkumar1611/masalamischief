@@ -2,6 +2,7 @@
 #   1. "New on OTT this week" strip from JustWatch India (scripts/refresh-new-on-ott.mjs)
 #   2. TMDB posters and stills for any film that doesn't have them yet (scripts/fetch-images.mjs,
 #      uses the TMDB_TOKEN repository secret)
+#   3. Checks the live site matches main, and asks Cloudflare to rebuild if not (CF_DEPLOY_HOOK secret)
 # If anything changed, it commits to main, and Cloudflare Pages publishes it as usual.
 # Run it by hand from GitHub → Actions → "Daily site update" → Run workflow.
 name: Daily site update
@@ -26,7 +27,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -59,9 +60,29 @@ jobs:
           git pull --rebase origin main
           git push origin main
 
+      # Make sure the live site is serving what's on main. If Cloudflare didn't publish (a failed build,
+      # or an older deployment was rolled back to), ask it to rebuild via the CF_DEPLOY_HOOK secret.
+      - name: Check the live site is up to date
+        id: live
+        continue-on-error: true
+        env:
+          CF_DEPLOY_HOOK: ${{ secrets.CF_DEPLOY_HOOK }}
+        run: |
+          want=$(grep -o 'data\.js?v=[0-9]*' index.html | head -1)
+          live() { curl -fsSL "https://masalamischief.in/?check=$(date +%s)" | grep -o 'data\.js?v=[0-9]*' | head -1; }
+          wait_for() { for i in $(seq 1 $1); do [ "$(live)" = "$want" ] && return 0; sleep 30; done; return 1; }
+          echo "Expecting $want"
+          if wait_for 10; then echo "Live site is up to date."; exit 0; fi
+          echo "Live site shows $(live). Asking Cloudflare to rebuild."
+          if [ -z "$CF_DEPLOY_HOOK" ]; then echo "No CF_DEPLOY_HOOK secret set."; exit 1; fi
+          curl -fsS -X POST "$CF_DEPLOY_HOOK" > /dev/null
+          if wait_for 16; then echo "Rebuilt and live."; exit 0; fi
+          echo "Still not live after a rebuild. Check Cloudflare → Workers & Pages → masalamischief → Deployments."
+          exit 1
+
       # Still publish what worked, but mark the run failed (GitHub emails you) if a step broke.
       - name: Report failures
-        if: steps.ott.outcome == 'failure' || steps.images.outcome == 'failure'
+        if: steps.ott.outcome == 'failure' || steps.images.outcome == 'failure' || steps.live.outcome == 'failure'
         run: |
-          echo "New on OTT: ${{ steps.ott.outcome }} · Images: ${{ steps.images.outcome }}"
+          echo "New on OTT: ${{ steps.ott.outcome }} · Images: ${{ steps.images.outcome }} · Live check: ${{ steps.live.outcome }}"
           exit 1
