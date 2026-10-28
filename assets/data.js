@@ -516,6 +516,163 @@ const WATCH = {
   "toy-story": { stream: ["JioHotstar"], rent: [] },
 };
 
+// Direct links to each film's page on the streaming app (from JustWatch India, WATCH_CHECKED).
+// A platform missing here falls back to that app's home page (PLATFORM_HOME).
+const WATCH_LINKS = {
+  "96": {
+    "SonyLIV": "https://www.sonyliv.com/movies/96-1000226530",
+    "Sun NXT": "https://www.sunnxt.com/movie/detail/82850/96/",
+    "ManoramaMAX": "https://www.manoramamax.com/movies/detail/122669/96",
+    "aha": "https://www.aha.video/movie/96",
+  },
+  "kumbalangi-nights": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.38b5da38-ea46-47e8-ea73-c0f4e94b9361",
+    "Apple TV": "https://tv.apple.com/in/movie/kumbalangi-nights/umc.cmc.20vhsjekfkfdrzz5prtz2skny",
+  },
+  "rrr": {
+    "Netflix": "https://www.netflix.com/title/81476453",
+    "ZEE5": "https://www.zee5.com/movies/details/watch-rrr-tamil-full-hd-movie-online-on-zee5/0-0-1z5148987",
+  },
+  "super-deluxe": {
+    "aha": "https://www.aha.video/movie/super-deluxe",
+    "Apple TV": "https://tv.apple.com/in/movie/super-deluxe/umc.cmc.6qxav1nz493jwj7bfrpit16um",
+  },
+  "andhadhun": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.2213bd17-7a0c-476e-88b6-3cd250672c64",
+    "JioHotstar": "https://www.hotstar.com/in/movies/andhadhun/1271615661",
+    "Apple TV": "https://tv.apple.com/in/movie/andhadhun/umc.cmc.4j7zw48zujb15dd0ljho1kan8",
+  },
+  "queen": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.c4490d27-27c1-4b0f-8031-ea8e1a3f9b5b",
+    "Apple TV": "https://tv.apple.com/in/movie/queen/umc.cmc.6llfe33ltrg6mczd2u7k5eakd",
+  },
+  "drishyam": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/drishyam/1000051783",
+  },
+  "vikram-vedha": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/vikram-vedha/1000216088",
+    "ZEE5": "https://www.zee5.com/movies/details/watch-vikram-vedha-2017-full-hd-movie-online-on-zee5/0-0-movie_1460826290",
+    "ManoramaMAX": "https://www.manoramamax.com/movies/detail/122647/vikram-vedha",
+  },
+  "premam": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/premam/1000091195",
+  },
+  "baahubali": {
+    "Netflix": "https://www.netflix.com/title/82031153",
+    "JioHotstar": "https://www.hotstar.com/in/movies/baahubali-the-beginning/1000074338",
+    "SonyLIV": "https://www.sonyliv.com/movies/bahubali-the-beginning-1000228346",
+    "Apple TV": "https://tv.apple.com/in/movie/bahubali-the-beginning/umc.cmc.51jt4tgusgwvkqo8oocmhn9a8",
+  },
+  "kantara": {
+    "Netflix": "https://www.netflix.com/title/81656709",
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.63d1b1bd-3a4f-4f26-bb67-a82454b11929",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.63d1b1bd-3a4f-4f26-bb67-a82454b11929",
+  },
+  "znmd": {
+    "Netflix": "https://www.netflix.com/title/70202336",
+  },
+  "jersey": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/jersey/1260133585",
+    "ZEE5": "https://www.zee5.com/movies/details/watch-jersey-full-hd-movie-online-on-zee5/0-0-59341",
+    "Sun NXT": "https://www.sunnxt.com/movie/detail/123851/jersey-(malayalam)/",
+  },
+  "stree": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.ce2e5edc-eea2-44ed-a195-86e4aa7a3a22",
+    "JioHotstar": "https://www.hotstar.com/in/movies/stree/1000223587",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.ce2e5edc-eea2-44ed-a195-86e4aa7a3a22",
+  },
+  "bangalore-days": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.9047306b-9fb6-457b-afd6-528c8b8c616d",
+    "JioHotstar": "https://www.hotstar.com/in/movies/bangalore-days/1000081352",
+  },
+  "avengers-endgame": {
+    "JioHotstar": "https://www.hotstar.com/in/1260013556",
+  },
+  "interstellar": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.e265dfdf-4ad6-41b9-9123-deb70d7b5bf3",
+    "JioHotstar": "https://www.hotstar.com/in/1971000531",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.e265dfdf-4ad6-41b9-9123-deb70d7b5bf3",
+    "Apple TV": "https://tv.apple.com/in/movie/interstellar/umc.cmc.1vrwat5k1ucm5k42q97ioqyq3",
+  },
+  "inception": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.04a9f72c-f9c8-c4d1-f97b-6d7ad986a51f",
+    "JioHotstar": "https://www.hotstar.com/in/1971000530",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.04a9f72c-f9c8-c4d1-f97b-6d7ad986a51f",
+    "Apple TV": "https://tv.apple.com/in/movie/inception/umc.cmc.6loas01ow0w4lkatxxloz7a6e",
+  },
+  "jurassic-park": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.7ea9f6d9-bdc8-9b2e-97a9-c341306e36ef",
+    "JioHotstar": "https://www.hotstar.com/in/1971000492",
+    "ZEE5": "https://www.zee5.com/movies/details/jurassic-park/0-0-1z5448695",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.7ea9f6d9-bdc8-9b2e-97a9-c341306e36ef",
+    "Apple TV": "https://tv.apple.com/in/movie/jurassic-park/umc.cmc.3bp8rj8ab9otj4ug279xhib2f",
+  },
+  "titanic": {
+    "JioHotstar": "https://www.hotstar.com/in/1770001166",
+  },
+  "la-la-land": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.a2b315ef-feed-47dd-9fd2-41e50afbb891",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.a2b315ef-feed-47dd-9fd2-41e50afbb891",
+    "Apple TV": "https://tv.apple.com/in/movie/la-la-land/umc.cmc.2ls5rdvvy1t038my1urkcjt94",
+  },
+  "across-the-spider-verse": {
+    "ZEE5": "https://www.zee5.com/movies/details/spider-man-across-the-spider-verse/0-0-1z5407501",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.7a5ee336-1492-4170-bc14-94a83749b0d3",
+    "Apple TV": "https://tv.apple.com/in/movie/spider-man-across-the-spider-verse/umc.cmc.2zphwshxw2ejh2znevhod0u01",
+  },
+  "knives-out": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.bd5bb5ac-9dfe-4bf3-9987-02e2ef5dc117",
+    "Lionsgate Play": "https://lionsgateplay.com/en/movies/knives-out/125930536013",
+    "Apple TV": "https://tv.apple.com/in/movie/knives-out/umc.cmc.21f7rjslttoalzd6o9c6cg5ml",
+  },
+  "mad-max-fury-road": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.0c9da1a1-af0f-41d7-be82-0bb2fd6e7f32",
+    "JioHotstar": "https://www.hotstar.com/in/1971000538",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.0c9da1a1-af0f-41d7-be82-0bb2fd6e7f32",
+    "Apple TV": "https://tv.apple.com/in/movie/mad-max-fury-road/umc.cmc.6xerenwn1999cjd2y6421r2ex",
+  },
+  "chillar-party": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.08f4f64b-07bd-4594-8575-0ab91d7d893e",
+    "JioHotstar": "https://www.hotstar.com/in/movies/chillar-party/1271701682",
+  },
+  "stanley-ka-dabba": {
+    "Apple TV": "https://tv.apple.com/in/movie/stanley-ka-dabba/umc.cmc.5b8j1z7lh8osr80rbo69diwzf",
+  },
+  "koi-mil-gaya": {
+    "ZEE5": "https://www.zee5.com/movies/details/watch-koi-mil-gaya-2003-full-hd-hindi-movie-online-on-zee5/0-0-275862",
+  },
+  "iqbal": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.04f3306a-08e2-41fa-b3a4-26250ed82b57",
+    "ZEE5": "https://www.zee5.com/movies/details/watch-iqbal-full-hd-movie-online-on-zee5/0-0-2383",
+    "MX Player": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.04f3306a-08e2-41fa-b3a4-26250ed82b57",
+  },
+  "paddington-2": {
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.75b4e007-61a3-4d28-be85-393bc17a2d8e",
+    "Apple TV": "https://tv.apple.com/in/movie/paddington-2/umc.cmc.6uanyirozllokd56zsopx7no1",
+  },
+  "coco": {
+    "JioHotstar": "https://www.hotstar.com/in/1660010633",
+  },
+  "toy-story": {
+    "JioHotstar": "https://www.hotstar.com/in/1660010197",
+  },
+};
+
+const PLATFORM_HOME = {
+  "Netflix": "https://www.netflix.com/in/",
+  "Prime Video": "https://www.primevideo.com/",
+  "JioHotstar": "https://www.hotstar.com/in",
+  "ZEE5": "https://www.zee5.com/",
+  "SonyLIV": "https://www.sonyliv.com/",
+  "Sun NXT": "https://www.sunnxt.com/",
+  "aha": "https://www.aha.video/",
+  "ManoramaMAX": "https://www.manoramamax.com/",
+  "Lionsgate Play": "https://lionsgateplay.com/",
+  "MX Player": "https://www.mxplayer.in/",
+  "Apple TV": "https://tv.apple.com/in",
+  "Amazon": "https://www.primevideo.com/",
+};
+
 // The OTT apps people can tick on the Suggest page.
 const PLATFORMS = ["Netflix", "Prime Video", "JioHotstar", "ZEE5", "SonyLIV", "Sun NXT", "aha", "ManoramaMAX"];
 

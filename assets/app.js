@@ -114,6 +114,18 @@ function platformChips(list, max = 3) {
   return `<div class="otts">${shown}${list.length > max ? `<span class="ott more">+${list.length - max}</span>` : ""}</div>`;
 }
 
+// Like platformChips, but each chip opens the film on that app (used where we're not inside a card link).
+function platformLinks(m, list) {
+  if (!list.length) return "";
+  const links = WATCH_LINKS[m.id] || {};
+  return `<div class="otts">${list.map((p) => {
+    const url = links[p] || PLATFORM_HOME[p];
+    return url
+      ? `<a class="ott ott-${slug(p)}" href="${esc(url)}" target="_blank" rel="noopener" title="Watch ${esc(m.title)} on ${esc(p)}">${p} ↗</a>`
+      : `<span class="ott ott-${slug(p)}">${p}</span>`;
+  }).join("")}</div>`;
+}
+
 function card(m, extra = "") {
   return `
     <a class="card" href="review.html?id=${encodeURIComponent(m.id)}">
@@ -251,7 +263,6 @@ function initReview() {
   const pageUrl = location.href;
   const watch = WATCH[m.id] || { stream: [], rent: [] };
   const notes = PARENT_NOTES[m.id];
-  const jw = `https://www.justwatch.com/in/search?q=${encodeURIComponent(m.title)}`;
 
   root.innerHTML = `
     ${poster(m, true)}
@@ -262,7 +273,7 @@ function initReview() {
           <div><div class="label">Masala Meter</div>${meter(m.masala)}</div>
           <div><div class="label">Quality</div><span class="num">${m.quality}</span><span class="muted">/10</span></div>
         </div>
-        ${watch.stream.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${platformChips(watch.stream, 9)}</div>` : ""}
+        ${watch.stream.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${platformLinks(m, watch.stream)}</div>` : ""}
         ${m.review.map((p) => `<p>${esc(p)}</p>`).join("")}
         <div class="hm">
           <div class="hits"><h3>Full masala</h3><ul>${m.hits.map((h) => `<li>${esc(h)}</li>`).join("")}</ul></div>
@@ -295,11 +306,10 @@ function initReview() {
         <div class="side panel-watch">
           <h3>📺 Where to watch</h3>
           ${watch.stream.length
-            ? `<p class="muted small">Included with subscription</p>${platformChips(watch.stream, 9)}`
+            ? `<p class="muted small">Included with subscription · tap to open</p>${platformLinks(m, watch.stream)}`
             : `<p class="muted small">Not on a subscription service in India right now.</p>`}
-          ${watch.rent.length ? `<p class="muted small" style="margin-top:12px">Rent or buy</p>${platformChips(watch.rent, 9)}` : ""}
-          <a class="jw" href="${jw}" target="_blank" rel="noopener">Check live availability on JustWatch →</a>
-          <p class="fine">Checked ${fmtDate(WATCH_CHECKED)}.</p>
+          ${watch.rent.length ? `<p class="muted small" style="margin-top:12px">Rent or buy</p>${platformLinks(m, watch.rent)}` : ""}
+          <p class="fine">Checked ${fmtDate(WATCH_CHECKED)}. Availability changes, so confirm in the app.</p>
         </div>
         <div class="side">
           <dl>

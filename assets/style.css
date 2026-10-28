@@ -247,6 +247,8 @@ section { margin-top: 44px; }
   font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 6px; letter-spacing: 0.01em;
   background: var(--surface-2); color: var(--ink); white-space: nowrap;
 }
+a.ott { text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
+a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); }
 .ott-netflix { background: #e50914; color: #fff; }
 .ott-prime-video { background: #00a8e1; color: #00131c; }
 .ott-jiohotstar { background: #0f1e64; color: #fff; }
