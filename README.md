@@ -19,6 +19,12 @@ visitor ratings and watchlist, and Family Picks (`family.html`) with parent note
 | `assets/data.js` | **All films, reviews and moods. Edit this to add reviews.** |
 | `assets/app.js` | Page rendering |
 | `assets/style.css` | Styles (light and dark mode) |
+| `functions/review.js` | Runs on Cloudflare: gives each review its own title, description and review text in the HTML, so WhatsApp previews and Google show the right film |
+| `functions/sitemap.xml.js` | Runs on Cloudflare: `/sitemap.xml`, listing every review automatically |
+| `robots.txt` | Points search engines at the sitemap |
+
+The `functions/` files read the same `assets/data.js`, so there's nothing extra to update when you add a
+review. They only run on Cloudflare; opening the site locally works as before.
 
 ## Run it locally
 
