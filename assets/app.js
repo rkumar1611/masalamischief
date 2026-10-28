@@ -3,6 +3,7 @@
 const NAV = [
   { href: "index.html", label: "Home", page: "home" },
   { href: "reviews.html", label: "Reviews", page: "reviews" },
+  { href: "films.html", label: "All films", page: "films" },
   { href: "suggest.html", label: "What should I watch?", page: "suggest" },
   { href: "family.html", label: "Family Picks", page: "family" },
   { href: "group.html", label: "Group Pick", page: "group" },
@@ -688,5 +689,214 @@ function groupResults(el, deck, room, linkFor, redo) {
   el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+/* ---------- All films catalogue (TMDB, built weekly by scripts/build-catalog.mjs) ---------- */
+const CAT_LANGS = { hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", en: "English" };
+const LANG_CODE = Object.fromEntries(Object.entries(CAT_LANGS).map(([c, l]) => [l, c]));
+
+// Catalogue films only know which app has them, not the exact page, so we open the app's search.
+const APP_SEARCH = {
+  "Netflix": "https://www.netflix.com/search?q=",
+  "Prime Video": "https://www.primevideo.com/search/ref=atv_nb_sug?ie=UTF8&phrase=",
+  "JioHotstar": "https://www.hotstar.com/in/explore?search_query=",
+  "ZEE5": "https://www.zee5.com/search?q=",
+  "aha": "https://www.aha.video/search?q=",
+  "SonyLIV": "https://www.sonyliv.com/search",
+};
+const appSearchUrl = (app, title) =>
+  APP_SEARCH[app] ? (APP_SEARCH[app].endsWith("=") ? APP_SEARCH[app] + encodeURIComponent(title) : APP_SEARCH[app]) : PLATFORM_HOME[app];
+
+const catCache = {};
+function loadCatalog(name) {
+  if (!catCache[name]) {
+    catCache[name] = fetch(`assets/catalog/${name}.json`, { cache: "no-cache" })
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  }
+  return catCache[name];
+}
+
+// Our reviewed films, keyed by TMDB id (from IMAGES), so the catalogue can link to the review instead.
+function reviewedByTmdb() {
+  const map = {};
+  MOVIES.forEach((m) => { if (IMAGES[m.id] && IMAGES[m.id].tmdb) map[IMAGES[m.id].tmdb] = m; });
+  return map;
+}
+const filmHref = (f) => (f.mine ? `review.html?id=${encodeURIComponent(f.mine.id)}` : `film.html?id=${f.l}-${f.id}`);
+
+function filmCard(f) {
+  const m = f.mine;
+  return `
+    <a class="fcard" href="${filmHref(f)}">
+      <div class="fposter">
+        ${f.p ? `<img src="${tmdb(f.p, "w342")}" alt="" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
+        ${m ? `<span class="fbadge mine" title="Reviewed by Masala Mischief">🌶️ ${m.masala}/5</span>` : ""}
+        <span class="fbadge score" title="${m ? "Our score" : "TMDB rating"}">★ ${m ? m.quality : f.v}</span>
+      </div>
+      <div class="fbody">
+        <strong>${esc(f.t)}</strong>
+        <span class="muted small">${esc(langLabel(CAT_LANGS[f.l] || ""))}${f.y ? ` · ${f.y}` : ""}</span>
+        ${f.w && f.w.length ? `<span class="fapps">${f.w.slice(0, 2).map((a) => `<span class="ott ott-${slug(a)}">${esc(a)}</span>`).join("")}${f.w.length > 2 ? `<span class="ott more">+${f.w.length - 2}</span>` : ""}</span>` : ""}
+      </div>
+    </a>`;
+}
+
+async function initFilms() {
+  const $ = (id) => document.getElementById(id);
+  const cat = await loadCatalog("index");
+  const byTmdb = reviewedByTmdb();
+  const list = cat ? cat.films.map((f) => ({ ...f, mine: byTmdb[f.id] })) : [];
+  // Make sure every reviewed film is in the list, even if TMDB's top lists missed it.
+  const have = new Set(list.map((f) => f.id));
+  MOVIES.forEach((m) => {
+    const img = IMAGES[m.id] || {};
+    if (img.tmdb && have.has(img.tmdb)) return;
+    list.push({ id: img.tmdb || m.id, l: LANG_CODE[m.lang], t: m.title, y: m.year, g: m.genres, r: m.runtime,
+      v: m.quality, n: 0, p: img.poster, w: streamsOn(m), c: PARENT_NOTES[m.id] && PARENT_NOTES[m.id].age <= 6 ? "U" : "", mine: m });
+  });
+  if (!cat) $("films-lead").textContent = "The full catalogue is being prepared. Meanwhile, here are all the films we've reviewed.";
+
+  const params = new URLSearchParams(location.search);
+  const state = {
+    q: params.get("q") || "", l: params.get("l") || "", g: params.get("g") || "", a: params.get("a") || "",
+    s: params.get("s") || "popular", r: params.get("r") === "1" || !cat, k: params.get("k") === "1", w: params.get("w") === "1",
+  };
+  const count = (arr) => arr.reduce((o, x) => ((o[x] = (o[x] || 0) + 1), o), {});
+  $("fl").insertAdjacentHTML("beforeend", Object.entries(CAT_LANGS).map(([c, l]) => `<option value="${c}">${esc(langLabel(l))}</option>`).join(""));
+  const genres = Object.entries(count(list.flatMap((f) => f.g || []))).sort((a, b) => b[1] - a[1]).map(([g]) => g);
+  $("fg").insertAdjacentHTML("beforeend", genres.map((g) => `<option>${esc(g)}</option>`).join(""));
+  const apps = Object.entries(count(list.flatMap((f) => f.w || []))).sort((a, b) => b[1] - a[1]).map(([a]) => a);
+  $("fa").insertAdjacentHTML("beforeend", apps.map((a) => `<option>${esc(a)}</option>`).join(""));
+  $("fq").value = state.q; $("fl").value = state.l; $("fg").value = state.g; $("fa").value = state.a; $("fs").value = state.s;
+  $("fr").checked = state.r; $("fk").checked = state.k; $("fw").checked = state.w;
+
+  const PAGE = 60;
+  let shown = PAGE;
+  let results = [];
+  const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const sorters = {
+    popular: (a, b) => (b.mine ? 1e9 : b.n) - (a.mine ? 1e9 : a.n),
+    rating: (a, b) => (b.mine ? b.mine.quality : b.v) - (a.mine ? a.mine.quality : a.v) || b.n - a.n,
+    new: (a, b) => (b.y || 0) - (a.y || 0) || b.n - a.n,
+    old: (a, b) => (a.y || 9999) - (b.y || 9999) || b.n - a.n,
+  };
+  const paint = () => {
+    $("fgrid").innerHTML = results.slice(0, shown).map(filmCard).join("") || `<div class="empty">No films match. Try fewer filters.</div>`;
+    $("fmore").hidden = shown >= results.length;
+  };
+  const apply = () => {
+    const q = norm(state.q.trim());
+    results = list.filter((f) =>
+      (!q || norm(f.t).includes(q) || norm(f.o).includes(q)) &&
+      (!state.l || f.l === state.l) &&
+      (!state.g || (f.g || []).includes(state.g)) &&
+      (!state.a || (f.w || []).includes(state.a)) &&
+      (!state.r || f.mine) &&
+      (!state.k || f.c === "U") &&
+      (!state.w || (f.w && f.w.length))
+    ).sort(sorters[state.s] || sorters.popular);
+    shown = PAGE;
+    $("fcount").textContent = `${results.length.toLocaleString("en-IN")} film${results.length === 1 ? "" : "s"}`;
+    paint();
+    try {
+      const p = new URLSearchParams();
+      ["q", "l", "g", "a"].forEach((k) => state[k] && p.set(k, state[k]));
+      if (state.s !== "popular") p.set("s", state.s);
+      ["r", "k", "w"].forEach((k) => state[k] && p.set(k, "1"));
+      history.replaceState(null, "", `${location.pathname}${p.toString() ? "?" + p : ""}`);
+    } catch {}
+  };
+  let t;
+  $("fq").addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => { state.q = $("fq").value; apply(); }, 150); });
+  [["fl", "l"], ["fg", "g"], ["fa", "a"], ["fs", "s"]].forEach(([id, k]) => $(id).addEventListener("change", () => { state[k] = $(id).value; apply(); }));
+  [["fr", "r"], ["fk", "k"], ["fw", "w"]].forEach(([id, k]) => $(id).addEventListener("change", () => { state[k] = $(id).checked; apply(); }));
+  $("fmore").addEventListener("click", () => { shown += PAGE; paint(); });
+  apply();
+}
+
+async function initFilm() {
+  const root = document.getElementById("film");
+  const [code, rawId] = (new URLSearchParams(location.search).get("id") || "").split("-");
+  const id = +rawId;
+  const mine = reviewedByTmdb()[id];
+  if (mine) { location.replace(`review.html?id=${encodeURIComponent(mine.id)}`); return; }
+  const data = CAT_LANGS[code] && id ? await loadCatalog(code) : null;
+  const f = data && data.films[id];
+  if (!f) {
+    root.innerHTML = `<div class="empty">We couldn't find that film. <a href="films.html">Browse all films</a>.</div>`;
+    return;
+  }
+  const lang = langLabel(CAT_LANGS[f.l]);
+  document.title = `${f.t} (${f.y || ""}) · where to watch · Masala Mischief`;
+  const pageUrl = location.href;
+  const shareText = `${f.t}${f.y ? ` (${f.y})` : ""}: ${f.w.length ? `streaming on ${f.w.join(", ")}` : "where to watch it"} · via Masala Mischief`;
+  root.innerHTML = `
+    <div class="poster big lang-${CAT_LANGS[f.l]}${f.b ? " has-img" : ""}">
+      ${f.b ? `<img class="poster-img" src="${tmdb(f.b, "w1280")}" alt="" decoding="async">` : ""}
+      <span class="lang-pill">${esc(lang)}${f.y ? ` · ${f.y}` : ""}</span>
+      ${f.c ? `<span class="age-pill" title="Indian certificate">${esc(f.c)}</span>` : ""}
+      <div class="poster-foot">
+        <div class="poster-rating"><span class="pr" title="TMDB rating">★ ${f.v}<small>/10 TMDB</small></span></div>
+        <span class="poster-title">${esc(f.t)}</span>
+      </div>
+    </div>
+    <div class="review-layout">
+      <article>
+        <p class="muted film-meta">${esc(f.g.join(" · "))}${f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
+        ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appSearchUrl(a, f.t))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
+        ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
+        <div class="panel not-reviewed">
+          <h3>🌶️ Not reviewed yet</h3>
+          <p class="muted">We haven't given this one the Masala Meter treatment. Summary and rating are from TMDB.</p>
+        </div>
+        <div class="share-row">
+          <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${f.t} ${f.y || ""} official trailer`)}">▶ Watch trailer</a>
+          <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
+          <button class="btn" id="copy" type="button">Copy link</button>
+        </div>
+      </article>
+      <aside>
+        ${f.p ? `<img class="side-poster" src="${tmdb(f.p, "w342")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : ""}
+        <div class="side panel-watch">
+          <h3>📺 Where to watch</h3>
+          ${f.w.length
+            ? `<p class="muted small">Included with subscription · opens a search in the app</p><div class="otts">${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appSearchUrl(a, f.t))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>`
+            : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
+          <p class="fine">From TMDB, updated ${fmtDate(data.built)}. Availability changes, so confirm in the app.</p>
+        </div>
+        <div class="side">
+          <dl>
+            <dt>Language</dt><dd>${esc(lang)}</dd>
+            ${f.o ? `<dt>Original title</dt><dd>${esc(f.o)}</dd>` : ""}
+            ${f.y ? `<dt>Year</dt><dd>${f.y}</dd>` : ""}
+            ${f.r ? `<dt>Runtime</dt><dd>${fmtRuntime(f.r)}</dd>` : ""}
+            ${f.g.length ? `<dt>Genre</dt><dd>${esc(f.g.join(", "))}</dd>` : ""}
+            ${f.c ? `<dt>Certificate</dt><dd>${esc(f.c)}</dd>` : ""}
+            <dt>TMDB</dt><dd>${f.v}/10 · <a href="https://www.themoviedb.org/movie/${f.id}" target="_blank" rel="noopener">${f.n.toLocaleString("en-IN")} votes</a></dd>
+          </dl>
+        </div>
+      </aside>
+    </div>
+    <section id="film-more" hidden>
+      <div class="section-head"><h2>More ${esc(lang)} films like this</h2></div>
+      <div class="fgrid" id="film-more-grid"></div>
+    </section>`;
+
+  document.getElementById("copy").onclick = async (e) => {
+    try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
+  };
+
+  const index = await loadCatalog("index");
+  if (index) {
+    const byTmdb = reviewedByTmdb();
+    const more = index.films.filter((x) => x.l === f.l && x.id !== f.id && x.g.some((g) => f.g.includes(g)))
+      .map((x) => ({ ...x, mine: byTmdb[x.id] }))
+      .sort((a, b) => b.g.filter((g) => f.g.includes(g)).length - a.g.filter((g) => f.g.includes(g)).length || b.v - a.v)
+      .slice(0, 6);
+    if (more.length) {
+      document.getElementById("film-more-grid").innerHTML = more.map(filmCard).join("");
+      document.getElementById("film-more").hidden = false;
+    }
+  }
+}
+
 renderChrome();
-({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup }[document.body.dataset.page] || (() => {}))();
+({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm }[document.body.dataset.page] || (() => {}))();

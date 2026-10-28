@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All films · Masala Mischief</title>
+  <meta name="description" content="Browse thousands of Hindi, Tamil, Telugu, Malayalam, Kannada and Hollywood films, with where to stream them in India.">
+  <meta property="og:title" content="All films · Masala Mischief">
+  <meta property="og:description" content="Browse thousands of Indian and Hollywood films, and see which apps stream them in India.">
+  <meta property="og:image" content="https://masalamischief.in/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#d7263d">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌶️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css?v=13">
+</head>
+<body data-page="films">
+  <main class="wrap">
+    <div class="page-head">
+      <h1>🎞️ All films</h1>
+      <p class="lead" id="films-lead">Thousands of Indian and Hollywood films, and where to stream them in India. The ones with a 🌶️ badge have our full review.</p>
+    </div>
+
+    <div class="filters">
+      <div class="toolbar" style="margin:0">
+        <input type="search" id="fq" placeholder="Search a film…" aria-label="Search films">
+        <select id="fl" aria-label="Language"><option value="">All languages</option></select>
+        <select id="fg" aria-label="Genre"><option value="">All genres</option></select>
+        <select id="fa" aria-label="Streaming app"><option value="">Any app</option></select>
+        <select id="fs" aria-label="Sort">
+          <option value="popular">Most popular</option>
+          <option value="rating">Highest rated</option>
+          <option value="new">Newest</option>
+          <option value="old">Oldest</option>
+        </select>
+      </div>
+      <div class="toolbar" style="margin:0">
+        <label class="toggle"><input type="checkbox" id="fr"> 🌶️ Reviewed by us</label>
+        <label class="toggle"><input type="checkbox" id="fk"> 👪 U-certificate only</label>
+        <label class="toggle"><input type="checkbox" id="fw"> 📺 Streaming in India</label>
+      </div>
+    </div>
+
+    <section>
+      <div class="section-head"><h2 id="fcount">Loading films…</h2></div>
+      <div class="fgrid" id="fgrid"></div>
+      <p class="center"><button class="btn" id="fmore" type="button" hidden>Show more</button></p>
+    </section>
+
+    <section>
+      <p class="muted small">Film details, posters and streaming info for films we haven't reviewed come from TMDB, updated weekly. Streaming changes often, so check the app.</p>
+    </section>
+  </main>
+  <script src="assets/data.js?v=13"></script>
+  <script src="assets/app.js?v=13"></script>
+</body>
+</html>
