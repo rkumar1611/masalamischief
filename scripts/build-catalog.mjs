@@ -2,20 +2,27 @@
 // languages, with poster, genres, runtime (or seasons), Indian certificate, TMDB rating, a short summary
 // and which apps stream them in India. Run weekly by .github/workflows/weekly-catalog.yml with the TMDB_TOKEN repository secret.
 //
-// Writes:
-//   assets/catalog/index.json   compact list for the All films page (and the sitemap)
-//   assets/catalog/<lang>.json  full details per language, for each film's page
+// Writes, per language:
+//   assets/catalog/list-<lang>.json  compact list (Movies & series page, search, sitemap)
+//   assets/catalog/<lang>.json       full details, for each title's page
+// plus assets/catalog/manifest.json listing the languages and counts.
 // Plain Node 20, no dependencies.
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 
 const OUT = new URL("../assets/catalog/", import.meta.url);
 const TOKEN = process.env.TMDB_TOKEN;
-const LANGS = ["hi", "ta", "te", "ml", "kn", "en"];
-const PER_LANG = 400;      // films per language
-const RECENT = 100;        // of which, up to this many recent popular ones
-const TV_PER_LANG = 150;   // series per Indian language
-const TV_EN = 300;         // English series
+// How many films and series to take per language (best-known first, plus recent hits).
+// Korean skips animation so it's dramas and films; anime is handled separately below.
+const PLAN = {
+  hi: { movies: 1000, tv: 150 }, ta: { movies: 1000, tv: 150 }, te: { movies: 1000, tv: 150 },
+  ml: { movies: 1000, tv: 150 }, kn: { movies: 1000, tv: 150 },
+  mr: { movies: 400, tv: 80 }, bn: { movies: 400, tv: 80 }, pa: { movies: 300, tv: 50 },
+  en: { movies: 400, tv: 300 },
+  ko: { movies: 300, tv: 300, noAnimation: true },
+};
+const LANGS = Object.keys(PLAN);
+const RECENT = 100;        // of each language's films, up to this many recent popular ones
 const TV_SKIP_GENRES = "10763,10764,10766,10767"; // News, Reality, Soap, Talk
 const MAX_EPISODES = 300;  // longer than this is almost always a daily soap (not applied to anime)
 // Anime: Japanese-language animation, stored under the code "ja" and shown as "Anime".
@@ -142,13 +149,15 @@ async function main() {
   const moviePicks = [];
   const tvPicks = [];
   for (const lang of LANGS) {
-    const recent = await discover("movie", lang, { sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": lang === "en" ? 200 : 10 }, Math.ceil(RECENT / 20));
-    const classic = await discover("movie", lang, { sort_by: "vote_count.desc" }, Math.ceil(PER_LANG / 20) + 2);
-    const ids = [...new Set([...recent.slice(0, RECENT), ...classic])].slice(0, PER_LANG);
+    const plan = PLAN[lang];
+    const movieParams = plan.noAnimation ? { without_genres: ANIMATION } : {};
+    const recent = await discover("movie", lang, { ...movieParams, sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": lang === "en" ? 200 : 10 }, Math.ceil(RECENT / 20));
+    const classic = await discover("movie", lang, { ...movieParams, sort_by: "vote_count.desc" }, Math.ceil(plan.movies / 20) + 2);
+    const ids = [...new Set([...recent.slice(0, RECENT), ...classic])].slice(0, plan.movies);
     moviePicks.push(...ids.map((id) => [id, lang]));
 
-    const tvTarget = lang === "en" ? TV_EN : TV_PER_LANG;
-    const tvParams = { without_genres: TV_SKIP_GENRES };
+    const tvTarget = plan.tv;
+    const tvParams = { without_genres: TV_SKIP_GENRES + (plan.noAnimation ? `,${ANIMATION}` : "") };
     const tvRecent = await discover("tv", lang, { ...tvParams, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": lang === "en" ? 100 : 5 }, 2);
     const tvClassic = await discover("tv", lang, { ...tvParams, sort_by: "vote_count.desc" }, Math.ceil(tvTarget / 20) + 2);
     // Ask for a few extra, since some get dropped below as daily soaps.
@@ -177,20 +186,26 @@ async function main() {
   const series = (await details(tvPicks, "tv", "watch/providers,content_ratings", toSeries,
     (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES))
     .sort((a, b) => b.n - a.n);
-  const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : lang === "en" ? TV_EN : TV_PER_LANG);
+  const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : PLAN[lang].tv);
   const keptSeries = OUT_LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, tvLimit(lang)));
   if (films.length < LANGS.length * 50) throw new Error(`Only ${films.length} films came back; not writing a broken catalogue.`);
 
+  // Per language: list-<lang>.json (compact, for browsing, search and the sitemap) and <lang>.json
+  // (full details, for each title's page). manifest.json says which languages exist.
   const all = [...films, ...keptSeries].sort((a, b) => b.n - a.n);
   mkdirSync(OUT, { recursive: true });
   const built = new Date().toISOString().slice(0, 10);
-  const index = all.map(({ ov, b, o, ...rest }) => rest);
-  writeFileSync(new URL("index.json", OUT), JSON.stringify({ built, count: all.length, films: index }));
+  const counts = {};
   for (const lang of OUT_LANGS) {
-    const byId = Object.fromEntries(all.filter((f) => f.l === lang).map((f) => [f.id, f]));
-    writeFileSync(new URL(`${lang}.json`, OUT), JSON.stringify({ built, films: byId }));
+    const mine = all.filter((f) => f.l === lang);
+    if (!mine.length) continue;
+    counts[lang] = mine.length;
+    writeFileSync(new URL(`list-${lang}.json`, OUT), JSON.stringify({ built, films: mine.map(({ ov, b, o, ...rest }) => rest) }));
+    writeFileSync(new URL(`${lang}.json`, OUT), JSON.stringify({ built, films: Object.fromEntries(mine.map((f) => [f.id, f])) }));
   }
-  console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series, built ${built}.`);
+  writeFileSync(new URL("manifest.json", OUT), JSON.stringify({ built, count: all.length, langs: counts }));
+  rmSync(new URL("index.json", OUT), { force: true }); // replaced by the per-language lists
+  console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series, built ${built}.`, counts);
 }
 
 main().catch((e) => { console.error(e.message); process.exit(1); });

@@ -108,7 +108,7 @@ function initSiteSearch() {
 
   async function load() {
     if (items) return items;
-    const cat = await loadCatalog("index");
+    const cat = await loadIndex();
     const byTmdb = reviewedByTmdb();
     const list = (cat ? cat.films : []).map((f) => ({ ...f, mine: byTmdb[f.id] }));
     const have = new Set(list.filter((f) => f.mine).map((f) => f.mine.id));
@@ -482,7 +482,7 @@ function initSuggest() {
 
   const paintMoods = chips(document.getElementById("mood-chips"), MOODS.map((m) => [m.id, `${m.emoji} ${m.label}`]),
     (v) => v === state.mood, (v) => { state.mood = state.mood === v ? "" : v; draw(); });
-  chips(document.getElementById("lang-chips"), LANGUAGES.map((l) => [l, `${l}${LANG_LABELS[l] ? ` / ${LANG_LABELS[l]}` : ""}`]),
+  chips(document.getElementById("lang-chips"), PICK_LANGUAGES.map((l) => [l, `${l}${LANG_LABELS[l] ? ` / ${LANG_LABELS[l]}` : ""}`]),
     (v) => state.langs.has(v), (v) => { state.langs.has(v) ? state.langs.delete(v) : state.langs.add(v); draw(); });
   chips(document.getElementById("app-chips"), PLATFORMS.map((p) => [p, p]),
     (v) => state.apps.has(v), (v) => { state.apps.has(v) ? state.apps.delete(v) : state.apps.add(v); store.set("apps", [...state.apps]); draw(); });
@@ -543,7 +543,7 @@ function initSuggest() {
   // Beyond our reviews: catalogue movies and series that fit the same choices. The catalogue has no
   // dub info, so languages match the original language only, and runtime limits apply to movies.
   async function drawCatalogue() {
-    const cat = await loadCatalog("index");
+    const cat = await loadIndex([...state.langs].map((l) => LANG_CODE[l]));
     const section = document.getElementById("cat-section");
     if (!cat) { section.hidden = true; return; }
     const byTmdb = reviewedByTmdb();
@@ -661,7 +661,7 @@ function groupCreate($) {
   let mood = null;
   const langs = new Set();
   chips($("gp-moods"), MOODS.map((m) => [m.id, `${m.emoji} ${m.label}`]), (v) => v === mood, (v) => { mood = mood === v ? null : v; });
-  chips($("gp-langs"), LANGUAGES.map((l) => [l, langLabel(l)]), (v) => langs.has(v), (v) => { langs.has(v) ? langs.delete(v) : langs.add(v); });
+  chips($("gp-langs"), PICK_LANGUAGES.map((l) => [l, langLabel(l)]), (v) => langs.has(v), (v) => { langs.has(v) ? langs.delete(v) : langs.add(v); });
 
   $("gp-start").addEventListener("click", async () => {
     const kids = $("gp-family").checked;
@@ -672,7 +672,8 @@ function groupCreate($) {
       (!useMood || !mood || m.moods.includes(mood));
     let pool = MOVIES.filter((m) => ok(m, true));
     if (pool.length < 6) pool = MOVIES.filter((m) => ok(m, false)); // too narrow: drop the mood
-    if (!pool.length) pool = MOVIES.slice();
+    // No review fits (say, only Marathi chosen): with the bigger mix the room comes from the catalogue.
+    if (!pool.length && !more) pool = MOVIES.slice();
     // Good films first, with a shuffle so every room is different.
     const shuffled = (arr, score) => arr.map((x) => [x, score(x) + Math.random() * 3]).sort((a, b) => b[1] - a[1]).map(([x]) => x);
     const ours = shuffled(pool, (m) => m.quality + m.masala * 0.3).map((m) => m.id);
@@ -681,7 +682,7 @@ function groupCreate($) {
     let theirs = [];
     if (more) {
       $("gp-start").disabled = true;
-      const cat = await loadCatalog("index");
+      const cat = await loadIndex([...langs].map((l) => LANG_CODE[l]));
       if (cat) {
         const byTmdb = reviewedByTmdb();
         const codes = new Set([...langs].map((l) => LANG_CODE[l]));
@@ -804,7 +805,12 @@ function groupResults(el, deck, room, linkFor, redo) {
 
 /* ---------- All films catalogue (TMDB, built weekly by scripts/build-catalog.mjs) ---------- */
 // "ja" holds anime only (Japanese animation), so it's shown as "Anime".
-const CAT_LANGS = { hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", en: "English", ja: "Anime" };
+const CAT_LANGS = {
+  hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", mr: "Marathi", bn: "Bengali", pa: "Punjabi",
+  en: "English", ko: "Korean", ja: "Anime",
+};
+// Language choices on Suggest and Group Pick: ours, plus catalogue-only languages (no reviews yet).
+const PICK_LANGUAGES = [...LANGUAGES, "Marathi", "Bengali", "Punjabi", "Korean"];
 const LANG_CODE = Object.fromEntries(Object.entries(CAT_LANGS).map(([c, l]) => [l, c]));
 
 // Catalogue films only know which app has them, not the exact page, so we open the app's search.
@@ -827,6 +833,17 @@ function loadCatalog(name) {
       .then((r) => (r.ok ? r.json() : null)).catch(() => null);
   }
   return catCache[name];
+}
+
+// The browse list for some languages (codes like "ta"), or all of them. The catalogue is stored as one
+// small list per language (list-<code>.json, named in manifest.json), so a page only downloads what it
+// needs. Older builds had a single index.json, which still works.
+async function loadIndex(codes) {
+  const man = await loadCatalog("manifest");
+  if (!man) return loadCatalog("index");
+  const want = (codes && codes.filter(Boolean).length ? codes : Object.keys(man.langs)).filter((c) => man.langs[c]);
+  const parts = await Promise.all(want.map((c) => loadCatalog(`list-${c}`)));
+  return { built: man.built, films: parts.flatMap((p) => (p ? p.films : [])) };
 }
 
 // Our reviewed films, keyed by TMDB id (from IMAGES), so the catalogue can link to the review instead.
@@ -913,7 +930,7 @@ function filmCard(f, rank) {
 
 async function initFilms() {
   const $ = (id) => document.getElementById(id);
-  const cat = await loadCatalog("index");
+  const cat = await loadIndex();
   const byTmdb = reviewedByTmdb();
   const list = cat ? cat.films.map((f) => ({ ...f, mine: byTmdb[f.id] })) : [];
   // Make sure every reviewed film is in the list, even if TMDB's top lists missed it.
@@ -1084,7 +1101,7 @@ async function initFilm() {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
   };
 
-  const index = await loadCatalog("index");
+  const index = await loadIndex([f.l]);
   if (index) {
     const byTmdb = reviewedByTmdb();
     const more = index.films.filter((x) => x.l === f.l && x.id !== f.id && (x.k === "tv") === tv && x.g.some((g) => f.g.includes(g)))
