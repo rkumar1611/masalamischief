@@ -486,3 +486,15 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 @media (max-width: 520px) { .gp-ranked li { grid-template-columns: minmax(0, 1fr) auto; } .gp-bar { grid-column: 1 / -1; order: 3; } }
 body.gp-active .page-head .lead { display: none; }
 body.gp-active .page-head h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
+
+/* New on OTT strip */
+.new-ott { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(220px, 260px); gap: 12px; overflow-x: auto; padding: 4px 2px 12px; scroll-snap-type: x mandatory; }
+.new-item {
+  scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+  text-decoration: none; color: var(--ink); box-shadow: var(--shadow); transition: transform 0.15s, border-color 0.15s;
+}
+.new-item:hover { transform: translateY(-2px); border-color: var(--chilli); }
+.new-item strong { font-family: var(--font-display); font-size: 1.1rem; line-height: 1.15; }
+.new-note { font-size: 0.9rem; color: var(--ink-soft); }
+.new-date { margin-top: auto; }

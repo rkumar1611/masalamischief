@@ -40,14 +40,16 @@ Open `assets/data.js`, copy an existing film object, and change the fields. The 
 Other things you can edit in `assets/data.js`:
 
 - `FEATURED_ID` – the film shown as "Pick of the week" on the home page.
+- `NEW_ON_OTT` – the "New on OTT this week" strip. Refresh it weekly from JustWatch India's "New" page
+  (update `checked`). If it's more than 10 days old, the heading changes to "Recently added" by itself.
 - `WATCH` – where each film streams in India (from JustWatch India). Update `WATCH_CHECKED` when you re-check.
 - `PARENT_NOTES` – adding an entry puts a film into Family Picks. Levels are 0 none, 1 mild, 2 some, 3 strong.
 
 Visitor ratings, the watchlist, chosen OTT apps and the light/dark choice are saved only in each
 visitor's own browser. Nothing is sent to a server, and nothing is collected about children.
 
-After changing anything in `assets/`, bump the `?v=9` number on the `<link>`/`<script>` tags in every
-`.html` file (e.g. to `?v=10`), otherwise returning visitors may keep seeing the old cached version.
+After changing anything in `assets/`, bump the `?v=10` number on the `<link>`/`<script>` tags in every
+`.html` file (e.g. to `?v=11`), otherwise returning visitors may keep seeing the old cached version.
 
 The bundled reviews are starter copy in the house voice: rewrite them in your own words before
 launch, and check the `audio` (dubbed languages) for each film, since that varies by platform.

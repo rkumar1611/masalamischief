@@ -1260,6 +1260,26 @@ const PARENT_NOTES = {
     note: "A father's death and a few scuffles. Inspiring for older kids who love planes or business stories." },
 };
 
+// "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
+// Refresh weekly: update checked and replace the items (url = the film's page on that app).
+const NEW_ON_OTT = {
+  checked: "2026-10-28",
+  items: [
+    { title: "Maayon", year: 2022, lang: "Tamil", app: "JioHotstar", added: "2026-10-28", url: "https://www.hotstar.com/in/movies/maayon/1271413412", note: "Tamil mystery thriller." },
+    { title: "Bakasura Restaurant", year: 2025, app: "JioHotstar", added: "2026-10-28", url: "https://www.hotstar.com/in/movies/bakasura-restaurant/1271718864", note: "Horror-comedy, new to streaming." },
+    { title: "M3GAN 2.0", year: 2025, lang: "English", app: "Netflix", added: "2026-10-27", url: "https://www.netflix.com/title/82000745", note: "The killer-doll sequel." },
+    { title: "Annihilation", year: 2018, lang: "English", app: "Prime Video", added: "2026-10-27", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.479fe801-e02a-42af-a9e8-5861959e3f37", note: "Natalie Portman in a beautiful, unsettling sci-fi mystery." },
+    { title: "Night Drive", year: 2022, lang: "Malayalam", app: "JioHotstar", added: "2026-10-26", url: "https://www.hotstar.com/in/movies/night-drive/1271718372", note: "A late-night drive goes very wrong." },
+    { title: "Sonic the Hedgehog 3", year: 2024, lang: "English", app: "JioHotstar", added: "2026-10-25", url: "https://www.hotstar.com/in/movies/sonic-the-hedgehog-3/1271717290", note: "Sonic, Tails and Knuckles take on Shadow.", kids: true },
+    { title: "Gran Turismo", year: 2023, lang: "English", app: "Netflix", added: "2026-10-25", url: "https://www.netflix.com/title/81672085", note: "A gamer becomes a real racing driver. Based on a true story." },
+    { title: "The Lord of the Rings: The Return of the King", year: 2003, lang: "English", app: "Prime Video", added: "2026-10-25", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.096a714d-6da9-4205-a118-3fb77fbaa003", note: "The epic finale. Clear your evening." },
+    { title: "Chhota Bheem: The Throne of Bali", year: 2013, lang: "Hindi", app: "Prime Video", added: "2026-10-25", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.62bf2199-50aa-42b1-9d7d-c41693d19471", note: "Plus a stack of other Chhota Bheem films for little ones.", kids: true },
+    { title: "Saina", year: 2021, lang: "Hindi", app: "Prime Video", added: "2026-10-23", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.b6bc65f0-a24c-14da-0d88-ce115f8607cb", note: "Parineeti Chopra as badminton star Saina Nehwal." },
+    { title: "Bring Her Back", year: 2025, lang: "English", app: "Netflix", added: "2026-10-23", url: "https://www.netflix.com/title/83077865", note: "From the makers of Talk to Me. Seriously scary." },
+    { title: "Star Trek Into Darkness", year: 2013, lang: "English", app: "Netflix", added: "2026-10-23", url: "https://www.netflix.com/title/70262640", note: "Benedict Cumberbatch versus the Enterprise crew." },
+  ],
+};
+
 // Film images from TMDB (themoviedb.org): backdrop = wide still for cards, poster = portrait for the review page.
 // Paths only; the site loads them from image.tmdb.org. Films without an entry keep the coloured tile.
 const IMAGES = {};

@@ -178,6 +178,24 @@ function noteBars(n) {
 }
 
 /* ---------- Home ---------- */
+// Each tile opens the film straight on its app. If the list hasn't been refreshed for over 10 days,
+// the heading softens to "Recently added" so it never claims stale picks are this week's.
+function renderNewOnOtt() {
+  const el = document.getElementById("new-ott");
+  if (!el || !NEW_ON_OTT.items.length) { const s = document.getElementById("new-ott-section"); if (s) s.hidden = true; return; }
+  const ageDays = (Date.now() - new Date(NEW_ON_OTT.checked + "T00:00:00")) / 864e5;
+  if (ageDays > 10) document.getElementById("new-ott-head").textContent = "📺 Recently added to OTT";
+  document.getElementById("new-ott-checked").textContent = `Updated ${fmtDate(NEW_ON_OTT.checked)}`;
+  el.innerHTML = NEW_ON_OTT.items.map((n) => `
+    <a class="new-item" href="${esc(n.url)}" target="_blank" rel="noopener" title="Watch ${esc(n.title)} on ${esc(n.app)}">
+      <span class="ott ott-${slug(n.app)}">${esc(n.app)} ↗</span>
+      <strong>${esc(n.title)}</strong>
+      <span class="muted small">${n.lang ? `${esc(langLabel(n.lang))} · ` : ""}${n.year}${n.kids ? " · 👪 Kids" : ""}</span>
+      ${n.note ? `<span class="new-note">${esc(n.note)}</span>` : ""}
+      <span class="muted small new-date">Added ${new Date(n.added + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+    </a>`).join("");
+}
+
 function initHome() {
   const byDate = [...MOVIES].sort((a, b) => b.reviewed.localeCompare(a.reviewed));
   const featured = MOVIES.find((m) => m.id === FEATURED_ID) || byDate[0];
@@ -199,6 +217,7 @@ function initHome() {
     <div><strong>${Object.keys(PARENT_NOTES).length}</strong><span>with parent notes</span></div>`;
 
   document.getElementById("latest").innerHTML = byDate.filter((m) => m.id !== featured.id).slice(0, 8).map((m) => card(m)).join("");
+  renderNewOnOtt();
   document.getElementById("moods").innerHTML = MOODS.map((m) => `
     <a class="mood" href="suggest.html?mood=${m.id}">
       <span class="e">${m.emoji}</span><strong>${m.label}</strong><span class="b">${m.blurb}</span>
