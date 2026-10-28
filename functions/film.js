@@ -2,7 +2,7 @@
 // reviewed, movies ("<lang>-<id>") and series ("<lang>-tv<id>"). Like functions/review.js, it puts the
 // film's own title, description, image and cast into the HTML so link previews and search show the
 // right film, plus structured data for Google (Movie or TVSeries, breadcrumbs, visitors' rating stars
-// once there are audience reviews). Data comes from assets/catalog/<lang>.json.
+// once there are audience reviews). Data comes from assets/catalog/t/<lang>/<n>.json (see manifest.json).
 // If anything goes wrong, the plain page is served as before.
 import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine } from "../lib/seo.js";
 import { audienceRating } from "../lib/community.js";
@@ -17,8 +17,12 @@ export async function onRequestGet(context) {
   try {
     const [code, rawId] = (new URL(context.request.url).searchParams.get("id") || "").split("-");
     if (!LANGS[code] || !/^(tv)?\d+$/.test(rawId || "")) return page;
+    // Layout 2 keeps each title in a small shard (t/<code>/<id % shards>.json); older builds had one file per language.
+    const manRes = await context.env.ASSETS.fetch(new URL("/assets/catalog/manifest.json", context.request.url));
+    const man = manRes.ok ? await manRes.json() : {};
+    const file = man.layout >= 2 ? `/assets/catalog/t/${code}/${+rawId.replace(/^tv/, "") % man.shards.t}.json` : `/assets/catalog/${code}.json`;
     const [res, audience] = await Promise.all([
-      context.env.ASSETS.fetch(new URL(`/assets/catalog/${code}.json`, context.request.url)),
+      context.env.ASSETS.fetch(new URL(file, context.request.url)),
       audienceRating(context.env, `c:${code}-${rawId}`),
     ]);
     if (!res.ok) return page;

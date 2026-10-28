@@ -1,6 +1,7 @@
 # Keeps the "Movies & series" catalogue up to date from TMDB (scripts/build-catalog.mjs, TMDB_TOKEN secret):
 #   - every day (Mon–Sat): a quick run that adds new releases and refreshes Trending (a few minutes)
-#   - Sundays: the full rebuild that re-ranks everything and refreshes ratings, cast and apps (about 30 min)
+#   - Sundays: the full run that re-ranks everything, adds new titles, and refreshes recent titles plus a
+#     quarter of the older ones (about 20–40 min; the first run after a big change takes an hour or two)
 # Commits only if something changed; Cloudflare Pages publishes it as usual.
 # Run it by hand from GitHub → Actions → "Catalogue" → Run workflow (choose quick or full).
 name: Catalogue
@@ -32,7 +33,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 300 # the first run after a big plan change fetches every title (an hour or two)
     steps:
       - uses: actions/checkout@v5
 
@@ -40,11 +41,12 @@ jobs:
         with:
           node-version: 24
 
-      # Full on the Sunday schedule or when chosen by hand; quick otherwise (daily schedule, pushes).
+      # Full on the Sunday schedule, when chosen by hand, or when the build itself changed (a push);
+      # quick on the other days.
       - name: Choose quick or full
         id: mode
         run: |
-          if [ "${{ github.event.schedule }}" = "0 2 * * 0" ] || [ "${{ inputs.mode }}" = "full" ]; then
+          if [ "${{ github.event.schedule }}" = "0 2 * * 0" ] || [ "${{ inputs.mode }}" = "full" ] || [ "${{ github.event_name }}" = "push" ]; then
             echo "mode=full" >> "$GITHUB_OUTPUT"
           else
             echo "mode=daily" >> "$GITHUB_OUTPUT"

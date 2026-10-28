@@ -148,22 +148,14 @@ function initSiteSearch() {
   const btn = document.getElementById("search-btn");
   const q = document.getElementById("site-q");
   const out = document.getElementById("site-results");
-  const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, "");
-  let items = null;
-
-  async function load() {
-    if (items) return items;
-    const cat = await loadIndex();
-    const byTmdb = reviewedByTmdb();
-    const list = (cat ? cat.films : []).map((f) => ({ ...f, mine: byTmdb[f.id] }));
-    const have = new Set(list.filter((f) => f.mine).map((f) => f.mine.id));
-    MOVIES.forEach((m) => { if (!have.has(m.id)) list.push({ id: m.id, l: LANG_CODE[m.lang], t: m.title, y: m.year, n: 1e9, p: (IMAGES[m.id] || {}).poster, mine: m }); });
-    return (items = list.map((f) => ({ ...f, key: norm(`${f.t} ${f.o || ""}`) })));
-  }
+  // Our reviews always match first; catalogue matches come from the search index (searchCatalog).
+  const ours = MOVIES.map((m) => ({ id: (IMAGES[m.id] || {}).tmdb || m.id, l: LANG_CODE[m.lang], t: m.title, y: m.year, n: 1e9,
+    p: (IMAGES[m.id] || {}).poster, mine: m, key: searchNorm(m.title) }));
+  const byTmdb = reviewedByTmdb();
   const open = (show) => {
     box.hidden = !show;
     btn.setAttribute("aria-expanded", show);
-    if (show) { q.focus(); load(); } else { q.value = ""; out.innerHTML = ""; }
+    if (show) q.focus(); else { q.value = ""; out.innerHTML = ""; }
   };
   btn.addEventListener("click", () => open(box.hidden));
   document.addEventListener("keydown", (e) => {
@@ -178,10 +170,14 @@ function initSiteSearch() {
   q.addEventListener("input", () => {
     clearTimeout(t);
     t = setTimeout(async () => {
-      const term = norm(q.value.trim());
+      const term = searchNorm(q.value);
       if (term.length < 2) { out.innerHTML = ""; return; }
-      const all = await load();
-      const hits = all.filter((f) => f.key.includes(term))
+      const found = await searchCatalog(term);
+      if (searchNorm(q.value) !== term) return; // a newer search is on its way
+      const mineIds = new Set();
+      const theirs = found.filter((f) => !(f.k !== "tv" && byTmdb[f.id] && mineIds.add(byTmdb[f.id].id)));
+      const hits = [...ours.filter((f) => f.key.includes(term) || mineIds.has(f.mine.id)),
+        ...theirs.map((f) => ({ ...f, key: searchNorm(f.t) }))]
         .sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || (b.key.startsWith(term) ? 1 : 0) - (a.key.startsWith(term) ? 1 : 0) || b.n - a.n)
         .slice(0, 8);
       out.innerHTML = hits.length
@@ -472,11 +468,15 @@ function renderTonight(featured) {
 async function renderTrending() {
   const data = await loadCatalog("trending");
   if (!data || !data.items || !data.items.length) return;
-  const langs = [...new Set(data.items.map((x) => x.l))];
-  const index = await loadIndex(langs);
-  const byKey = Object.fromEntries(index.films.map((f) => [`${f.l}-${f.id}`, f]));
+  // Newer builds store the films themselves; older ones only {l, id}, looked up in the language lists.
+  let items = data.items;
+  if (!items[0].t) {
+    const index = await loadIndex([...new Set(items.map((x) => x.l))]);
+    const byKey = Object.fromEntries(index.films.map((f) => [`${f.l}-${f.id}`, f]));
+    items = items.map((x) => byKey[`${x.l}-${x.id}`]).filter(Boolean);
+  }
   const byTmdb = reviewedByTmdb();
-  const films = data.items.map((x) => byKey[`${x.l}-${x.id}`]).filter(Boolean).slice(0, 12).map((f) => ({ ...f, mine: byTmdb[f.id] }));
+  const films = items.slice(0, 12).map((f) => ({ ...f, mine: byTmdb[f.id] }));
   if (!films.length) return;
   document.getElementById("trending").innerHTML = films.map((f) => filmCard(f)).join("");
   document.getElementById("trending-section").hidden = false;
@@ -492,10 +492,9 @@ async function renderAudienceHome() {
     data = await res.json();
   } catch { return; }
   if (!data.top || !data.top.length) return;
-  // Titles are "r:<our id>" or "c:<lang>-<tmdb id>"; look the catalogue ones up in their language list.
-  const codes = [...new Set([...data.top, ...data.latest].map((r) => r.title).filter((t) => t.startsWith("c:")).map((t) => t.slice(2).split("-")[0]))];
-  const index = codes.length ? await loadIndex(codes) : { films: [] };
-  const byKey = Object.fromEntries(index.films.map((f) => [`${f.l}-${f.id}`, f]));
+  // Titles are "r:<our id>" or "c:<lang>-<tmdb id>"; look the catalogue ones up one by one.
+  const keys = [...new Set([...data.top, ...data.latest].map((r) => r.title).filter((t) => t.startsWith("c:")).map((t) => t.slice(2)))];
+  const byKey = Object.fromEntries(await Promise.all(keys.map(async (k) => [k, await loadTitle(...k.split("-"))])));
   const resolve = (t) => {
     if (t.startsWith("r:")) {
       const m = movieById(t.slice(2));
@@ -1194,15 +1193,55 @@ function loadCatalog(name) {
   return catCache[name];
 }
 
-// The browse list for some languages (codes like "ta"), or all of them. The catalogue is stored as one
-// small list per language (list-<code>.json, named in manifest.json), so a page only downloads what it
-// needs. Older builds had a single index.json, which still works.
+// The catalogue's storage (see scripts/build-catalog.mjs). manifest.json says which layout is live:
+//   layout 2: list-<code>.json per language, popular.json for "all languages", t/<code>/<n>.json title
+//             details, p/<n>.json people, s/<letter>.json search
+//   layout 1 (older builds): list-<code>.json and <code>.json per language, people/<n>.json
+const catLayout = async () => ((await loadCatalog("manifest")) || {}).layout || 1;
+
+// The browse list for some languages (codes like "ta"). With no languages: every language on the older
+// layout, or the best-known titles across all languages (popular.json, marked popular: true) on layout 2,
+// since the full catalogue is too big to load at once.
 async function loadIndex(codes) {
   const man = await loadCatalog("manifest");
   if (!man) return loadCatalog("index");
-  const want = (codes && codes.filter(Boolean).length ? codes : Object.keys(man.langs)).filter((c) => man.langs[c]);
+  const asked = (codes || []).filter(Boolean);
+  if (!asked.length && man.layout >= 2) {
+    const pop = await loadCatalog("popular");
+    return pop && { built: man.built, films: pop.films, popular: true };
+  }
+  const want = (asked.length ? asked : Object.keys(man.langs)).filter((c) => man.langs[c]);
   const parts = await Promise.all(want.map((c) => loadCatalog(`list-${c}`)));
   return { built: man.built, films: parts.flatMap((p) => (p ? p.films : [])) };
+}
+
+// One title's full details (raw id like "12345" or "tv12345"), or null.
+async function loadTitle(code, rawId) {
+  if (!CAT_LANGS[code] || !rawId) return null;
+  const man = await loadCatalog("manifest");
+  const data = man && man.layout >= 2
+    ? await loadCatalog(`t/${code}/${+String(rawId).replace(/^tv/, "") % man.shards.t}`)
+    : await loadCatalog(code);
+  return (data && data.films[rawId]) || null;
+}
+
+// Titles matching a search, from the search index (layout 2): every title with a word starting with the
+// same two letters as the search's first word is in one small file. Older layout: the whole catalogue.
+// Same normalising as the build (scripts/build-catalog.mjs): "K.G.F: Chapter 1" → "kgf chapter 1".
+const searchNorm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  .replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+async function searchCatalog(term) {
+  const q = searchNorm(term);
+  if (!q) return [];
+  if ((await catLayout()) < 2) {
+    const cat = await loadIndex();
+    return (cat ? cat.films : []).filter((f) => searchNorm(`${f.t} ${f.o || ""}`).includes(q));
+  }
+  const word = q.split(" ").find((w) => w.length >= 2 && !["the", "an", "of", "and"].includes(w));
+  if (!word) return [];
+  const rows = (await loadCatalog(`s/${word.slice(0, 2)}`)) || [];
+  return rows.filter((r) => searchNorm(r[2]).includes(q))
+    .map(([l, id, t, y, tv, p, n, v]) => ({ l, id, t, y, ...(tv ? { k: "tv" } : {}), p, n, v }));
 }
 
 // Our reviewed films, keyed by TMDB id (from IMAGES), so the catalogue can link to the review instead.
@@ -1261,8 +1300,7 @@ function catToMovie(f, full) {
 async function resolveDeckId(id) {
   if (id[0] !== "_") return movieById(id);
   const [code, raw] = id.slice(1).split("-");
-  const data = CAT_LANGS[code] ? await loadCatalog(code) : null;
-  const f = data && data.films[raw];
+  const f = await loadTitle(code, raw);
   return f ? catToMovie(f) : null;
 }
 
@@ -1289,17 +1327,35 @@ function filmCard(f, rank) {
 
 async function initFilms() {
   const $ = (id) => document.getElementById(id);
-  const cat = await loadIndex();
   const byTmdb = reviewedByTmdb();
-  const list = cat ? cat.films.map((f) => ({ ...f, mine: byTmdb[f.id] })) : [];
-  // Make sure every reviewed film is in the list, even if TMDB's top lists missed it.
-  const have = new Set(list.map((f) => f.id));
-  MOVIES.forEach((m) => {
-    const img = IMAGES[m.id] || {};
-    if (img.tmdb && have.has(img.tmdb)) return;
-    list.push({ id: img.tmdb || m.id, l: LANG_CODE[m.lang], t: m.title, y: m.year, g: m.genres, r: m.runtime,
-      v: m.quality, n: 0, p: img.poster, w: streamsOn(m), c: PARENT_NOTES[m.id] && PARENT_NOTES[m.id].age <= 6 ? "U" : "", mine: m });
-  });
+  const layout = await catLayout();
+
+  // The titles to filter: on layout 2, one language at a time (key = its code), the best-known titles
+  // across all languages (key ""), or search matches across all languages (key "q:<term>"). The older
+  // layout loads everything once (key ""). Our reviewed films are always added.
+  const cache = {};
+  async function getList(key) {
+    if (cache[key]) return cache[key];
+    let films = null;
+    let popular = false;
+    if (key.startsWith("q:")) films = await searchCatalog(key.slice(2));
+    else {
+      const cat = await loadIndex(key ? [key] : []);
+      films = cat && cat.films;
+      popular = !!(cat && cat.popular);
+    }
+    const list = (films || []).map((f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }));
+    const have = new Set(list.map((f) => f.id));
+    MOVIES.forEach((m) => {
+      const img = IMAGES[m.id] || {};
+      if (img.tmdb && have.has(img.tmdb)) return;
+      list.push({ id: img.tmdb || m.id, l: LANG_CODE[m.lang], t: m.title, y: m.year, g: m.genres, r: m.runtime,
+        v: m.quality, n: 0, p: img.poster, w: streamsOn(m), c: PARENT_NOTES[m.id] && PARENT_NOTES[m.id].age <= 6 ? "U" : "", mine: m });
+    });
+    return (cache[key] = { list, popular, ok: !!films });
+  }
+  const first = await getList(layout >= 2 ? new URLSearchParams(location.search).get("l") || "" : "");
+  const cat = first.ok;
   if (!cat) $("films-lead").textContent = "The full catalogue is being prepared. Meanwhile, here are all the films we've reviewed.";
 
   const params = new URLSearchParams(location.search);
@@ -1312,17 +1368,28 @@ async function initFilms() {
     (v) => v === state.view, (v) => { state.view = v; apply(); });
   const count = (arr) => arr.reduce((o, x) => ((o[x] = (o[x] || 0) + 1), o), {});
   $("fl").insertAdjacentHTML("beforeend", Object.entries(CAT_LANGS).map(([c, l]) => `<option value="${c}">${esc(langLabel(l))}</option>`).join(""));
-  const genres = Object.entries(count(list.flatMap((f) => f.g || []))).sort((a, b) => b[1] - a[1]).map(([g]) => g);
-  $("fg").insertAdjacentHTML("beforeend", genres.map((g) => `<option>${esc(g)}</option>`).join(""));
-  const apps = Object.entries(count(list.flatMap((f) => f.w || []))).sort((a, b) => b[1] - a[1]).map(([a]) => a);
-  $("fa").insertAdjacentHTML("beforeend", apps.map((a) => `<option>${esc(a)}</option>`).join(""));
+  // Genre and app choices come from the titles loaded, so they're refilled when the list changes.
+  const fillOptions = (list) => {
+    [["fg", (f) => f.g, "Any genre"], ["fa", (f) => f.w, "Any app"]].forEach(([id, pick]) => {
+      const keep = state[id === "fg" ? "g" : "a"];
+      const names = Object.entries(count(list.flatMap((f) => pick(f) || []))).sort((a, b) => b[1] - a[1]).map(([x]) => x);
+      if (keep && !names.includes(keep)) names.unshift(keep);
+      const firstOpt = $(id).querySelector("option");
+      $(id).innerHTML = `${firstOpt ? firstOpt.outerHTML : ""}${names.map((x) => `<option>${esc(x)}</option>`).join("")}`;
+      $(id).value = keep;
+    });
+  };
+  fillOptions(first.list);
+  let list = first.list;
+  let listIsPopular = first.popular;
+  let listKey = null;
   $("fq").value = state.q; $("ft").value = state.t; $("fl").value = state.l; $("fg").value = state.g; $("fa").value = state.a; $("fs").value = state.s;
   $("fr").checked = state.r; $("fk").checked = state.k; $("fw").checked = state.w;
 
   const PAGE = 60;
   let shown = PAGE;
   let results = [];
-  const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  let run = 0;
   const sorters = {
     popular: (a, b) => (b.mine ? 1e9 : b.n) - (a.mine ? 1e9 : a.n),
     rating: (a, b) => (b.mine ? b.mine.quality : b.v) - (a.mine ? a.mine.quality : a.v) || b.n - a.n,
@@ -1337,8 +1404,8 @@ async function initFilms() {
       `<div class="empty">Nothing matches. Try fewer filters.</div>`;
     $("fmore").hidden = isTop() || shown >= results.length;
   };
-  const apply = () => {
-    const q = norm(state.q.trim());
+  const apply = async () => {
+    const q = searchNorm(state.q);
     // Top 50 anime covers films and series together, so it sets the language rather than the type.
     const animeTop = state.view === "top-anime";
     const type = animeTop ? "" : isTop() ? state.view.slice(4) : state.t;
@@ -1346,8 +1413,19 @@ async function initFilms() {
     $("ft").disabled = $("fs").disabled = isTop();
     $("fl").disabled = animeTop;
     paintView();
+    const key = layout < 2 ? "" : lang || (q.length >= 2 && !isTop() ? `q:${q}` : "");
+    if (key !== listKey) {
+      const mine = ++run;
+      if (listKey !== null) $("fcount").textContent = "Loading…";
+      const got = await getList(key);
+      if (mine !== run) return; // a newer choice is loading
+      list = got.list;
+      listIsPopular = got.popular;
+      listKey = key;
+      fillOptions(list);
+    }
     results = list.filter((f) =>
-      (!q || norm(f.t).includes(q) || norm(f.o).includes(q)) &&
+      (!q || searchNorm(f.t).includes(q) || searchNorm(f.o).includes(q)) &&
       (!type || (type === "tv" ? f.k === "tv" : f.k !== "tv")) &&
       (!lang || f.l === lang) &&
       (!state.g || (f.g || []).includes(state.g)) &&
@@ -1365,6 +1443,8 @@ async function initFilms() {
       : isTop()
       ? `🏆 Top ${results.length} ${where ? where + " " : ""}${type === "tv" ? "series" : "movies"}`
       : `${results.length.toLocaleString("en-IN")} ${results.length === 1 ? noun[0] : noun[1]}`;
+    // "All languages" shows the best-known titles only; a language (or a search) covers everything.
+    if (listIsPopular && !q) $("fcount").textContent += isTop() ? " · from the best-known titles" : " · the best-known across all languages. Pick a language to see every title.";
     paint();
     try {
       const p = new URLSearchParams();
@@ -1390,8 +1470,7 @@ async function initFilm() {
   const id = /^\d+$/.test(rawId || "") ? +rawId : /^tv\d+$/.test(rawId || "") ? rawId : null;
   const mine = typeof id === "number" && reviewedByTmdb()[id];
   if (mine) { location.replace(`review.html?id=${encodeURIComponent(mine.id)}`); return; }
-  const data = CAT_LANGS[code] && id ? await loadCatalog(code) : null;
-  const f = data && data.films[id];
+  const [f, man] = await Promise.all([id ? loadTitle(code, String(id)) : null, loadCatalog("manifest")]);
   if (!f) {
     root.innerHTML = `<div class="empty">We couldn't find that title. <a href="films.html">Browse movies & series</a>.</div>`;
     return;
@@ -1437,7 +1516,7 @@ async function initFilm() {
           ${f.w.length
             ? `<p class="muted small">Included with subscription · opens a search in the app</p><div class="otts">${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appSearchUrl(a, f.t))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>`
             : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
-          <p class="fine">From TMDB, updated ${fmtDate(data.built)}. Availability changes, so confirm in the app.</p>
+          <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}. Availability changes, so confirm in the app.</p>
         </div>
         <div class="side">
           <dl>
@@ -1466,6 +1545,17 @@ async function initFilm() {
   root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
   initCommunity(`c:${code}-${rawId}`, document.getElementById("community"), f.t);
 
+  // "More like this" needs the whole language list, so it loads only once the visitor scrolls near it.
+  await new Promise((resolve) => {
+    if (!("IntersectionObserver" in window)) return resolve();
+    const mark = document.createElement("div");
+    mark.style.height = "1px";
+    document.getElementById("film-more").before(mark);
+    const go = () => { io.disconnect(); mark.remove(); resolve(); };
+    const io = new IntersectionObserver((seen) => { if (seen.some((s) => s.isIntersecting)) go(); }, { rootMargin: "600px" });
+    io.observe(mark);
+    setTimeout(go, 3000); // in case the browser never reports it (some embedded views)
+  });
   const index = await loadIndex([f.l]);
   if (index) {
     const byTmdb = reviewedByTmdb();
@@ -1482,16 +1572,19 @@ async function initFilm() {
 
 /* ---------- Actor / director page ---------- */
 // person.html?id=<TMDB person id>. Their titles come from the catalogue's people index
-// (assets/catalog/people/<id % 64>.json, built weekly) plus our reviewed films (reviewed.json).
-const PEOPLE_SHARDS = 64; // must match scripts/build-catalog.mjs
+// (assets/catalog/p/<id % shards>.json, shard count in manifest.json) plus our reviewed films (reviewed.json).
+const PEOPLE_SHARDS = 64; // the older layout's people/<id % 64>.json
 
 async function initPerson() {
   const root = document.getElementById("person");
   const pid = (new URLSearchParams(location.search).get("id") || "").match(/^\d{1,9}$/)?.[0];
   const notFound = () => { root.innerHTML = `<div class="empty">We couldn't find that person. <a href="films.html">Browse movies & series</a>.</div>`; };
   if (!pid) return notFound();
-  const [shard, reviewed] = await Promise.all([loadCatalog(`people/${pid % PEOPLE_SHARDS}`), loadCatalog("reviewed")]);
-  let p = shard && shard[pid];
+  const man = await loadCatalog("manifest");
+  const v2 = man && man.layout >= 2;
+  const [shard, reviewed] = await Promise.all([
+    loadCatalog(v2 ? `p/${pid % man.shards.p}` : `people/${pid % PEOPLE_SHARDS}`), loadCatalog("reviewed")]);
+  const p = shard && shard[pid];
 
   // Our reviewed films with this person, as catalogue-style entries.
   const roleIn = (x) => {
@@ -1505,11 +1598,18 @@ async function initPerson() {
   const name = p ? p[0] : ours[0].r.name;
   const photo = (p && p[1]) || (ours.find((o) => o.r.photo) || {}).r?.photo || "";
 
-  const keys = p ? p[2] : [];
-  const index = keys.length ? await loadIndex([...new Set(keys.map((k) => k.split("-")[0]))]) : { films: [] };
-  const byKey = Object.fromEntries(index.films.map((f) => [`${f.l}-${f.id}`, f]));
+  // Layout 2 keeps each person's titles in their own entry; the older one only had "<lang>-<id>" keys.
+  let found;
+  if (v2) {
+    found = (p ? p[2] : []).map(([l, id, t, y, tv, poster, v]) => ({ l, id, t, y, ...(tv ? { k: "tv" } : {}), p: poster, v, n: 0 }));
+  } else {
+    const keys = p ? p[2] : [];
+    const index = keys.length ? await loadIndex([...new Set(keys.map((k) => k.split("-")[0]))]) : { films: [] };
+    const byKey = Object.fromEntries(index.films.map((f) => [`${f.l}-${f.id}`, f]));
+    found = keys.map((k) => byKey[k]).filter(Boolean);
+  }
   const byTmdb = reviewedByTmdb();
-  const titles = keys.map((k) => byKey[k]).filter(Boolean).map((f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }));
+  const titles = found.map((f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }));
   // Add reviewed films the catalogue doesn't have.
   const have = new Set(titles.filter((f) => f.mine).map((f) => f.mine.id));
   ours.filter((o) => !have.has(o.m.id)).forEach(({ m }) => {
@@ -1518,7 +1618,6 @@ async function initPerson() {
   });
   titles.sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || (b.y || 0) - (a.y || 0));
 
-  const directs = ours.some((o) => o.r.role === "Director");
   const movies = titles.filter((f) => f.k !== "tv").length;
   const series = titles.length - movies;
   const langs = [...new Set(titles.map((f) => langLabel(CAT_LANGS[f.l] || "")).filter(Boolean))];

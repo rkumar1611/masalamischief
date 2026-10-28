@@ -1,43 +1,62 @@
-// Builds the "Films & series" catalogue from TMDB: the best-known films and series in each of our
-// languages, with poster, genres, runtime (or seasons), Indian certificate, TMDB rating, a short summary
-// and which apps stream them in India. Run weekly by .github/workflows/weekly-catalog.yml with the TMDB_TOKEN repository secret.
+// Builds the "Movies & series" catalogue from TMDB: the best-known films and series in each of our
+// languages (about 50,000 titles), with poster, genres, runtime (or seasons), Indian certificate, TMDB
+// rating, a short summary, cast, trailer and which apps stream them in India.
+// Run by .github/workflows/weekly-catalog.yml with the TMDB_TOKEN repository secret:
+//   Sundays (full):  re-discovers every language, fetches new titles, refreshes recent titles and a
+//                    quarter of the older ones (a different quarter each week), drops titles that fell out
+//   other days (CATALOG_MODE=daily): adds new releases and refreshes the trending films
 //
-// Writes, per language:
-//   assets/catalog/list-<lang>.json  compact list (Movies & series page, search, sitemap)
-//   assets/catalog/<lang>.json       full details, for each title's page
-// plus assets/catalog/manifest.json listing the languages and counts.
-// Plain Node 20, no dependencies.
+// Writes into assets/catalog/ (layout 2, see manifest.json):
+//   manifest.json          languages, counts, layout version, shard counts
+//   list-<lang>.json       compact list of one language (Movies & series page, Suggest, Group Pick)
+//   popular.json           the best-known titles across all languages (the "All languages" views)
+//   t/<lang>/<n>.json      full details, n = TMDB id % TITLE_SHARDS (title pages)
+//   p/<n>.json             people: name, photo and their titles, n = person id % PEOPLE_SHARDS (actor pages)
+//   s/<ab>.json            search index: titles with a word starting with those two letters (search)
+//   trending.json, lists/*.json, upcoming.json, sitemaps/*.xml
+// Plain Node 20+, no dependencies.
 
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { EXTRA_APPEND, VIDEO_LANGS, extrasOf } from "./tmdb-extras.mjs";
 
 const OUT = new URL("../assets/catalog/", import.meta.url);
+const DATA = new URL("../assets/data.js", import.meta.url);
+const SITE = "https://masalamischief.in";
 const TOKEN = process.env.TMDB_TOKEN;
 // How many films and series to take per language (best-known first, plus recent hits).
 // Korean skips animation so it's dramas and films; anime is handled separately below.
 const PLAN = {
-  hi: { movies: 1000, tv: 150 }, ta: { movies: 1000, tv: 150 }, te: { movies: 1000, tv: 150 },
-  ml: { movies: 1000, tv: 150 }, kn: { movies: 1000, tv: 150 },
-  mr: { movies: 400, tv: 80 }, bn: { movies: 400, tv: 80 }, pa: { movies: 300, tv: 50 },
-  en: { movies: 400, tv: 300 },
-  ko: { movies: 300, tv: 300, noAnimation: true },
+  hi: { movies: 6000, tv: 600 }, ta: { movies: 5000, tv: 300 }, te: { movies: 5000, tv: 300 },
+  ml: { movies: 5000, tv: 250 }, kn: { movies: 3000, tv: 150 },
+  mr: { movies: 1500, tv: 100 }, bn: { movies: 2000, tv: 150 }, pa: { movies: 1000, tv: 60 },
+  en: { movies: 8000, tv: 2000 },
+  ko: { movies: 1500, tv: 1000, noAnimation: true },
 };
 const LANGS = Object.keys(PLAN);
-const RECENT = 100;        // of each language's films, up to this many recent popular ones
+const RECENT = 300;        // of each language's films, up to this many recent popular ones
 const TV_SKIP_GENRES = "10763,10764,10766,10767"; // News, Reality, Soap, Talk
 const MAX_EPISODES = 300;  // longer than this is almost always a daily soap (not applied to anime)
 // Anime: Japanese-language animation, stored under the code "ja" and shown as "Anime".
 const ANIME = "ja";
-const ANIME_MOVIES = 200;
-const ANIME_TV = 300;
+const ANIME_MOVIES = 1000;
+const ANIME_TV = 1500;
 const ANIMATION = "16";    // TMDB genre id, same for films and TV
 const OUT_LANGS = [...LANGS, ANIME];
-const WORKERS = 8;
+const WORKERS = 16;
+
+// Storage (must match the site: assets/app.js, functions/film.js, functions/person.js).
+const LAYOUT = 2;
+const TITLE_SHARDS = 128;
+const PEOPLE_SHARDS = 512;
+const POPULAR_SIZE = 2500;
+// Weekly refresh: titles from the last RECENT_DAYS every week, older ones once every REFRESH_WEEKS.
+const RECENT_DAYS = 730;
+const REFRESH_WEEKS = 4;
+
 // "Trending this week" on the homepage: the most popular new films (last few months) per main language.
 const TREND_LANGS = ["hi", "ta", "te", "ml", "kn", "en"];
 const TREND_DAYS = 120;
 const TREND_PER_LANG = 4;
-const PEOPLE_SHARDS = 64;  // must match the site (assets/app.js)
 const DAILY_DAYS = 45;     // the daily run looks for titles released in this many days
 // Upcoming releases page: next few months, most-awaited first in each language.
 const UPCOMING_LANGS = ["hi", "ta", "te", "ml", "kn", "mr", "bn", "pa", "en", "ko"];
@@ -53,11 +72,16 @@ const APP_RULES = [
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+const keyOf = (f) => `${f.l}-${f.id}`;
+const numId = (id) => +String(id).replace(/^tv/, "");
 
 async function tmdb(path, params = {}) {
   const url = `https://api.themoviedb.org/3${path}?${new URLSearchParams({ language: "en-US", ...params })}`;
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const res = await fetch(url, { headers: { authorization: `Bearer ${TOKEN}`, accept: "application/json" } });
+  for (let attempt = 0; attempt < 5; attempt++) {
+    let res;
+    try { res = await fetch(url, { headers: { authorization: `Bearer ${TOKEN}`, accept: "application/json" } }); }
+    catch { await sleep(2000); continue; } // network blip
     if (res.status === 429) { await sleep(2000 * (attempt + 1)); continue; }
     if (res.status === 401) throw new Error("TMDB rejected the token. Check the TMDB_TOKEN secret.");
     if (res.status === 404) return null;
@@ -69,7 +93,7 @@ async function tmdb(path, params = {}) {
 
 async function discover(kind, lang, params, pages) {
   const ids = [];
-  for (let page = 1; page <= pages; page++) {
+  for (let page = 1; page <= Math.min(pages, 500); page++) {
     const data = await tmdb(`/discover/${kind}`, { with_original_language: lang, include_adult: "false", page, ...params });
     if (!data || !data.results.length) break;
     ids.push(...data.results.filter((r) => r.poster_path).map((r) => r.id));
@@ -84,6 +108,9 @@ const shorten = (s, max = 320) => {
   const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("! "), cut.lastIndexOf("? "));
   return (end > 120 ? cut.slice(0, end + 1) : cut.replace(/\s+\S*$/, "") + "…");
 };
+
+// Vote counts rounded to two figures above 100, so small weekly changes don't rewrite every file.
+const votes = (n) => (n < 100 ? n : Number(n.toPrecision(2)));
 
 const appsOf = (d) => [...new Set((d["watch/providers"]?.results?.IN?.flatrate || [])
   .map((p) => (APP_RULES.find(([re]) => re.test(p.provider_name)) || [])[1]).filter(Boolean))];
@@ -102,7 +129,7 @@ function toFilm(d, lang) {
     g: (d.genres || []).map((g) => g.name),
     r: d.runtime || null,
     v: Math.round((d.vote_average || 0) * 10) / 10,
-    n: d.vote_count || 0,
+    n: votes(d.vote_count || 0),
     p: d.poster_path,
     ...(d.backdrop_path ? { b: d.backdrop_path } : {}),
     ...(cert ? { c: cert } : {}),
@@ -133,7 +160,7 @@ function toSeries(d, lang) {
     g: (d.genres || []).map((g) => g.name),
     r: (d.episode_run_time || [])[0] || null,
     v: Math.round((d.vote_average || 0) * 10) / 10,
-    n: d.vote_count || 0,
+    n: votes(d.vote_count || 0),
     p: d.poster_path,
     ...(d.backdrop_path ? { b: d.backdrop_path } : {}),
     ...(cert ? { c: cert } : {}),
@@ -144,27 +171,61 @@ function toSeries(d, lang) {
   };
 }
 
-// Fetch details a few at a time.
+// Fetch details a few at a time, with a progress line every 2,000.
 async function details(picks, kind, append, toItem, keep = () => true) {
   const out = [];
   let next = 0;
+  let done = 0;
   await Promise.all(Array.from({ length: WORKERS }, async () => {
     while (next < picks.length) {
       const [id, lang] = picks[next++];
       const d = await tmdb(`/${kind}/${id}`, { append_to_response: `${append},${EXTRA_APPEND}`, include_video_language: VIDEO_LANGS });
       if (d && d.poster_path && keep(d, lang)) out.push(toItem(d, lang));
-      await sleep(60);
+      if (++done % 2000 === 0) console.log(`  ${kind}: ${done}/${picks.length}`);
+      await sleep(25);
     }
   }));
   return out;
 }
 
+const movieDetails = (picks) => details(picks, "movie", "watch/providers,release_dates", toFilm);
+// Long-running daily soaps swamp Indian TV on TMDB; keep web and prime-time series. Long-running
+// anime (One Piece, Detective Conan) is the real thing, so the episode limit doesn't apply there.
+const seriesDetails = (picks) => details(picks, "tv", "watch/providers,content_ratings", toSeries,
+  (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES);
+
+// Everything we already have, from the current files (layout 2) or the older one-file-per-language
+// layout, so unchanged titles don't have to be fetched again.
+function loadExisting() {
+  const have = new Map();
+  const add = (films) => Object.values(films).forEach((f) => have.set(keyOf(f), f));
+  for (const lang of OUT_LANGS) {
+    const dir = new URL(`t/${lang}/`, OUT);
+    if (existsSync(dir)) {
+      readdirSync(dir).filter((f) => f.endsWith(".json")).forEach((f) => add(JSON.parse(readFileSync(new URL(f, dir), "utf8")).films));
+    } else if (existsSync(new URL(`${lang}.json`, OUT))) {
+      add(JSON.parse(readFileSync(new URL(`${lang}.json`, OUT), "utf8")).films);
+    }
+  }
+  return have;
+}
+
+// Recent titles every week; older ones when it's their turn (a quarter each week, by id).
+function dueForRefresh(f) {
+  if (!("rd" in f) && f.y) return true; // saved by an older build without release dates
+  if (f.rd && f.rd >= day(-RECENT_DAYS)) return true;
+  const week = Math.floor(Date.now() / (7 * 864e5));
+  return numId(f.id) % REFRESH_WEEKS === week % REFRESH_WEEKS;
+}
+
 async function main() {
   if (!TOKEN) { console.log("No TMDB_TOKEN set; skipping catalogue."); return; }
   if (process.env.CATALOG_MODE === "daily") return daily();
-  const since = new Date(Date.now() - 2 * 365 * 864e5).toISOString().slice(0, 10);
-  const today = new Date().toISOString().slice(0, 10);
-  const trendSince = new Date(Date.now() - TREND_DAYS * 864e5).toISOString().slice(0, 10);
+  const since = day(-RECENT_DAYS);
+  const today = day(0);
+  const trendSince = day(-TREND_DAYS);
+  const have = loadExisting();
+  console.log(`Already have ${have.size} titles.`);
 
   const moviePicks = [];
   const tvPicks = [];
@@ -177,17 +238,17 @@ async function main() {
       ? (await discover("movie", lang, { ...movieParams, sort_by: "popularity.desc", "primary_release_date.gte": trendSince, "primary_release_date.lte": today, "vote_count.gte": 3 }, 1)).slice(0, TREND_PER_LANG + 2)
       : [];
     trendIds[lang] = trend;
-    const recent = await discover("movie", lang, { ...movieParams, sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": lang === "en" ? 200 : 10 }, Math.ceil(RECENT / 20));
+    const recent = await discover("movie", lang, { ...movieParams, sort_by: "popularity.desc", "primary_release_date.gte": since, "primary_release_date.lte": today, "vote_count.gte": lang === "en" ? 50 : 2 }, Math.ceil(RECENT / 20));
     const classic = await discover("movie", lang, { ...movieParams, sort_by: "vote_count.desc" }, Math.ceil(plan.movies / 20) + 2);
     const ids = [...new Set([...trend, ...recent.slice(0, RECENT), ...classic])].slice(0, plan.movies);
     moviePicks.push(...ids.map((id) => [id, lang]));
 
     const tvTarget = plan.tv;
     const tvParams = { without_genres: TV_SKIP_GENRES + (plan.noAnimation ? `,${ANIMATION}` : "") };
-    const tvRecent = await discover("tv", lang, { ...tvParams, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": lang === "en" ? 100 : 5 }, 2);
+    const tvRecent = await discover("tv", lang, { ...tvParams, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": lang === "en" ? 50 : 2 }, 3);
     const tvClassic = await discover("tv", lang, { ...tvParams, sort_by: "vote_count.desc" }, Math.ceil(tvTarget / 20) + 2);
     // Ask for a few extra, since some get dropped below as daily soaps.
-    const tvIds = [...new Set([...tvRecent.slice(0, 30), ...tvClassic])].slice(0, Math.round(tvTarget * 1.3));
+    const tvIds = [...new Set([...tvRecent.slice(0, 50), ...tvClassic])].slice(0, Math.round(tvTarget * 1.3));
     tvPicks.push(...tvIds.map((id) => [id, lang]));
     console.log(`${lang}: ${ids.length} films, ${tvIds.length} series candidates`);
   }
@@ -195,47 +256,52 @@ async function main() {
   // Anime: Japanese animation only (so no Japanese live-action), films and series.
   const anime = { with_genres: ANIMATION };
   const animeMovies = [...new Set([
-    ...(await discover("movie", ANIME, { ...anime, sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": 50 }, 2)).slice(0, 30),
+    ...(await discover("movie", ANIME, { ...anime, sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": 20 }, 3)).slice(0, 60),
     ...(await discover("movie", ANIME, { ...anime, sort_by: "vote_count.desc" }, Math.ceil(ANIME_MOVIES / 20) + 1)),
   ])].slice(0, ANIME_MOVIES);
   const animeSeries = [...new Set([
-    ...(await discover("tv", ANIME, { ...anime, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": 50 }, 3)).slice(0, 50),
+    ...(await discover("tv", ANIME, { ...anime, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": 20 }, 4)).slice(0, 80),
     ...(await discover("tv", ANIME, { ...anime, sort_by: "vote_count.desc" }, Math.ceil(ANIME_TV / 20) + 1)),
   ])].slice(0, ANIME_TV);
   moviePicks.push(...animeMovies.map((id) => [id, ANIME]));
   tvPicks.push(...animeSeries.map((id) => [id, ANIME]));
   console.log(`anime: ${animeMovies.length} films, ${animeSeries.length} series`);
 
-  const films = await details(moviePicks, "movie", "watch/providers,release_dates", toFilm);
-  // Long-running daily soaps swamp Indian TV on TMDB; keep web and prime-time series. Long-running
-  // anime (One Piece, Detective Conan) is the real thing, so the episode limit doesn't apply there.
-  const series = (await details(tvPicks, "tv", "watch/providers,content_ratings", toSeries,
-    (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES))
-    .sort((a, b) => b.n - a.n);
+  // Reuse what we have unless it's new or due for a refresh.
+  const split = (picks, prefix) => {
+    const reuse = [];
+    const fetch = [];
+    for (const [id, lang] of picks) {
+      const old = have.get(`${lang}-${prefix}${id}`);
+      if (old && !dueForRefresh(old)) reuse.push(old); else fetch.push([id, lang]);
+    }
+    return { reuse, fetch };
+  };
+  const m = split(moviePicks, "");
+  const t = split(tvPicks, "tv");
+  console.log(`Fetching ${m.fetch.length} films and ${t.fetch.length} series; reusing ${m.reuse.length + t.reuse.length}.`);
+  const films = [...m.reuse, ...(await movieDetails(m.fetch))];
+  const series = [...t.reuse, ...(await seriesDetails(t.fetch))].sort((a, b) => b.n - a.n);
   const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : PLAN[lang].tv);
   const keptSeries = OUT_LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, tvLimit(lang)));
-  if (films.length < LANGS.length * 50) throw new Error(`Only ${films.length} films came back; not writing a broken catalogue.`);
+  if (films.length < Math.min(have.size * 0.8, 20000) || films.length < LANGS.length * 50) {
+    throw new Error(`Only ${films.length} films came back; not writing a broken catalogue.`);
+  }
 
-  writeCatalogue([...films, ...keptSeries], trendIds, { full: true });
+  writeCatalogue([...films, ...keptSeries], trendIds);
   await writeUpcoming();
   console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series.`);
 }
 
-// Daily run (CATALOG_MODE=daily): a few minutes instead of half an hour. Adds films and series released
-// in the last DAILY_DAYS days that aren't in the catalogue yet, refreshes the trending films (so "where to
-// watch" is current), and rebuilds Trending. Nothing is removed; the Sunday rebuild trims and re-ranks.
+// Daily run (CATALOG_MODE=daily): a few minutes. Adds films and series released in the last DAILY_DAYS
+// days that aren't in the catalogue yet, refreshes the trending films (so "where to watch" is current),
+// and rebuilds Trending. Nothing is removed; the Sunday run trims and re-ranks.
 async function daily() {
-  const today = new Date().toISOString().slice(0, 10);
-  const newSince = new Date(Date.now() - DAILY_DAYS * 864e5).toISOString().slice(0, 10);
-  const trendSince = new Date(Date.now() - TREND_DAYS * 864e5).toISOString().slice(0, 10);
-
-  const existing = [];
-  for (const lang of OUT_LANGS) {
-    const file = new URL(`${lang}.json`, OUT);
-    if (existsSync(file)) existing.push(...Object.values(JSON.parse(readFileSync(file, "utf8")).films));
-  }
-  if (existing.length < LANGS.length * 50) { console.log("No catalogue yet; the weekly run builds it first."); return; }
-  const have = new Set(existing.map((f) => `${f.l}-${f.id}`));
+  const today = day(0);
+  const newSince = day(-DAILY_DAYS);
+  const trendSince = day(-TREND_DAYS);
+  const have = loadExisting();
+  if (have.size < LANGS.length * 50) { console.log("No catalogue yet; the weekly run builds it first."); return; }
 
   const moviePicks = [];
   const tvPicks = [];
@@ -252,73 +318,84 @@ async function daily() {
       trendIds[lang] = (await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": trendSince, "primary_release_date.lte": today, "vote_count.gte": 3 }, 1)).slice(0, TREND_PER_LANG + 2);
       queue(trendIds[lang], moviePicks, lang, true);
     }
-    queue(await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, 2), moviePicks, lang);
+    queue(await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, 3), moviePicks, lang);
     queue(await discover("tv", lang, { ...tvBase, sort_by: "popularity.desc", "first_air_date.gte": newSince, "first_air_date.lte": today }, 1), tvPicks, lang);
   }
   console.log(`Daily: ${moviePicks.length} films and ${tvPicks.length} series to fetch.`);
 
-  const films = await details(moviePicks, "movie", "watch/providers,release_dates", toFilm);
-  const series = await details(tvPicks, "tv", "watch/providers,content_ratings", toSeries,
-    (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES);
-  const fresh = new Map([...films, ...series].map((f) => [`${f.l}-${f.id}`, f]));
+  const fresh = new Map([...(await movieDetails(moviePicks)), ...(await seriesDetails(tvPicks))].map((f) => [keyOf(f), f]));
   const added = [...fresh.keys()].filter((k) => !have.has(k));
   console.log(`New titles: ${added.length}${added.length ? ` (${added.slice(0, 20).join(", ")}${added.length > 20 ? "…" : ""})` : ""}.`);
-  writeCatalogue([...existing.filter((f) => !fresh.has(`${f.l}-${f.id}`)), ...fresh.values()], trendIds, { full: false });
+  for (const [k, f] of fresh) have.set(k, f);
+  writeCatalogue([...have.values()], trendIds);
   await writeUpcoming();
 }
 
-// Writes the per-language files, people index and trending list from every title. With full: false
-// (the daily run), a language's files are only rewritten when its titles changed, so unchanged files
-// keep their date and there's nothing to commit for them.
-function writeCatalogue(titles, trendIds, { full }) {
-  // Per language: list-<lang>.json (compact, for browsing, search and the sitemap) and <lang>.json
-  // (full details, for each title's page). manifest.json says which languages exist.
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, ...rest }) => rest;
+// Same as searchNorm() in assets/app.js: "K.G.F: Chapter 1" → "kgf chapter 1".
+const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ");
+const STOPWORDS = new Set(["the", "a", "an", "of", "and"]);
+
+// Writes every file from the full list of titles. Files are only rewritten when their content changed.
+function writeCatalogue(titles, trendIds) {
   const all = [...titles].sort((a, b) => b.n - a.n);
   mkdirSync(OUT, { recursive: true });
-  const built = new Date().toISOString().slice(0, 10);
+  const built = day(0);
   const counts = {};
-  const changed = [];
+
   for (const lang of OUT_LANGS) {
     const mine = all.filter((f) => f.l === lang);
     if (!mine.length) continue;
     counts[lang] = mine.length;
-    const films = Object.fromEntries(mine.map((f) => [f.id, f]));
-    const fullFile = new URL(`${lang}.json`, OUT);
-    if (!full && existsSync(fullFile) && JSON.stringify(JSON.parse(readFileSync(fullFile, "utf8")).films) === JSON.stringify(films)) continue;
-    changed.push(lang);
-    writeFileSync(new URL(`list-${lang}.json`, OUT), JSON.stringify({ built, films: mine.map(({ ov, b, o, im, tr, cast, dir, wd, ...rest }) => rest) }));
-    writeFileSync(fullFile, JSON.stringify({ built, films }));
+    writeIfChanged(new URL(`list-${lang}.json`, OUT), JSON.stringify({ films: mine.map(compact) }));
+    // Full details in TITLE_SHARDS small files per language.
+    const shards = Array.from({ length: TITLE_SHARDS }, () => ({}));
+    mine.forEach((f) => { shards[numId(f.id) % TITLE_SHARDS][f.id] = f; });
+    mkdirSync(new URL(`t/${lang}/`, OUT), { recursive: true });
+    shards.forEach((s, i) => writeIfChanged(new URL(`t/${lang}/${i}.json`, OUT), JSON.stringify({ films: s })));
+    rmSync(new URL(`${lang}.json`, OUT), { force: true }); // older layout
   }
-  if (full || changed.length) writeFileSync(new URL("manifest.json", OUT), JSON.stringify({ built, count: all.length, langs: counts }));
-  console.log(`Languages written: ${changed.join(", ") || "none"}.`);
+  writeIfChanged(new URL("popular.json", OUT), JSON.stringify({ films: all.slice(0, POPULAR_SIZE).map(compact) }));
 
-  // Actor pages: people/<n>.json, where n = person id % PEOPLE_SHARDS, so a page loads one small file.
-  // Each person: [name, photo path, ["<lang>-<id>", ...] titles they lead or direct].
+  // Actor pages: p/<n>.json. Each person: [name, photo, [[lang, id, title, year, series?, poster, rating], ...]].
   const people = {};
   for (const f of all) {
-    for (const [pid, name, , photo] of [...(f.cast || []), ...(f.dir || []).map(([i, n, ph]) => [i, n, "", ph])]) {
+    const crew = [...(f.cast || []), ...(f.dir || []).map(([i, nm, ph]) => [i, nm, "", ph])];
+    for (const [pid, name, , photo] of crew) {
       const p = (people[pid] = people[pid] || [name, "", []]);
       if (photo && !p[1]) p[1] = photo;
-      const key = `${f.l}-${f.id}`;
-      if (!p[2].includes(key)) p[2].push(key);
+      if (!p[2].some((x) => x[0] === f.l && x[1] === f.id)) p[2].push([f.l, f.id, f.t, f.y, f.k === "tv" ? 1 : 0, f.p || "", f.v]);
     }
   }
-  mkdirSync(new URL("people/", OUT), { recursive: true });
-  const shards = Array.from({ length: PEOPLE_SHARDS }, () => ({}));
-  for (const [pid, p] of Object.entries(people)) shards[pid % PEOPLE_SHARDS][pid] = p;
-  shards.forEach((s, i) => writeIfChanged(new URL(`people/${i}.json`, OUT), JSON.stringify(s)));
+  const pShards = Array.from({ length: PEOPLE_SHARDS }, () => ({}));
+  for (const [pid, p] of Object.entries(people)) pShards[pid % PEOPLE_SHARDS][pid] = p;
+  mkdirSync(new URL("p/", OUT), { recursive: true });
+  pShards.forEach((s, i) => writeIfChanged(new URL(`p/${i}.json`, OUT), JSON.stringify(s)));
+  rmSync(new URL("people/", OUT), { recursive: true, force: true }); // older layout
   console.log(`People: ${Object.keys(people).length}.`);
 
-  // trending.json: [{l, id}] taking turns between languages, only titles that made it into the catalogue.
-  const have = new Set(all.filter((f) => f.k !== "tv").map((f) => `${f.l}-${f.id}`));
-  const perLang = TREND_LANGS.map((l) => (trendIds[l] || []).filter((id) => have.has(`${l}-${id}`)).slice(0, TREND_PER_LANG));
+  // Search: s/<ab>.json holds every title with a word starting with "ab": [lang, id, title, year, series?, poster, votes, rating].
+  const search = {};
+  for (const f of all) {
+    const starts = new Set(norm(f.t).split(/\s+/).filter((w) => w.length >= 2 && !STOPWORDS.has(w)).map((w) => w.slice(0, 2)));
+    for (const c of starts) (search[c] = search[c] || []).push([f.l, f.id, f.t, f.y, f.k === "tv" ? 1 : 0, f.p || "", f.n, f.v]);
+  }
+  const sDir = new URL("s/", OUT);
+  mkdirSync(sDir, { recursive: true });
+  for (const c of Object.keys(search)) writeIfChanged(new URL(`${c}.json`, sDir), JSON.stringify(search[c]));
+  readdirSync(sDir).filter((f) => !search[f.replace(".json", "")]).forEach((f) => rmSync(new URL(f, sDir)));
+
+  // trending.json: the films themselves, taking turns between languages.
+  const byKey = new Map(all.filter((f) => f.k !== "tv").map((f) => [keyOf(f), f]));
+  const perLang = TREND_LANGS.map((l) => (trendIds[l] || []).map((id) => byKey.get(`${l}-${id}`)).filter(Boolean).slice(0, TREND_PER_LANG));
   const trending = [];
-  for (let i = 0; i < TREND_PER_LANG; i++) perLang.forEach((ids, j) => ids[i] && trending.push({ l: TREND_LANGS[j], id: ids[i] }));
-  const trendFile = new URL("trending.json", OUT);
-  const oldTrend = existsSync(trendFile) ? JSON.parse(readFileSync(trendFile, "utf8")).items : null;
-  if (JSON.stringify(oldTrend) !== JSON.stringify(trending)) writeFileSync(trendFile, JSON.stringify({ built, items: trending }));
+  for (let i = 0; i < TREND_PER_LANG; i++) perLang.forEach((list) => list[i] && trending.push(compact(list[i])));
+  writeIfChanged(new URL("trending.json", OUT), JSON.stringify({ items: trending }));
   console.log(`Trending: ${trending.length} films.`);
+
   writeLists(all);
+  writeSitemaps(all, people);
+  writeIfChanged(new URL("manifest.json", OUT), JSON.stringify({ layout: LAYOUT, built, count: all.length, langs: counts, shards: { t: TITLE_SHARDS, p: PEOPLE_SHARDS } }));
   rmSync(new URL("index.json", OUT), { force: true }); // replaced by the per-language lists
   console.log(`Total: ${all.length} titles.`, counts);
 }
@@ -344,12 +421,11 @@ function weightedRank(arr, minVotes = 3) {
 }
 
 const slugOf = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, ...rest }) => rest;
 
 function writeLists(all) {
   const dir = new URL("lists/", OUT);
   mkdirSync(dir, { recursive: true });
-  const today = new Date().toISOString().slice(0, 10);
+  const today = day(0);
   const released = all.filter((f) => !f.rd || f.rd <= today);
   const index = { ott: [], best: {} };
   // previews.json: four posters per list, keyed by the list page's link, for the homepage tiles.
@@ -411,10 +487,50 @@ function writeLists(all) {
   console.log(`Lists: ${index.ott.length} apps, ${Object.values(index.best).reduce((s, b) => s + b.genres.length + b.years.length + b.kinds.length, 0)} best-of lists.`);
 }
 
+// Sitemaps, ready-made so the site doesn't have to read big files on each request
+// (served by functions/sitemaps/[name].js): one per language, plus people and lists.
+const xml = (paths) => `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${paths.map((p) => `<url><loc>${SITE}${p.replace(/&/g, "&amp;")}</loc></url>`).join("\n")}
+</urlset>`;
+
+function writeSitemaps(all, people) {
+  const dir = new URL("sitemaps/", OUT);
+  mkdirSync(dir, { recursive: true });
+  // Our reviewed films have review pages (in main.xml), not film pages.
+  let reviewed = new Set();
+  try {
+    const { IMAGES } = new Function(`${readFileSync(DATA, "utf8")}; return { IMAGES };`)();
+    reviewed = new Set(Object.values(IMAGES).map((i) => i.tmdb));
+  } catch {}
+  for (const lang of OUT_LANGS) {
+    const paths = all.filter((f) => f.l === lang && !(f.k !== "tv" && reviewed.has(f.id))).map((f) => `/film?id=${keyOf(f)}`);
+    if (paths.length) writeIfChanged(new URL(`${lang}.xml`, dir), xml(paths.slice(0, 50000)));
+  }
+  // Actor and director pages, for people with at least 3 titles (fewer makes a thin page).
+  const pids = Object.entries(people).filter(([, p]) => p[2].length >= 3).map(([id]) => id).sort((a, b) => a - b);
+  writeIfChanged(new URL("people.xml", dir), xml(pids.slice(0, 50000).map((id) => `/person?id=${id}`)));
+}
+
+// lists.xml: New on <app>, best-of lists and upcoming (after writeUpcoming, which knows the languages).
+function writeListsSitemap(upcoming) {
+  const index = JSON.parse(readFileSync(new URL("lists/index.json", OUT), "utf8"));
+  const paths = ["/ott", "/best", ...index.ott.map(([s]) => `/ott?app=${s}`)];
+  for (const [l, b] of Object.entries(index.best)) {
+    b.kinds.forEach((k) => paths.push(`/best?l=${l}${k === "tv" ? "&k=tv" : ""}`));
+    b.genres.forEach(([g, , movies, tv]) => {
+      if (movies) paths.push(`/best?l=${l}&g=${g}`);
+      if (tv) paths.push(`/best?l=${l}&g=${g}&k=tv`);
+    });
+    b.years.forEach(([y]) => paths.push(`/best?l=${l}&y=${y}`));
+  }
+  if (upcoming.length) paths.push("/upcoming", ...[...new Set(upcoming.map((f) => f.l))].map((l) => `/upcoming?l=${l}`));
+  writeIfChanged(new URL("sitemaps/lists.xml", OUT), xml(paths));
+}
+
 // upcoming.json: the most-awaited films releasing in the next UPCOMING_DAYS days, per language, with
 // trailer and lead cast, for the Upcoming releases page. Rebuilt on every run (daily and Sunday).
 async function writeUpcoming() {
-  const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
   const picks = [];
   for (const lang of UPCOMING_LANGS) {
     const params = { sort_by: "popularity.desc", "primary_release_date.gte": day(1), "primary_release_date.lte": day(UPCOMING_DAYS), ...(PLAN[lang]?.noAnimation ? { without_genres: ANIMATION } : {}) };
@@ -427,6 +543,7 @@ async function writeUpcoming() {
   });
   films.sort((a, b) => a.d.localeCompare(b.d) || a.t.localeCompare(b.t));
   writeIfChanged(new URL("upcoming.json", OUT), JSON.stringify({ items: films }));
+  writeListsSitemap(films);
   console.log(`Upcoming: ${films.length} films.`);
 }
 

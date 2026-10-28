@@ -2,6 +2,9 @@
 //   main.xml    our pages and every review (from assets/data.js)
 //   <code>.xml  catalogue titles in one language we haven't reviewed (assets/catalog/list-<code>.json)
 //   people.xml  actor and director pages (assets/catalog/people/*.json)
+//   lists.xml   New on <app>, best-of lists and upcoming
+// Newer catalogue builds pre-make every one except main.xml (assets/catalog/sitemaps/); the code below
+// is the fallback for older builds.
 import "../../assets/data.js";
 
 const SITE = "https://masalamischief.in";
@@ -20,6 +23,12 @@ export async function onRequestGet(context) {
     const pages = ["/", "/reviews", "/films", "/suggest", "/family", "/group"].map((p) => `<url><loc>${SITE}${p}</loc></url>`);
     const reviews = MOVIES.map((m) => `<url><loc>${SITE}/review?id=${encodeURIComponent(m.id)}</loc><lastmod>${m.reviewed}</lastmod></url>`);
     return xmlResponse([...pages, ...reviews]);
+  }
+  // Newer catalogue builds write the language, people and lists sitemaps ready-made
+  // (assets/catalog/sitemaps/<name>.xml), so they're served as they are, with no big files to read here.
+  if (/^[a-z]{2,8}$/.test(name)) {
+    const ready = await context.env.ASSETS.fetch(new URL(`/assets/catalog/sitemaps/${name}.xml`, context.request.url));
+    if (ready.ok) return new Response(ready.body, { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
   }
   if (name === "lists") {
     // New on <app>, best-of lists and upcoming releases (assets/catalog/lists/index.json, upcoming.json).
