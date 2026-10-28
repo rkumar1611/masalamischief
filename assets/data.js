@@ -1265,6 +1265,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-10-28",
   items: [
+    { title: "The Aviator", year: 2004, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/70011213", note: "Directed by Martin Scorsese · IMDb 7.5" },
     { title: "Maayon", year: 2022, lang: "Tamil", app: "JioHotstar", added: "2026-10-28", url: "https://www.hotstar.com/in/movies/maayon/1271413412", note: "Tamil mystery thriller." },
     { title: "Bakasura Restaurant", year: 2025, app: "JioHotstar", added: "2026-10-28", url: "https://www.hotstar.com/in/movies/bakasura-restaurant/1271718864", note: "Horror-comedy, new to streaming." },
     { title: "M3GAN 2.0", year: 2025, lang: "English", app: "Netflix", added: "2026-10-27", url: "https://www.netflix.com/title/82000745", note: "The killer-doll sequel." },
