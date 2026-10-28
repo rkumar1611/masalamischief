@@ -127,6 +127,10 @@ main { padding-bottom: 64px; }
 .menu-btn { display: none; }
 @media (max-width: 700px) {
   .menu-btn { display: inline-grid; place-items: center; font-size: 1.1rem; }
+  /* Order on phones: ☰ menu, then search, then light/dark last */
+  .site-header .wrap .menu-btn { order: 1; margin-left: auto; }
+  .site-header .wrap .search-btn { order: 2; margin-left: 0; }
+  .site-header .wrap #theme-btn { order: 3; margin-left: 0; }
   .site-header .wrap { gap: 6px; }
   .site-header .logo { font-size: 1.22rem; gap: 6px; }
   .site-header .logo-mark { width: 30px; height: 30px; font-size: 0.9rem; }
