@@ -1259,3 +1259,6 @@ const PARENT_NOTES = {
   "soorarai-pottru": { age: 10, violence: 1, romance: 1, language: 1, scary: 0,
     note: "A father's death and a few scuffles. Inspiring for older kids who love planes or business stories." },
 };
+
+// Lets the Cloudflare functions (functions/) read the same data. Harmless in the browser.
+globalThis.MM_DATA = { MOVIES, WATCH, WATCH_LINKS, PARENT_NOTES, LANG_LABELS, MOODS };

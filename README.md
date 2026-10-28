@@ -38,8 +38,8 @@ Other things you can edit in `assets/data.js`:
 Visitor ratings, the watchlist, chosen OTT apps and the light/dark choice are saved only in each
 visitor's own browser. Nothing is sent to a server, and nothing is collected about children.
 
-After changing anything in `assets/`, bump the `?v=7` number on the `<link>`/`<script>` tags in every
-`.html` file (e.g. to `?v=8`), otherwise returning visitors may keep seeing the old cached version.
+After changing anything in `assets/`, bump the `?v=8` number on the `<link>`/`<script>` tags in every
+`.html` file (e.g. to `?v=9`), otherwise returning visitors may keep seeing the old cached version.
 
 The bundled reviews are starter copy in the house voice: rewrite them in your own words before
 launch, and check the `audio` (dubbed languages) for each film, since that varies by platform.
