@@ -474,6 +474,162 @@ const MOVIES = [
     misses: ["Early animation looks dated", "Sid's room can scare little ones"],
     reviewed: "2026-09-29",
   },
+  {
+    id: "12th-fail", title: "12th Fail", year: 2023, lang: "Hindi", audio: ["Hindi"],
+    genres: ["Drama", "Biography"], runtime: 147,
+    moods: ["feel-good", "rainy-sunday", "family-time"], masala: 2, quality: 9,
+    tagline: "The UPSC film that will make you call your old tuition teacher.",
+    review: [
+      "Vikrant Massey plays Manoj, a boy from Chambal who fails his board exams and then sets his sights on the toughest exam in the country. Based on a true story, it follows him through Delhi's coaching lanes, flour mills and rented rooms where a dozen aspirants share one dream.",
+      "It's earnest and sometimes heavy-handed, but it earns every tear. A rare film about ambition that's really about honesty."
+    ],
+    hits: ["Vikrant Massey's career-best turn", "Mukherjee Nagar feels real", "An ending that lands"],
+    misses: ["Preachy in patches", "Music overdoes the emotion"],
+    reviewed: "2026-10-28",
+  },
+  {
+    id: "laapataa-ladies", title: "Laapataa Ladies", year: 2024, lang: "Hindi", audio: ["Hindi"],
+    genres: ["Comedy", "Drama"], runtime: 124,
+    moods: ["feel-good", "first-date", "family-time", "rainy-sunday"], masala: 3, quality: 9,
+    tagline: "Two brides, one train, two veils, and a very wrong turn.",
+    review: [
+      "On a crowded train, two newly married brides in identical red ghoonghats get swapped. One young husband brings home the wrong wife, and the other bride is left alone on a station platform. Kiran Rao turns that mix-up into a warm village comedy.",
+      "It says sharp things about how women are treated without ever lecturing, and the comic timing (hello, Ravi Kishan's cop) is spot on. Short, sweet and easy to recommend to anyone."
+    ],
+    hits: ["Ravi Kishan steals it", "Big ideas, light touch", "Lovely small-town detail"],
+    misses: ["A couple of convenient coincidences", "Some will want more bite"],
+    reviewed: "2026-10-28",
+  },
+  {
+    id: "manjummel-boys", title: "Manjummel Boys", year: 2024, lang: "Malayalam", audio: ["Malayalam"],
+    genres: ["Thriller", "Drama"], runtime: 135,
+    moods: ["edge-of-seat", "friends-night"], masala: 3, quality: 8.5,
+    tagline: "A boys' trip to Kodaikanal goes very, very far down.",
+    review: [
+      "A gang of friends from Kochi goes on a cheap road trip to Kodaikanal and wanders into the Guna Caves, where one of them falls into a deep pit. Based on a real 2006 rescue, the second half is pure, breathless survival.",
+      "The first half is loose and jokey, which is the point: you get to know the friends before everything goes wrong. Watch it with your own gang, then call them."
+    ],
+    hits: ["Unbearably tense rescue", "Friendship feels real", "Great use of a classic Kamal song"],
+    misses: ["First half meanders", "Claustrophobes, beware"],
+    reviewed: "2026-10-27",
+  },
+  {
+    id: "jawan", title: "Jawan", year: 2023, lang: "Hindi", audio: ["Hindi", "Tamil", "Telugu"],
+    genres: ["Action", "Thriller"], runtime: 169,
+    moods: ["go-big", "friends-night"], masala: 5, quality: 7,
+    tagline: "Shah Rukh Khan, two of him, and a metro hijack to fix the country.",
+    review: [
+      "Atlee brings Tamil mass-cinema energy to Bollywood's biggest star. SRK plays a vigilante with a squad of women and a list of grievances, from farmer loans to rotten hospitals, and the film stops for a whistle-worthy entry every twenty minutes.",
+      "Logic was left at the ticket counter. Leave yours there too, and it's a riot."
+    ],
+    hits: ["SRK in full mass mode", "Interval block", "The bald look"],
+    misses: ["Long and loud", "Plot is pure convenience"],
+    reviewed: "2026-10-27",
+  },
+  {
+    id: "kgf-2", title: "K.G.F: Chapter 2", year: 2022, lang: "Kannada", audio: ["Kannada", "Hindi", "Tamil", "Telugu", "Malayalam"],
+    genres: ["Action", "Period"], runtime: 168,
+    moods: ["go-big"], masala: 5, quality: 7,
+    tagline: "Rocky Bhai versus everyone. Bring ear protection.",
+    review: [
+      "Rocky now rules the gold fields, and he has two problems: the ruthless Adheera (Sanjay Dutt) wants them back, and a determined prime minister (Raveena Tandon) wants him gone. Prashanth Neel shoots every line of dialogue like a trailer.",
+      "It's relentless, smoky and wildly over the top. If you loved Chapter 1, this is more of the same, only bigger."
+    ],
+    hits: ["Yash's swagger", "Huge set pieces", "Dialogue built for whistles"],
+    misses: ["Exhausting pace", "Women mostly sidelined"],
+    reviewed: "2026-10-26",
+  },
+  {
+    id: "pushpa", title: "Pushpa: The Rise", year: 2021, lang: "Telugu", audio: ["Telugu", "Hindi", "Tamil", "Malayalam", "Kannada"],
+    genres: ["Action", "Crime"], runtime: 179,
+    moods: ["go-big", "friends-night"], masala: 5, quality: 7,
+    tagline: "Flower nahi, fire hai. You already know the shrug.",
+    review: [
+      "Allu Arjun is Pushpa Raj, a labourer who climbs the red sanders smuggling ladder in the Seshachalam forests. The stubble, the slouch and the shoulder-shrug became a national meme, and the songs were everywhere.",
+      "It's long and the romance track is weak, but Fahadh Faasil's late entry as a menacing cop sets up the sequel beautifully."
+    ],
+    hits: ["Allu Arjun's physical performance", "Chart-busting songs", "Fahadh Faasil's last act"],
+    misses: ["Romance track drags", "Three hours, and it's only part one"],
+    reviewed: "2026-10-26",
+  },
+  {
+    id: "kalki", title: "Kalki 2898 AD", year: 2024, lang: "Telugu", audio: ["Telugu", "Hindi", "Tamil", "Malayalam", "Kannada"],
+    genres: ["Sci-fi", "Action"], runtime: 181,
+    moods: ["go-big", "mind-bender"], masala: 4, quality: 7,
+    tagline: "The Mahabharata meets Mad Max, with Amitabh Bachchan as the trump card.",
+    review: [
+      "In a ruined future Kashi, a bounty hunter (Prabhas) is hired to catch a pregnant woman (Deepika Padukone) who may carry a god. Standing in his way is Ashwatthama, played with towering presence by Amitabh Bachchan.",
+      "The world-building is the most ambitious Indian sci-fi has attempted, and the final hour is a blast. The first hour, sadly, is clunky."
+    ],
+    hits: ["Amitabh Bachchan's Ashwatthama", "Jaw-dropping production design", "Mythology twist at the end"],
+    misses: ["Slow, jokey first hour", "Prabhas feels miscast early on"],
+    reviewed: "2026-10-25",
+  },
+  {
+    id: "hanu-man", title: "Hanu-Man", year: 2024, lang: "Telugu", audio: ["Telugu", "Hindi", "Tamil", "Kannada", "Malayalam"],
+    genres: ["Fantasy", "Action"], runtime: 158,
+    moods: ["go-big", "family-time", "feel-good"], masala: 4, quality: 7,
+    tagline: "A small-town thief gets superpowers. India gets its own origin story.",
+    review: [
+      "Hanumanthu, a likeable village thief, finds a gem that gives him Hanuman-like strength, just as a comic-book-obsessed villain comes hunting for it. Teja Sajja makes the hero easy to root for.",
+      "Made on a fraction of the usual superhero budget, it gets real goosebumps out of its climax. A great pick for a mixed-age family night."
+    ],
+    hits: ["Goosebump climax", "Big heart, small budget", "Fun for kids and grandparents"],
+    misses: ["Villain is cartoonish", "Comedy subplots run long"],
+    reviewed: "2026-10-25",
+  },
+  {
+    id: "oppenheimer", title: "Oppenheimer", year: 2023, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Drama", "Biography"], runtime: 180,
+    moods: ["mind-bender", "rainy-sunday"], masala: 2, quality: 9,
+    tagline: "Three hours of men talking in rooms, and somehow it's a thriller.",
+    review: [
+      "Christopher Nolan tells the story of J. Robert Oppenheimer, the physicist who led the building of the atomic bomb, cutting between the race to build it and the hearings that later broke him. Cillian Murphy is haunting.",
+      "The Trinity test sequence is one of the great scenes of the decade. It's dense, so watch with full attention and no phones."
+    ],
+    hits: ["Cillian Murphy", "The Trinity test", "Ludwig Göransson's score"],
+    misses: ["Very dense dialogue", "Women's roles are thin"],
+    reviewed: "2026-10-24",
+  },
+  {
+    id: "dune-part-two", title: "Dune: Part Two", year: 2024, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Sci-fi", "Adventure"], runtime: 166,
+    moods: ["go-big", "mind-bender"], masala: 4, quality: 9,
+    tagline: "Sandworm-riding, holy wars and the biggest screen you can find.",
+    review: [
+      "Paul Atreides (Timothée Chalamet) joins the desert Fremen to take revenge on the house that destroyed his family, while Chani (Zendaya) worries he's becoming the messiah they fear. Denis Villeneuve stages it on a staggering scale.",
+      "Better than Part One: more action, more feeling, and a terrifying Austin Butler. Watch Part One first, or at least read a summary."
+    ],
+    hits: ["Sandworm ride", "Austin Butler's villain", "Sound and visuals"],
+    misses: ["Needs Part One", "Ending is a cliffhanger"],
+    reviewed: "2026-10-24",
+  },
+  {
+    id: "inside-out-2", title: "Inside Out 2", year: 2024, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Animation", "Family"], runtime: 96,
+    moods: ["family-time", "feel-good"], masala: 3, quality: 8,
+    tagline: "Riley turns 13. Anxiety moves in and starts redecorating.",
+    review: [
+      "Joy, Sadness and the gang are back, but puberty brings new emotions: Anxiety, Envy, Ennui and Embarrassment. At a weekend hockey camp, Anxiety takes the controls and Riley starts losing track of who she is.",
+      "Not quite as fresh as the first film, but its climax about panic is one of the kindest things a kids' film has said. Parents of teens may cry harder than the kids."
+    ],
+    hits: ["Anxiety is perfectly written", "Gentle lesson about self-worth", "Funny for adults too"],
+    misses: ["Repeats the first film's structure", "Less magical world-building"],
+    reviewed: "2026-10-23",
+  },
+  {
+    id: "jungle-book", title: "The Jungle Book", year: 2016, lang: "English", audio: ["English", "Hindi"],
+    genres: ["Adventure", "Family"], runtime: 106,
+    moods: ["family-time", "go-big"], masala: 4, quality: 8,
+    tagline: "Mowgli, Baloo and a Shere Khan who'll make the kids hide behind cushions.",
+    review: [
+      "Jon Favreau's photo-real version of Kipling's story follows Mowgli as he's forced out of the jungle by the tiger Shere Khan, with Bagheera and Baloo along for the journey. Watch it in Hindi if you can: the dub cast is a treat.",
+      "It's beautiful and moves fast, but Shere Khan and Kaa are genuinely scary for little ones."
+    ],
+    hits: ["Stunning animals", "Great Hindi dub", "Bare Necessities"],
+    misses: ["Scary for under-7s", "Songs feel squeezed in"],
+    reviewed: "2026-10-23",
+  },
 ];
 
 // Where to watch in India, from JustWatch India on WATCH_CHECKED.
@@ -514,6 +670,18 @@ const WATCH = {
   "paddington-2": { stream: [], rent: ["Amazon", "Apple TV"] },
   "coco": { stream: ["JioHotstar"], rent: [] },
   "toy-story": { stream: ["JioHotstar"], rent: [] },
+  "12th-fail": { stream: ["JioHotstar"], rent: [] },
+  "laapataa-ladies": { stream: ["Netflix"], rent: [] },
+  "manjummel-boys": { stream: ["JioHotstar"], rent: [] },
+  "jawan": { stream: ["Netflix"], rent: ["Apple TV"] },
+  "kgf-2": { stream: ["Prime Video"], rent: ["Amazon"] },
+  "pushpa": { stream: ["Prime Video", "MX Player"], rent: ["Amazon"] },
+  "kalki": { stream: ["Netflix", "Prime Video"], rent: ["Amazon"] },
+  "hanu-man": { stream: ["JioHotstar", "ZEE5"], rent: [] },
+  "oppenheimer": { stream: ["JioHotstar"], rent: ["ZEE5", "Amazon", "Apple TV"] },
+  "dune-part-two": { stream: ["Netflix"], rent: ["Amazon", "Apple TV"] },
+  "inside-out-2": { stream: ["JioHotstar"], rent: [] },
+  "jungle-book": { stream: ["JioHotstar"], rent: [] },
 };
 
 // Direct links to each film's page on the streaming app (from JustWatch India, WATCH_CHECKED).
@@ -656,6 +824,54 @@ const WATCH_LINKS = {
   "toy-story": {
     "JioHotstar": "https://www.hotstar.com/in/1660010197",
   },
+  "12th-fail": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/12th-fail/1260161273",
+  },
+  "laapataa-ladies": {
+    "Netflix": "https://www.netflix.com/title/81760391",
+  },
+  "manjummel-boys": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/manjummel-boys/1271305800",
+  },
+  "jawan": {
+    "Netflix": "https://www.netflix.com/title/81728124",
+    "Apple TV": "https://tv.apple.com/in/movie/jawan/umc.cmc.4mnynnb1387rj9mxmr69fy7of",
+  },
+  "kgf-2": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.49568f51-d8da-43ae-a8ce-185f4d00ae35",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.49568f51-d8da-43ae-a8ce-185f4d00ae35",
+  },
+  "pushpa": {
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.ac3855ce-6c21-4b6e-a8d8-dd0479dafda1",
+    "MX Player": "https://www.mxplayer.in/movie/watch-pushpa-the-rise-hindi-movie-online-c2dc7967b20d067c12227043915c9f84",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.7f460370-67e0-4ace-8d50-d79569598103",
+  },
+  "kalki": {
+    "Netflix": "https://www.netflix.com/title/81726031",
+    "Prime Video": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.5e6a95ea-424a-49e0-b1db-3a6097ec03f9",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.5e6a95ea-424a-49e0-b1db-3a6097ec03f9",
+  },
+  "hanu-man": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/hanuman/1971007527",
+    "ZEE5": "https://www.zee5.com/movies/details/watch-hanuman-2024-full-hanu-man-movie-online-on-zee5/0-0-1z5531939",
+  },
+  "oppenheimer": {
+    "JioHotstar": "https://www.hotstar.com/in/1971011128",
+    "ZEE5": "https://www.zee5.com/movies/details/watch-oppenheimer-full-hd-movie-on-rent-online-on-zee5/0-0-1z5465540",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.0653d989-0412-4e01-b466-f657bf48121e",
+    "Apple TV": "https://tv.apple.com/in/movie/oppenheimer/umc.cmc.5gylew9icuhfiifdv3oxwxen8",
+  },
+  "dune-part-two": {
+    "Netflix": "https://www.netflix.com/title/81602836",
+    "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.9392c069-96f9-421b-ac7a-275308e1327a",
+    "Apple TV": "https://tv.apple.com/in/movie/dune-part-two/umc.cmc.363aycnv6vy9qgekvew6fveb9",
+  },
+  "inside-out-2": {
+    "JioHotstar": "https://www.hotstar.com/in/movies/inside-out-2/1271325263",
+  },
+  "jungle-book": {
+    "JioHotstar": "https://www.hotstar.com/in/1260018310",
+  },
 };
 
 const PLATFORM_HOME = {
@@ -711,4 +927,14 @@ const PARENT_NOTES = {
     note: "Huge battle scenes with blood and beheadings, plus a romantic song. Skip for under-12s." },
   "avengers-endgame": { age: 12, violence: 2, romance: 0, language: 1, scary: 1,
     note: "Plenty of superhero fighting and major character deaths that hit hard. Works best if kids know the earlier films." },
+  "inside-out-2": { age: 6, violence: 0, romance: 0, language: 0, scary: 1,
+    note: "No villains, just big feelings. The climax shows a panic attack, which is a great opener for talking about worry." },
+  "jungle-book": { age: 7, violence: 2, romance: 0, language: 0, scary: 2,
+    note: "Shere Khan's attacks, a hypnotising python and a fiery climax. Thrilling for 7+, too intense for toddlers." },
+  "hanu-man": { age: 8, violence: 2, romance: 1, language: 0, scary: 1,
+    note: "Superhero fights with goons and a mild romance. Devotional themes that grandparents will enjoy." },
+  "laapataa-ladies": { age: 10, violence: 1, romance: 1, language: 0, scary: 0,
+    note: "Dowry and a controlling husband come up, and a corrupt cop shakes people down. Warm, funny and a great conversation-starter." },
+  "12th-fail": { age: 10, violence: 1, romance: 1, language: 1, scary: 0,
+    note: "Some roughing-up by police and a gentle romance. Lots of exam stress: inspiring for teens, but talk about failure afterwards." },
 };

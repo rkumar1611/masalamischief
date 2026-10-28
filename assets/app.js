@@ -297,6 +297,7 @@ function initReview() {
         </div>
 
         <div class="share-row">
+          <a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${m.title} ${m.year} official trailer`)}">▶ Watch trailer</a>
           <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="save" type="button"></button>
           <button class="btn" id="copy" type="button">Copy link</button>
