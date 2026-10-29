@@ -1009,7 +1009,6 @@ function initReview() {
           <button class="btn" id="save" type="button"></button>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
-        <div id="similar-slot"></div>
         <div id="ext-slot">${extLinks({ im: IMAGES[m.id] && IMAGES[m.id].imdb, tmdbUrl: IMAGES[m.id] && IMAGES[m.id].tmdb ? `https://www.themoviedb.org/movie/${IMAGES[m.id].tmdb}` : "" })}</div>
       </article>
       <aside>
@@ -1035,8 +1034,9 @@ function initReview() {
         </div>
       </aside>
     </div>
+    <div id="similar-slot"></div>
     <section>
-      <div class="section-head"><h2>More like this mood</h2></div>
+      <div class="section-head"><h2>More of our reviews in this mood</h2></div>
       <div class="grid">${MOVIES.filter((x) => x.id !== m.id && x.moods.some((mo) => m.moods.includes(mo)))
         .sort((a, b) => b.quality - a.quality).slice(0, 4).map((x) => card(x)).join("")}</div>
     </section>`;
@@ -1141,7 +1141,7 @@ function initSuggest() {
     if (!f) { likedOut.innerHTML = `<p class="muted">Couldn't load that one. Try another.</p>`; return; }
     liked.value = f.t;
     likedOut.innerHTML = "";
-    await renderMoreLike(likedOut, f, `🍿 Because you liked ${f.t}`);
+    await renderMoreLike(likedOut, f, `🍿 Because you liked ${f.t}`, true);
     if (!likedOut.innerHTML) likedOut.innerHTML = `<p class="muted">We couldn't find similar titles for that one yet.</p>`;
   });
 
@@ -1753,10 +1753,13 @@ function rankWithFallback(arr, want, minVotes = 20) {
 }
 // More like this: TMDB's recommendations (f.rc, from the weekly build) that we have pages for, then titles
 // in the same language and kind with the most genres in common, well-rated and close in year first.
+// The weekly build works this out per title (f.ml), so title pages usually need no extra download;
+// without it, this falls back to the title's language list.
 async function moreLikeThis(f, n = 6) {
-  const [cat, pop] = await Promise.all([loadIndex([f.l]), loadCatalog("popular")]);
+  if (f.ml && f.ml.length) return f.ml.slice(0, n).map(([l, id, t, y, p, v, tv, w]) => ({ l, id, t, y, p, v, ...(tv ? { k: "tv" } : {}), w: w || [] }));
+  const cat = await loadIndex([f.l]);
   if (!cat) return [];
-  const byKey = new Map([...(pop ? pop.films : []), ...cat.films].map((x) => [`${x.l}-${x.id}`, x]));
+  const byKey = new Map(cat.films.map((x) => [`${x.l}-${x.id}`, x]));
   const seen = new Set([`${f.l}-${f.id}`]);
   const out = [];
   const add = (x) => { const k = `${x.l}-${x.id}`; if (x && !seen.has(k)) { seen.add(k); out.push(x); } };
@@ -1773,8 +1776,17 @@ async function moreLikeThis(f, n = 6) {
   return out.slice(0, n);
 }
 // Fills a slot with "More like this" for title f (a catalogue entry, or a stand-in for one of our reviews).
-async function renderMoreLike(slot, f, heading) {
+async function renderMoreLike(slot, f, heading, now) {
   if (!slot) return;
+  // Without the built list it means a big download, so wait until the row is nearly on screen.
+  if (!(f.ml && f.ml.length) && !now && "IntersectionObserver" in window) {
+    await new Promise((resolve) => {
+      const go = () => { io.disconnect(); resolve(); };
+      const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) go(); }, { rootMargin: "600px" });
+      io.observe(slot);
+      setTimeout(go, 4000); // in case the browser never reports it (some embedded views)
+    });
+  }
   const list = await moreLikeThis(f);
   if (!list.length) return;
   const byTmdb = reviewedByTmdb();
@@ -2034,7 +2046,6 @@ async function initFilm() {
           <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
-        <div id="similar-slot"></div>
         ${extLinks({ im: f.im, wd: f.wd, tmdbUrl: `https://www.themoviedb.org/${tv ? `tv/${String(f.id).slice(2)}` : `movie/${f.id}`}` })}
       </article>
       <aside>
@@ -2063,10 +2074,7 @@ async function initFilm() {
         </div>
       </aside>
     </div>
-    <section id="film-more" hidden>
-      <div class="section-head"><h2>More ${esc(lang)} ${tv ? "series" : "movies"} like this</h2></div>
-      <div class="fgrid" id="film-more-grid"></div>
-    </section>`;
+    <div id="similar-slot"></div>`;
 
   document.getElementById("copy").onclick = async (e) => {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
@@ -2081,30 +2089,6 @@ async function initFilm() {
 
   root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
   initCommunity(`c:${code}-${rawId}`, document.getElementById("community"), f.t);
-
-  // "More like this" needs the whole language list, so it loads only once the visitor scrolls near it.
-  await new Promise((resolve) => {
-    if (!("IntersectionObserver" in window)) return resolve();
-    const mark = document.createElement("div");
-    mark.style.height = "1px";
-    document.getElementById("film-more").before(mark);
-    const go = () => { io.disconnect(); mark.remove(); resolve(); };
-    const io = new IntersectionObserver((seen) => { if (seen.some((s) => s.isIntersecting)) go(); }, { rootMargin: "600px" });
-    io.observe(mark);
-    setTimeout(go, 3000); // in case the browser never reports it (some embedded views)
-  });
-  const index = await loadIndex([f.l]);
-  if (index) {
-    const byTmdb = reviewedByTmdb();
-    const more = index.films.filter((x) => x.l === f.l && x.id !== f.id && (x.k === "tv") === tv && x.g.some((g) => f.g.includes(g)))
-      .map((x) => ({ ...x, mine: byTmdb[x.id] }))
-      .sort((a, b) => b.g.filter((g) => f.g.includes(g)).length - a.g.filter((g) => f.g.includes(g)).length || b.v - a.v)
-      .slice(0, 6);
-    if (more.length) {
-      document.getElementById("film-more-grid").innerHTML = more.map(filmCard).join("");
-      document.getElementById("film-more").hidden = false;
-    }
-  }
 }
 
 /* ---------- Actor / director page ---------- */
