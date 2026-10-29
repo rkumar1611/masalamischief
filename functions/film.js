@@ -4,7 +4,7 @@
 // right film, plus structured data for Google (Movie or TVSeries, breadcrumbs, visitors' rating stars
 // once there are audience reviews). Data comes from assets/catalog/t/<lang>/<n>.json (see manifest.json).
 // If anything goes wrong, the plain page is served as before.
-import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine } from "../lib/seo.js";
+import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions } from "../lib/seo.js";
 import { audienceRating } from "../lib/community.js";
 
 const LANGS = {
@@ -72,6 +72,7 @@ export async function onRequestGet(context) {
           actor: people(f.cast),
           sameAs: sameAs(f.im, f.wd),
           aggregateRating: aggregate(audience),
+          potentialAction: watchActions(f.u),
         },
         breadcrumbs([["Home", `${SITE}/`], ["Movies & series", `${SITE}/films`], [f.t, url]]),
       ],

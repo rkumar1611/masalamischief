@@ -87,6 +87,7 @@ function renderChrome() {
           </div>
           <a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("Film reviews, what to watch tonight and where to stream it: https://masalamischief.in")}">Share Masala Mischief on WhatsApp</a>
           <button class="btn small install-btn" type="button" hidden>📲 Install the app</button>
+          <button class="btn small alert-btn" type="button" hidden>🔔 Weekly OTT alerts</button>
           <p class="install-help small muted" id="install-help" hidden>On iPhone: tap the Share button <b>⎋</b> in Safari, then <b>Add to Home Screen</b>.</p>
         </div>
         <nav class="footer-col" aria-label="Explore">
@@ -126,6 +127,45 @@ function renderChrome() {
   initTrailers();
   initMenu();
   initInstall();
+  initAlerts();
+}
+
+// Weekly "New on OTT" alerts: sw.js shows them, functions/api/push/ keeps the list and sends them on
+// Fridays. The 🔔 buttons show where the browser supports push: Android and desktop browsers, and
+// iPhone once the site is installed on the home screen.
+function initAlerts() {
+  const btns = [...document.querySelectorAll(".alert-btn")];
+  if (!btns.length || location.protocol === "file:" || !("serviceWorker" in navigator) || !("PushManager" in window) ||
+    !("Notification" in window) || Notification.permission === "denied") return;
+  const paint = (on, text) => btns.forEach((b) => {
+    b.hidden = false;
+    b.textContent = text || (on ? "🔕 Turn off OTT alerts" : "🔔 Weekly OTT alerts");
+  });
+  const post = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((s) => paint(Boolean(s))).catch(() => {});
+  btns.forEach((b) => b.addEventListener("click", async () => {
+    btns.forEach((x) => (x.disabled = true));
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const cur = await reg.pushManager.getSubscription();
+      if (cur) {
+        await post({ endpoint: cur.endpoint, off: true }).catch(() => {});
+        await cur.unsubscribe();
+        paint(false);
+        return;
+      }
+      if ((await Notification.requestPermission()) !== "granted") { btns.forEach((x) => (x.hidden = true)); return; }
+      const { key } = await fetch("/api/push/key").then((r) => r.json());
+      const raw = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
+      if (!(await post(sub.toJSON())).ok) { await sub.unsubscribe(); throw new Error("not saved"); }
+      paint(true);
+    } catch {
+      paint(false, "🔔 Couldn't turn on alerts. Try again");
+    } finally {
+      btns.forEach((x) => (x.disabled = false));
+    }
+  }));
 }
 
 // Install as an app (manifest.webmanifest + sw.js). The service worker saves pages as you visit them so

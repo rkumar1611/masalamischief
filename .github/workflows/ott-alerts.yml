@@ -1,0 +1,28 @@
+# Fridays at 7 pm India time: sends the weekly "New on OTT" alert to everyone who turned on 🔔 alerts
+# on the site (scripts/send-alerts.mjs). Needs the ADMIN_PASSWORD repository secret (same value as in
+# Cloudflare). Run it by hand from GitHub → Actions → "OTT alerts" → Run workflow.
+name: OTT alerts
+
+on:
+  schedule:
+    - cron: "30 13 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Send this week's alert
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: node scripts/send-alerts.mjs

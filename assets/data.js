@@ -1352,4 +1352,4 @@ const IMAGES = {
 };
 
 // Lets the Cloudflare functions (functions/) read the same data. Harmless in the browser.
-globalThis.MM_DATA = { MOVIES, WATCH, WATCH_LINKS, PARENT_NOTES, LANG_LABELS, MOODS, IMAGES };
+globalThis.MM_DATA = { MOVIES, WATCH, WATCH_LINKS, PARENT_NOTES, LANG_LABELS, MOODS, IMAGES, NEW_ON_OTT };

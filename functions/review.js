@@ -5,13 +5,13 @@
 // rich results (our rating, visitors' rating stars, cast, IMDb/Wikidata links, breadcrumbs).
 // If anything goes wrong, the plain page is served as before.
 import "../assets/data.js";
-import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine } from "../lib/seo.js";
+import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions } from "../lib/seo.js";
 import { audienceRating } from "../lib/community.js";
 
 export async function onRequestGet(context) {
   const page = await context.next();
   try {
-    const { MOVIES, WATCH, PARENT_NOTES, LANG_LABELS, IMAGES } = globalThis.MM_DATA;
+    const { MOVIES, WATCH, WATCH_LINKS, PARENT_NOTES, LANG_LABELS, IMAGES } = globalThis.MM_DATA;
     const id = new URL(context.request.url).searchParams.get("id");
     const m = MOVIES.find((x) => x.id === id);
     if (!m) return page;
@@ -62,6 +62,8 @@ export async function onRequestGet(context) {
       actor: people(extras.cast),
       sameAs: sameAs(img.imdb, extras.wd),
       aggregateRating: aggregate(audience),
+      // Only the apps it's streaming on now (WATCH), with their direct links.
+      potentialAction: watchActions(Object.fromEntries(Object.entries((WATCH_LINKS && WATCH_LINKS[m.id]) || {}).filter(([app]) => stream.includes(app)))),
     };
     const jsonLd = {
       "@context": "https://schema.org",

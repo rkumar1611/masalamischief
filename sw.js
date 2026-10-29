@@ -114,6 +114,30 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+// Weekly "New on OTT" alerts (functions/api/push/). Tapping one opens the page it points to.
+self.addEventListener("push", (event) => {
+  let m = {};
+  try { m = event.data ? event.data.json() : {}; } catch {}
+  event.waitUntil(self.registration.showNotification(m.title || "Masala Mischief", {
+    body: m.body || "",
+    icon: "/assets/icons/icon-192.png",
+    badge: "/assets/icons/icon-192.png",
+    tag: m.tag,
+    data: { url: m.url || "/" },
+  }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || "/", location.origin).href;
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const win = wins.find((w) => new URL(w.url).origin === location.origin);
+    if (win) { await win.focus(); return win.navigate(url).catch(() => self.clients.openWindow(url)); }
+    return self.clients.openWindow(url);
+  })());
+});
+
 const offline = () => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Offline · Masala Mischief</title>
 <body style="font-family:system-ui,sans-serif;background:#26121a;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:16px">
