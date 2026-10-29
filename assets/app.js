@@ -37,12 +37,36 @@ const store = {
     try { localStorage.setItem("mm:" + key, JSON.stringify(value)); } catch {}
   },
 };
+// The watchlist holds our review ids ("rrr") and catalogue titles as "_<lang>-<id>" ("_hi-864692",
+// "_en-tv1396", the same ids Group Pick uses). For catalogue titles, a small copy of the card details is
+// kept in "watchlistInfo" so the list can be drawn without loading each title's file.
 const watchlist = () => store.get("watchlist", []);
 const inWatchlist = (id) => watchlist().includes(id);
-function toggleWatchlist(id) {
+const CAT_ID = /^_([a-z]{2})-((?:tv)?\d+)$/;
+const isCatId = (id) => CAT_ID.test(id) && Boolean(CAT_LANGS[id.slice(1, 3)]);
+const catSaveId = (f) => `_${f.l}-${f.id}`;
+function toggleWatchlist(id, info) {
   const list = watchlist();
-  store.set("watchlist", list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
-  return !list.includes(id);
+  const adding = !list.includes(id);
+  store.set("watchlist", adding ? [...list, id] : list.filter((x) => x !== id));
+  if (CAT_ID.test(id)) {
+    const all = store.get("watchlistInfo", {});
+    if (adding && info) all[id] = { t: info.t, l: info.l, id: info.id, ...(info.k ? { k: info.k } : {}), y: info.y, p: info.p, v: info.v, w: info.w || [] };
+    else if (!adding) delete all[id];
+    store.set("watchlistInfo", all);
+  }
+  return adding;
+}
+// Saved catalogue titles as card entries: the kept copy, or the title's file (a friend's list).
+async function savedTitles(ids) {
+  const info = store.get("watchlistInfo", {});
+  const out = await Promise.all(ids.filter(isCatId).map(async (id) => {
+    if (info[id]) return info[id];
+    const [, l, raw] = id.match(CAT_ID);
+    const f = await loadTitle(l, raw).catch(() => null);
+    return f && { t: f.t, l: f.l, id: f.id, ...(f.k ? { k: f.k } : {}), y: f.y, p: f.p, v: f.v, w: f.w || [] };
+  }));
+  return out.filter(Boolean);
 }
 
 /* ---------- Theme ---------- */
@@ -446,12 +470,17 @@ const stillLeaving = (lv) => Object.entries(lv || {}).some(([, d]) => d >= today
 const leavingText = (lv, only) => Object.entries(lv || {}).filter(([a, d]) => (!only || a === only) && d >= todayLocal())
   .sort((a, b) => a[1].localeCompare(b[1])).map(([a, d]) => `${a} ${leavesOn(d)}`).join(", ");
 const leavingLine = (lv) => (leavingText(lv) ? `<p class="leave-note">⏳ Leaving ${esc(leavingText(lv))}. Watch it before it goes.</p>` : "");
-// Our reviewed films that are leaving an app soon, as { review id: lv }.
+// Titles leaving an app soon, keyed the way the watchlist saves them: { "rrr": lv, "_hi-123": lv }.
 async function reviewsLeaving() {
   const data = await loadCatalog("leaving");
   if (!data) return {};
   const byTmdb = reviewedByTmdb();
-  return Object.fromEntries(data.items.filter((f) => f.k !== "tv" && byTmdb[f.id] && stillLeaving(f.lv)).map((f) => [byTmdb[f.id].id, f.lv]));
+  const out = {};
+  data.items.filter((f) => stillLeaving(f.lv)).forEach((f) => {
+    out[catSaveId(f)] = f.lv;
+    if (f.k !== "tv" && byTmdb[f.id]) out[byTmdb[f.id].id] = f.lv;
+  });
+  return out;
 }
 
 function initTrailers() {
@@ -646,21 +675,32 @@ function initHome() {
     <div class="chart-box"><h3>🌶️ Most masala</h3><ol>${top("masala").map((m, i) => row(m, i, meter(m.masala))).join("")}</ol></div>
     <div class="chart-box"><h3>🏆 Highest rated</h3><ol>${top("quality").map((m, i) => row(m, i, score(m.quality))).join("")}</ol></div>`;
 
-  const saved = watchlist().map(movieById).filter(Boolean);
-  if (saved.length) {
-    document.getElementById("saved-section").hidden = false;
-    document.getElementById("saved").innerHTML = saved.slice(0, 4).map((m) => card(m)).join("");
-    reviewsLeaving().then((lv) => {
-      const soon = saved.filter((m) => lv[m.id]);
-      if (soon.length) document.getElementById("saved").insertAdjacentHTML("beforebegin", `<div class="leave-bar"><strong>⏳ Leaving soon from your watchlist</strong>
-        <ul>${soon.map((m) => `<li><a href="review.html?id=${encodeURIComponent(m.id)}">${esc(m.title)}</a> leaves ${esc(leavingText(lv[m.id]))}</li>`).join("")}</ul></div>`);
-    });
-  }
-
+  // Your watchlist: the last six saved, reviews and catalogue titles alike, newest first.
+  renderSavedHome();
   renderListTiles();
   renderTonight(featured);
   renderTrending();
   renderAudienceHome();
+}
+
+async function renderSavedHome() {
+  const ids = watchlist().slice().reverse();
+  const cat = await savedTitles(ids);
+  const saved = ids.map((id) => {
+    const m = movieById(id);
+    if (m) return { id, f: reviewAsFilm(m), href: `review.html?id=${encodeURIComponent(m.id)}` };
+    const f = cat.find((x) => catSaveId(x) === id);
+    return f && { id, f, href: `film.html?id=${f.l}-${f.id}` };
+  }).filter(Boolean);
+  if (saved.length) {
+    document.getElementById("saved-section").hidden = false;
+    document.getElementById("saved").innerHTML = saved.slice(0, 6).map((s) => filmCard(s.f)).join("");
+    reviewsLeaving().then((lv) => {
+      const soon = saved.filter((s) => lv[s.id]);
+      if (soon.length) document.getElementById("saved").insertAdjacentHTML("beforebegin", `<div class="leave-bar"><strong>⏳ Leaving soon from your watchlist</strong>
+        <ul>${soon.map((s) => `<li><a href="${s.href}">${esc(s.f.t)}</a> leaves ${esc(leavingText(lv[s.id]))}</li>`).join("")}</ul></div>`);
+    });
+  }
 }
 
 // Popular lists: the links are plain HTML in index.html (so search engines see them); this adds four
@@ -786,13 +826,18 @@ function initReviews() {
   const params = new URLSearchParams(location.search);
   if (params.get("lang")) lang.value = params.get("lang");
   if (params.get("saved")) savedOnly.checked = true;
-  // A friend's shared watchlist: reviews?list=<id>,<id>,… (only films we've reviewed).
-  const shared = params.has("list") ? [...new Set((params.get("list") || "").split(","))].filter(movieById).slice(0, 100) : null;
+  // A friend's shared watchlist: reviews?list=<id>,<id>,… (our reviews and "_<lang>-<id>" catalogue titles).
+  const shared = params.has("list") ? [...new Set((params.get("list") || "").split(","))].filter((id) => movieById(id) || isCatId(id)).slice(0, 100) : null;
   const bar = document.getElementById("list-bar");
+  if (savedOnly.checked && !shared) {
+    document.querySelector(".page-head h1").textContent = "♡ My watchlist";
+    document.title = "My watchlist · Masala Mischief";
+    document.querySelector(".page-head .lead").textContent = "Films and series you saved on this device. Share the list with friends, or tap any title for where to watch it.";
+  }
   if (shared) {
     document.querySelector(".page-head h1").textContent = "🍿 A friend's watchlist";
     document.querySelector(".page-head .lead").textContent = shared.length
-      ? `${shared.length} film${shared.length === 1 ? "" : "s"} they want to watch. Save the ones you like to your own watchlist.`
+      ? `${shared.length} title${shared.length === 1 ? "" : "s"} they want to watch. Save the ones you like to your own watchlist.`
       : "This list is empty, or the films in it aren't on the site any more.";
     document.title = "A friend's watchlist · Masala Mischief";
     savedOnly.closest("label").hidden = true;
@@ -808,13 +853,21 @@ function initReviews() {
            <a class="btn small" href="reviews.html">See all our reviews</a>`
         : `<span>✓ All of these are in <a href="reviews.html?saved=1">your watchlist</a>.</span><a class="btn small" href="reviews.html">See all our reviews</a>`;
       const btn = document.getElementById("save-all");
-      if (btn) btn.addEventListener("click", () => { store.set("watchlist", [...saved, ...missing]); draw(); });
+      if (btn) btn.addEventListener("click", () => {
+        // Keep the card details of their catalogue titles too, so your list can draw them.
+        const info = store.get("watchlistInfo", {});
+        catSaved.forEach((f) => { const id = catSaveId(f); if (missing.includes(id)) info[id] = f; });
+        store.set("watchlistInfo", info);
+        store.set("watchlist", [...saved, ...missing]);
+        draw();
+      });
       return;
     }
     bar.hidden = !(savedOnly.checked && saved.length);
     if (bar.hidden) return;
     const link = `${location.origin}/reviews?list=${saved.map(encodeURIComponent).join(",")}`;
-    const names = saved.map(movieById).filter(Boolean).map((m) => m.title);
+    const info = store.get("watchlistInfo", {});
+    const names = saved.map((id) => (movieById(id) || {}).title || (info[id] || {}).t).filter(Boolean);
     const text = `Here's what I want to watch 🍿 ${names.slice(0, 5).join(", ")}${names.length > 5 ? ` and ${names.length - 5} more` : ""}. Reviews and where to stream them:`;
     bar.innerHTML = `<span>📤 Share your watchlist with friends</span>
       <a class="btn primary small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`${text} ${link}`)}">WhatsApp</a>
@@ -832,11 +885,31 @@ function initReviews() {
   let leavingMap = null;
   reviewsLeaving().then((lv) => { leavingMap = lv; draw(); });
   function paintLeaving(ids) {
-    const soon = (leavingMap ? ids.filter((id) => leavingMap[id]) : []).map((id) => [movieById(id), leavingMap[id]]).filter(([m]) => m)
+    const info = store.get("watchlistInfo", {});
+    const named = (id) => {
+      const m = movieById(id);
+      if (m) return { title: m.title, href: `review.html?id=${encodeURIComponent(m.id)}` };
+      const f = info[id] || catSaved.find((x) => catSaveId(x) === id);
+      return f && { title: f.t, href: `film.html?id=${f.l}-${f.id}` };
+    };
+    const soon = (leavingMap ? ids.filter((id) => leavingMap[id]) : []).map((id) => [named(id), leavingMap[id]]).filter(([m]) => m)
       .sort((a, b) => Object.values(a[1]).sort()[0].localeCompare(Object.values(b[1]).sort()[0]));
     leaveBar.hidden = !soon.length || !(shared || savedOnly.checked || ids.length);
     leaveBar.innerHTML = soon.length ? `<strong>⏳ Leaving soon from ${shared ? "this list" : "your watchlist"}</strong>
-      <ul>${soon.map(([m, lv]) => `<li><a href="review.html?id=${encodeURIComponent(m.id)}">${esc(m.title)}</a> leaves ${esc(leavingText(lv))}</li>`).join("")}</ul>` : "";
+      <ul>${soon.map(([m, lv]) => `<li><a href="${m.href}">${esc(m.title)}</a> leaves ${esc(leavingText(lv))}</li>`).join("")}</ul>` : "";
+  }
+
+  // Saved movies & series from the catalogue (your list, or a friend's), below the reviews.
+  let catSaved = [];
+  const catBox = document.getElementById("saved-cat");
+  async function drawCatalogue(ids) {
+    const want = (shared || savedOnly.checked) ? ids.filter(isCatId) : [];
+    catSaved = want.length ? await savedTitles(want) : [];
+    const byTmdb = reviewedByTmdb();
+    catBox.hidden = !catSaved.length;
+    document.getElementById("saved-cat-grid").innerHTML = catSaved.map((f) => filmCard({ ...f, mine: f.k !== "tv" && byTmdb[f.id] })).join("");
+    document.getElementById("saved-cat-head").textContent = `🎬 ${shared ? "Movies & series on this list" : "Movies & series you saved"} (${catSaved.length})`;
+    return catSaved.length;
   }
 
   let minMasala = 0;
@@ -864,11 +937,17 @@ function initReviews() {
     list.sort(sorters[sort.value]);
     paintBar(saved);
     paintLeaving(shared || saved);
-    count.textContent = `${list.length} film${list.length === 1 ? "" : "s"}`;
+    const listIds = shared || saved;
+    const catCount = (shared || savedOnly.checked) ? listIds.filter(isCatId).length : 0;
+    count.textContent = `${list.length} review${list.length === 1 ? "" : "s"}${catCount ? ` · ${catCount} more movie${catCount === 1 ? "" : "s"} & series below` : ""}`;
     out.innerHTML = list.length
       ? list.map((m) => card(m)).join("")
-      : `<div class="empty">${savedOnly.checked && !saved.length ? "Your watchlist is empty. Tap “Save” on any review to add it." : "No reviews match that yet. Try loosening a filter."}</div>`;
+      : catCount ? ""
+      : `<div class="empty">${savedOnly.checked && !saved.length ? "Your watchlist is empty. Tap “♡ Save” on any review, film or series to add it." : "No reviews match that yet. Try loosening a filter."}</div>`;
+    const seq = ++drawSeq;
+    drawCatalogue(listIds).then(() => { if (seq === drawSeq) paintLeaving(listIds); });
   }
+  let drawSeq = 0;
   [q, lang, ott, sort, savedOnly, familyOnly].forEach((el) => el.addEventListener("input", draw));
   draw();
 }
@@ -1951,7 +2030,8 @@ async function initFilm() {
         </div>
         <div class="share-row">
           ${trailerBtn(f.tr, f.t, `${f.t} ${f.y || ""} ${tv ? "series" : ""} official trailer`)}
-          <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
+          <button class="btn primary" id="save" type="button"></button>
+          <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
         <div id="similar-slot"></div>
@@ -1992,6 +2072,12 @@ async function initFilm() {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
   };
   renderMoreLike(document.getElementById("similar-slot"), f, `🍿 Liked ${f.t}? Try these`);
+  // Save to the watchlist (kept on this device, like saved reviews).
+  const saveId = catSaveId(f);
+  const save = document.getElementById("save");
+  const paintSave = () => (save.textContent = inWatchlist(saveId) ? "✓ In your watchlist" : "♡ Save to watchlist");
+  save.addEventListener("click", () => { toggleWatchlist(saveId, f); paintSave(); });
+  paintSave();
 
   root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
   initCommunity(`c:${code}-${rawId}`, document.getElementById("community"), f.t);
