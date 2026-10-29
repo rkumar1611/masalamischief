@@ -67,7 +67,7 @@ function renderChrome() {
       <button class="theme-btn search-btn" id="search-btn" type="button" aria-label="Search movies and series" aria-expanded="false">🔍</button>
       <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch light or dark mode"></button>
       <button class="theme-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="main-nav">☰</button>
-      <nav class="nav" id="main-nav" aria-label="Main">${links}</nav>
+      <nav class="nav" id="main-nav" aria-label="Main">${links}<button class="nav-install install-btn" type="button" hidden>📲 Install app</button></nav>
       <div class="site-search" id="site-search" hidden>
         <form id="site-search-form" role="search">
           <input type="search" id="site-q" placeholder="Search movies & series…" autocomplete="off" aria-label="Search movies and series">
@@ -86,6 +86,8 @@ function renderChrome() {
             <span><b>★ Score</b> how well it's made, out of 10</span>
           </div>
           <a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("Film reviews, what to watch tonight and where to stream it: https://masalamischief.in")}">Share Masala Mischief on WhatsApp</a>
+          <button class="btn small install-btn" type="button" hidden>📲 Install the app</button>
+          <p class="install-help small muted" id="install-help" hidden>On iPhone: tap the Share button <b>⎋</b> in Safari, then <b>Add to Home Screen</b>.</p>
         </div>
         <nav class="footer-col" aria-label="Explore">
           <h4>Explore</h4>
@@ -123,7 +125,39 @@ function renderChrome() {
   initSiteSearch();
   initTrailers();
   initMenu();
+  initInstall();
 }
+
+// Install as an app (manifest.webmanifest + sw.js). The service worker saves pages as you visit them so
+// the site, your watchlist included, opens offline. The Install buttons (footer, phone menu) show when
+// the browser offers installing (Android, desktop Chrome/Edge), or with how-to steps on iPhone Safari.
+let installPrompt = null;
+function initInstall() {
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  }
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const btns = [...document.querySelectorAll(".install-btn")];
+  const show = (on) => btns.forEach((b) => (b.hidden = !on));
+  if (standalone) return;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent);
+  if (installPrompt || ios) show(true);
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; show(true); });
+  window.addEventListener("appinstalled", () => { installPrompt = null; show(false); });
+  btns.forEach((b) => b.addEventListener("click", async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice.catch(() => ({}));
+      if (outcome === "accepted") { installPrompt = null; show(false); }
+    } else if (ios) {
+      const help = document.getElementById("install-help");
+      help.hidden = false;
+      help.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }));
+}
+// The browser can offer installing before the page has drawn its buttons.
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
 
 // Phones: the main links sit behind a ☰ button and open as a two-column panel (CSS shows the button
 // only on narrow screens). Closes on Esc, a tap outside, or opening search.

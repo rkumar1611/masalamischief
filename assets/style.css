@@ -139,7 +139,16 @@ main { padding-bottom: 64px; }
   .nav.open { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; overflow: visible; padding: 4px 0 6px; }
   .nav.open a { white-space: normal; text-align: center; padding: 11px 8px; background: var(--surface-2); color: var(--ink); border-radius: 12px; }
   .nav.open a.active { background: var(--chilli); color: var(--chilli-ink); }
+  .nav.open .nav-install:not([hidden]) {
+    display: block; grid-column: 1 / -1; font: inherit; font-weight: 700; padding: 11px 8px; border-radius: 12px;
+    border: 1.5px dashed var(--chilli); background: transparent; color: var(--ink); cursor: pointer;
+  }
 }
+/* Install app: in the phone menu only (and the footer) */
+.nav-install { display: none; }
+.install-btn[hidden], .install-help[hidden] { display: none; }
+.footer-brand .install-btn { margin-left: 6px; }
+.install-help { margin-top: 8px; }
 
 /* Hero */
 .hero-band {

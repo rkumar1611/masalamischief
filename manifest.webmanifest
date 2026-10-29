@@ -1,0 +1,23 @@
+{
+  "name": "Masala Mischief",
+  "short_name": "Masala",
+  "description": "Indian and Hollywood film reviews with extra chilli, what to watch tonight, and where to stream it in India.",
+  "id": "/",
+  "start_url": "/?source=app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#26121a",
+  "theme_color": "#d7263d",
+  "lang": "en-IN",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    { "src": "/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "What should I watch?", "url": "/suggest?source=app", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Movies & series", "url": "/films?source=app", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My watchlist", "url": "/reviews?saved=1&source=app", "icons": [{ "src": "/assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
