@@ -135,6 +135,8 @@ const JW_PAGE = `query P($f: TitleFilter, $after: String, $pkg: [String!]) {
   }
 }`;
 
+// What happened to the last JustWatch request that failed (also saved in manifest.json as linksNote).
+let jwProblem = "";
 async function jw(query, variables) {
   for (let attempt = 0; attempt < 4; attempt++) {
     try {
@@ -143,14 +145,16 @@ async function jw(query, variables) {
         headers: { "content-type": "application/json", "user-agent": "Mozilla/5.0 (compatible; MasalaMischiefBot/1.0; +https://masalamischief.in)" },
         body: JSON.stringify({ query, variables }),
       });
+      const body = await res.text();
       if (res.ok) {
-        const j = await res.json();
-        if (j.data) return j.data;
-      }
-    } catch {}
+        const j = JSON.parse(body);
+        if (j.data && Object.values(j.data).every(Boolean)) return j.data;
+        jwProblem = `GraphQL: ${JSON.stringify(j.errors || j).slice(0, 200)}`;
+      } else jwProblem = `HTTP ${res.status}: ${body.replace(/\s+/g, " ").slice(0, 200)}`;
+    } catch (e) { jwProblem = `fetch: ${e.message}`; }
     await sleep(3000 * (attempt + 1));
   }
-  throw new Error("JustWatch didn't answer");
+  throw new Error(`JustWatch didn't answer (${jwProblem})`);
 }
 
 // The title's own page on the app: subscription offers first, then the shortest link (a season or the
@@ -208,11 +212,14 @@ async function appLinks() {
       }
     }));
   } catch (e) {
+    jwProblem = e.message;
     console.log(`App links: ${e.message}; keeping the links we had.`);
     return null;
   }
   console.log(`App links: ${links.size} titles from ${requests} JustWatch requests.`);
-  return links.size > 1000 ? links : null;
+  if (links.size > 1000) return links;
+  jwProblem = `only ${links.size} titles from ${requests} requests`;
+  return null;
 }
 
 // f.u = { app: direct link } for the apps in f.w that JustWatch has a page for (title pages only).
@@ -225,8 +232,10 @@ function attachLinks(titles, links, have) {
     const u = Object.fromEntries(f.w.filter((a) => found[a]).map((a) => [a, found[a]]));
     if (Object.keys(u).length) { f.u = u; n++; } else delete f.u;
   }
+  linkCount = n;
   console.log(`Direct app links on ${n} titles.`);
 }
+let linkCount = 0;
 
 function toFilm(d, lang) {
   const apps = appsOf(d);
@@ -515,7 +524,7 @@ function writeCatalogue(titles, trendIds) {
 
   writeLists(all);
   writeSitemaps(all, people);
-  writeIfChanged(new URL("manifest.json", OUT), JSON.stringify({ layout: LAYOUT, built, count: all.length, langs: counts, shards: { t: TITLE_SHARDS, p: PEOPLE_SHARDS } }));
+  writeIfChanged(new URL("manifest.json", OUT), JSON.stringify({ layout: LAYOUT, built, count: all.length, langs: counts, shards: { t: TITLE_SHARDS, p: PEOPLE_SHARDS }, links: linkCount, ...(jwProblem ? { linksNote: jwProblem } : {}) }));
   rmSync(new URL("index.json", OUT), { force: true }); // replaced by the per-language lists
   console.log(`Total: ${all.length} titles.`, counts);
 }
