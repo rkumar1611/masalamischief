@@ -168,14 +168,31 @@ function initUpdates() {
 // Weekly "New on OTT" alerts: sw.js shows them, functions/api/push/ keeps the list and sends them on
 // Fridays. The 🔔 buttons show where the browser supports push: Android and desktop browsers, and
 // iPhone once the site is installed on the home screen.
+// If notifications are blocked for the site, the browser won't ask again, so the button stays and
+// explains how to allow them on that device.
+function blockedSteps(ua) {
+  const app = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (/iphone|ipad|ipod/i.test(ua)) return "Notifications are off for Masala Mischief. Open iPhone <b>Settings</b> → <b>Notifications</b> → <b>Masala Mischief</b> → turn on <b>Allow Notifications</b>, then tap 🔔 again.";
+  if (/android/i.test(ua) && app) return "Notifications are blocked for the app. Long-press the <b>Masala Mischief</b> icon → <b>App info</b> → <b>Notifications</b> → turn them on, then tap 🔔 again.";
+  if (/android/i.test(ua)) return "Notifications are blocked for this site. Tap the icon left of the address (🔒 or ⚙) → <b>Permissions</b> or <b>Notifications</b> → <b>Allow</b>, then tap 🔔 again.";
+  return "Notifications are blocked for this site. Click the icon left of the address bar → <b>Notifications</b> → <b>Allow</b>, then click 🔔 again.";
+}
 function initAlerts() {
   const btns = [...document.querySelectorAll(".alert-btn")];
   if (!btns.length || location.protocol === "file:" || !("serviceWorker" in navigator) || !("PushManager" in window) ||
-    !("Notification" in window) || Notification.permission === "denied") return;
+    !("Notification" in window)) return;
   const paint = (on, text) => btns.forEach((b) => {
     b.hidden = false;
     b.textContent = text || (on ? "🔕 Turn off OTT alerts" : "🔔 Weekly OTT alerts");
   });
+  // How-to text under the tapped button (under the heading for the one on the home page).
+  const help = (b, html) => {
+    let p = document.getElementById("alert-help");
+    if (!p) { p = document.createElement("p"); p.id = "alert-help"; p.className = "alert-help small muted"; }
+    p.innerHTML = html;
+    (b.closest(".section-head") || b).after(p);
+  };
+  paint(false);
   const post = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((s) => paint(Boolean(s))).catch(() => {});
   btns.forEach((b) => b.addEventListener("click", async () => {
@@ -189,7 +206,10 @@ function initAlerts() {
         paint(false);
         return;
       }
-      if ((await Notification.requestPermission()) !== "granted") { btns.forEach((x) => (x.hidden = true)); return; }
+      document.getElementById("alert-help")?.remove();
+      const perm = Notification.permission === "denied" ? "denied" : await Notification.requestPermission();
+      if (perm === "denied") { help(b, blockedSteps(navigator.userAgent)); return; }
+      if (perm !== "granted") return; // closed the question without choosing; the button stays
       const { key } = await fetch("/api/push/key").then((r) => r.json());
       const raw = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
