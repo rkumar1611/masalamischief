@@ -142,6 +142,13 @@ const JW_PAGE = `query P($f: TitleFilter, $after: String, $pkg: [String!]) {
   }
 }`;
 
+// Top 10 on each app this week (top10.json): JustWatch India's most popular movies and series per app.
+// Two small requests per app, once a week (the first run at least 6 days after the last); only titles
+// we have pages for.
+const TOP_COUNT = 10;
+const JW_TOP = `query T($f: TitleFilter) { popularTitles(country: IN, first: 30, sortBy: POPULAR, filter: $f) {
+  edges { node { content(country: IN, language: "en") { externalIds { tmdbId } } } } } }`;
+
 // What happened to the last JustWatch request that failed (also saved in manifest.json as linksNote).
 let jwProblem = "";
 async function jw(query, variables) {
@@ -456,6 +463,7 @@ async function main() {
   attachLinks([...films, ...keptSeries], await appLinks(), have);
   writeCatalogue([...films, ...keptSeries], trendIds);
   await writeUpcoming(new Set(films.map(keyOf)));
+  await writeTop10([...films, ...keptSeries]);
   console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series.`);
 }
 
@@ -497,6 +505,7 @@ async function daily() {
   attachLinks([...have.values()], null, before);
   writeCatalogue([...have.values()], trendIds);
   await writeUpcoming(new Set(have.keys()));
+  await writeTop10([...have.values()]);
 }
 
 const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, ...rest }) => rest;
@@ -845,6 +854,30 @@ async function writeUpcoming(known) {
   writeIfChanged(new URL("upcoming.json", OUT), JSON.stringify({ items: films, now }));
   writeListsSitemap(films);
   console.log(`Upcoming: ${films.length} films; in theatres: ${now.length}.`);
+}
+
+async function writeTop10(all) {
+  const file = new URL("top10.json", OUT);
+  const old = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : null;
+  if (old && old.built > day(-6)) { console.log(`Top 10: from ${old.built}, not due yet.`); return; }
+  const byId = new Map(all.map((f) => [String(f.id), f]));
+  const apps = [];
+  try {
+    for (const [pkg, name] of Object.entries(JW_APPS)) {
+      const row = { app: name };
+      for (const [type, key, prefix] of [["MOVIE", "movies", ""], ["SHOW", "series", "tv"]]) {
+        const p = (await jw(JW_TOP, { f: { packages: [pkg], objectTypes: [type] } })).popularTitles;
+        row[key] = [...new Set(p.edges.map((e) => byId.get(`${prefix}${e.node.content?.externalIds?.tmdbId}`)).filter(Boolean))]
+          .slice(0, TOP_COUNT).map(compact);
+      }
+      if (row.movies.length || row.series.length) apps.push(row);
+    }
+  } catch (e) {
+    console.log(`Top 10: ${e.message}; keeping the last one.`);
+    return;
+  }
+  writeIfChanged(file, JSON.stringify({ built: day(0), apps }));
+  console.log(`Top 10: ${apps.length} apps.`);
 }
 
 function writeIfChanged(file, text) {
