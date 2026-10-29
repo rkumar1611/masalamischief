@@ -1264,8 +1264,14 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-10-28",
+  checked: "2026-10-29",
   items: [
+    { title: "Baththa", year: 2026, app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/83064751", note: "Directed by Balaji Tharaneetharan · IMDb 9", kids: true },
+    { title: "10 Cloverfield Lane", year: 2016, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/80082850", note: "Directed by Dan Trachtenberg · IMDb 7.2" },
+    { title: "On the Waterfront", year: 1954, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/60000711", note: "Directed by Elia Kazan · IMDb 8.1" },
+    { title: "Far and Away", year: 1992, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/492899", note: "Directed by Ron Howard · IMDb 6.6" },
+    { title: "Christy", year: 2025, lang: "English", app: "JioHotstar", added: "2026-10-29", url: "https://www.hotstar.com/in/movies/christy/1271719030", note: "Directed by David Michôd · IMDb 6.6" },
+    { title: "Raja Natwarlal", year: 2014, app: "JioHotstar", added: "2026-10-29", url: "https://www.hotstar.com/in/movies/raja-natwarlal/1271719024", note: "Directed by Kunal Deshmukh · IMDb 6.2" },
     { title: "The Conjuring", year: 2013, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/70251894", note: "Directed by James Wan · IMDb 7.5" },
     { title: "Annabelle: Creation", year: 2017, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/80158661", note: "Directed by David F. Sandberg · IMDb 6.5" },
     { title: "Annabelle Comes Home", year: 2019, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/81095126", note: "Directed by Gary Dauberman · IMDb 5.9" },
@@ -1274,12 +1280,6 @@ const NEW_ON_OTT = {
     { title: "The Conjuring 2", year: 2016, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/80091246", note: "Directed by James Wan · IMDb 7.3" },
     { title: "The Aviator", year: 2004, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/70011213", note: "Directed by Martin Scorsese · IMDb 7.5" },
     { title: "Maayon", year: 2022, lang: "Tamil", app: "JioHotstar", added: "2026-10-28", url: "https://www.hotstar.com/in/movies/maayon/1271413412", note: "Tamil mystery thriller." },
-    { title: "Bakasura Restaurant", year: 2025, app: "JioHotstar", added: "2026-10-28", url: "https://www.hotstar.com/in/movies/bakasura-restaurant/1271718864", note: "Horror-comedy, new to streaming." },
-    { title: "M3GAN 2.0", year: 2025, lang: "English", app: "Netflix", added: "2026-10-27", url: "https://www.netflix.com/title/82000745", note: "The killer-doll sequel." },
-    { title: "Annihilation", year: 2018, lang: "English", app: "Prime Video", added: "2026-10-27", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.479fe801-e02a-42af-a9e8-5861959e3f37", note: "Natalie Portman in a beautiful, unsettling sci-fi mystery." },
-    { title: "Night Drive", year: 2022, lang: "Malayalam", app: "JioHotstar", added: "2026-10-26", url: "https://www.hotstar.com/in/movies/night-drive/1271718372", note: "A late-night drive goes very wrong." },
-    { title: "Sonic the Hedgehog 3", year: 2024, lang: "English", app: "JioHotstar", added: "2026-10-25", url: "https://www.hotstar.com/in/movies/sonic-the-hedgehog-3/1271717290", note: "Sonic, Tails and Knuckles take on Shadow.", kids: true },
-    { title: "Gran Turismo", year: 2023, lang: "English", app: "Netflix", added: "2026-10-25", url: "https://www.netflix.com/title/81672085", note: "A gamer becomes a real racing driver. Based on a true story." },
   ],
 };
 
