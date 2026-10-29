@@ -194,27 +194,37 @@ function initAlerts() {
   };
   paint(false);
   const post = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-  navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((s) => paint(Boolean(s))).catch(() => {});
+  navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((s) => {
+    paint(Boolean(s));
+    // Already on: make sure our list has it (fixes a save that was cut off; no message is sent).
+    if (s && Notification.permission === "granted") post(s.toJSON()).catch(() => {});
+  }).catch(() => {});
   btns.forEach((b) => b.addEventListener("click", async () => {
     btns.forEach((x) => (x.disabled = true));
     try {
       const reg = await navigator.serviceWorker.ready;
       const cur = await reg.pushManager.getSubscription();
       if (cur) {
-        await post({ endpoint: cur.endpoint, off: true }).catch(() => {});
         await cur.unsubscribe();
         paint(false);
+        post({ endpoint: cur.endpoint, off: true }).catch(() => {}); // if this is lost, the next send removes it
         return;
       }
       document.getElementById("alert-help")?.remove();
       const perm = Notification.permission === "denied" ? "denied" : await Notification.requestPermission();
       if (perm === "denied") { help(b, blockedSteps(navigator.userAgent)); return; }
       if (perm !== "granted") return; // closed the question without choosing; the button stays
+      paint(false, "⏳ Turning on alerts…");
       const { key } = await fetch("/api/push/key").then((r) => r.json());
       const raw = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
-      if (!(await post(sub.toJSON())).ok) { await sub.unsubscribe(); throw new Error("not saved"); }
       paint(true);
+      // Saving can finish in the background; if our server says no, undo it so the button tells the truth.
+      post(sub.toJSON()).then(async (r) => {
+        if (r.ok) return;
+        await sub.unsubscribe().catch(() => {});
+        paint(false, "🔔 Couldn't turn on alerts. Try again");
+      }).catch(() => {}); // offline: the next visit saves it
     } catch {
       paint(false, "🔔 Couldn't turn on alerts. Try again");
     } finally {
