@@ -349,6 +349,8 @@ function toSeries(d, lang) {
     ...(cert ? { c: cert } : {}),
     ...(d.external_ids?.imdb_id ? { im: d.external_ids.imdb_id } : {}),
     w: appsOf(d),
+    // Latest season that has started airing (for new-season alerts).
+    ...(d.last_episode_to_air?.season_number ? { sa: d.last_episode_to_air.season_number } : {}),
     ov: shorten(d.overview),
     ...extrasOf(d, "tv"),
     ...recsOf(d, "tv"),
@@ -458,7 +460,8 @@ async function main() {
     const fetch = [];
     for (const [id, lang] of picks) {
       const old = have.get(`${lang}-${prefix}${id}`);
-      if (old && !dueForRefresh(old)) reuse.push(old); else fetch.push([id, lang]);
+      // Series still running are checked every week, so a new season is spotted quickly.
+      if (old && !dueForRefresh(old) && !(prefix === "tv" && !old.end)) reuse.push(old); else fetch.push([id, lang]);
     }
     return { reuse, fetch };
   };
@@ -466,7 +469,9 @@ async function main() {
   const t = split(tvPicks, "tv");
   console.log(`Fetching ${m.fetch.length} films and ${t.fetch.length} series; reusing ${m.reuse.length + t.reuse.length}.`);
   const films = [...m.reuse, ...(await movieDetails(m.fetch))];
-  const series = [...t.reuse, ...(await seriesDetails(t.fetch))].sort((a, b) => b.n - a.n);
+  const freshSeries = await seriesDetails(t.fetch);
+  const series = [...t.reuse, ...freshSeries].sort((a, b) => b.n - a.n);
+  writeNewSeasons(freshSeries, have);
   const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : PLAN[lang].tv);
   const keptSeries = OUT_LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, tvLimit(lang)));
   if (films.length < Math.min(have.size * 0.8, 20000) || films.length < LANGS.length * 50) {
@@ -874,6 +879,20 @@ async function writeUpcoming(known) {
   writeIfChanged(new URL("upcoming.json", OUT), JSON.stringify({ items: films, now }));
   writeListsSitemap(films);
   console.log(`Upcoming: ${films.length} films; in theatres: ${now.length}.`);
+}
+
+// new-seasons.json: series whose latest aired season went up since last week (from sa), kept for 21
+// days, for the "New season of a series you saved" alert. The first run after sa was added only
+// records it (no old value to compare), so it can't announce a whole catalogue of "new" seasons.
+const SEASON_DAYS = 21;
+function writeNewSeasons(fresh, have) {
+  const file = new URL("new-seasons.json", OUT);
+  const old = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")).items : [];
+  const found = fresh.filter((s) => { const was = have.get(keyOf(s)); return was && was.sa && s.sa > was.sa; })
+    .map((s) => ({ k: keyOf(s), t: s.t, s: s.sa, w: s.w, f: day(0) }));
+  const items = [...found, ...old.filter((x) => x.f >= day(-SEASON_DAYS) && !found.some((n) => n.k === x.k))];
+  writeIfChanged(file, JSON.stringify({ items }));
+  console.log(`New seasons: ${found.length} this week${found.length ? ` (${found.slice(0, 10).map((x) => `${x.t} S${x.s}`).join(", ")})` : ""}.`);
 }
 
 async function writeTop10(all) {
