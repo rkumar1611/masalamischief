@@ -11,17 +11,21 @@ const BATCH = 20;
 export async function onRequestPost({ request, env }) {
   if (!env.DB) return notReady();
   if (!isAdmin(request, env)) return json({ error: "Not allowed." }, 401);
-  const message = weeklyMessage(globalThis.MM_DATA.NEW_ON_OTT);
-  if (!message) return json({ sent: 0, removed: 0, next: null, note: "Nothing new this week." });
+  const newOnOtt = globalThis.MM_DATA.NEW_ON_OTT;
+  if (!weeklyMessage(newOnOtt)) return json({ sent: 0, removed: 0, next: null, note: "Nothing new this week." });
 
   await ensurePushSchema(env.DB);
   const after = Math.max(0, Math.round(+new URL(request.url).searchParams.get("after") || 0));
-  const { results } = await env.DB.prepare("SELECT rowid AS id, endpoint, p256dh, auth FROM push_subs WHERE rowid > ? ORDER BY rowid LIMIT ?")
+  const { results } = await env.DB.prepare("SELECT rowid AS id, endpoint, p256dh, auth, langs, apps FROM push_subs WHERE rowid > ? ORDER BY rowid LIMIT ?")
     .bind(after, BATCH).all();
   const keys = await vapidKeys(env.DB);
   let sent = 0;
   let removed = 0;
+  let skipped = 0;
   for (const sub of results) {
+    // Each browser gets only its languages and apps; nothing that fits this week means no message.
+    const message = weeklyMessage(newOnOtt, sub);
+    if (!message) { skipped++; continue; }
     const status = await sendPush(sub, message, keys).catch(() => 0);
     if (status >= 200 && status < 300) sent++;
     else if (status === 404 || status === 410) {
@@ -30,5 +34,5 @@ export async function onRequestPost({ request, env }) {
       removed++;
     }
   }
-  return json({ sent, removed, next: results.length === BATCH ? results[results.length - 1].id : null });
+  return json({ sent, removed, skipped, next: results.length === BATCH ? results[results.length - 1].id : null });
 }

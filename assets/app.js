@@ -192,10 +192,58 @@ function initAlerts() {
     p.innerHTML = html;
     (b.closest(".section-head") || b).after(p);
   };
+  // Which languages and apps to hear about (saved on this device and sent with the subscription).
+  const choice = () => store.get("alertChoice", { langs: [], apps: [] });
+  const post = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, ...choice() }) });
+  const choiceText = (c) => {
+    const langs = c.langs.map((l) => (l === "English" ? "Hollywood" : l));
+    return `${langs.length ? langs.join(", ") : "all languages"} on ${c.apps.length ? c.apps.join(", ") : "every app"}`;
+  };
+  const prefsBtns = btns.map((b) => {
+    const p = document.createElement("button");
+    p.type = "button";
+    p.className = "btn small alert-prefs-btn";
+    p.textContent = "⚙️ Choose languages & apps";
+    p.hidden = true;
+    b.after(p);
+    p.addEventListener("click", () => openChoice(p));
+    return p;
+  });
+  const showPrefs = (on) => prefsBtns.forEach((p) => (p.hidden = !on));
+  function openChoice(anchor) {
+    let box = document.getElementById("alert-choice");
+    if (box) { box.remove(); return; }
+    const c = choice();
+    box = document.createElement("div");
+    box.id = "alert-choice";
+    box.className = "alert-choice";
+    const chipSet = (name, list, picked, label) => `<div><span class="title">${name}</span><div class="chips">${list.map((x) =>
+      `<button class="chip" type="button" data-v="${esc(x)}" aria-pressed="${picked.includes(x)}">${esc(label ? label(x) : x)}</button>`).join("")}</div></div>`;
+    box.innerHTML = `<p class="small muted">Pick what you'd like to hear about on Fridays. Pick none for everything. If nothing new fits in a week, we stay quiet.</p>
+      <div data-k="langs">${chipSet("Languages", PICK_LANGUAGES, c.langs, langLabel)}</div>
+      <div data-k="apps">${chipSet("Apps", PLATFORMS, c.apps)}</div>
+      <div class="cta-row"><button class="btn primary small" type="button" data-save>Save</button><span class="small muted" data-msg></span></div>`;
+    box.addEventListener("click", async (e) => {
+      const chip = e.target.closest(".chip");
+      if (chip) { chip.setAttribute("aria-pressed", chip.getAttribute("aria-pressed") !== "true"); return; }
+      if (!e.target.closest("[data-save]")) return;
+      const pick = (k) => [...box.querySelectorAll(`[data-k="${k}"] .chip[aria-pressed="true"]`)].map((x) => x.dataset.v);
+      const next = { langs: pick("langs"), apps: pick("apps") };
+      store.set("alertChoice", next);
+      const msg = box.querySelector("[data-msg]");
+      msg.textContent = "Saving…";
+      try {
+        const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription();
+        const r = sub ? await post(sub.toJSON()) : { ok: true };
+        msg.textContent = r.ok ? `✓ Saved: ${choiceText(next)}.` : "Couldn't save. Try again.";
+      } catch { msg.textContent = "Couldn't save. Try again."; }
+    });
+    (anchor.closest(".section-head") || anchor).after(box);
+  }
   paint(false);
-  const post = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((s) => {
     paint(Boolean(s));
+    showPrefs(Boolean(s));
     // Already on: make sure our list has it (fixes a save that was cut off; no message is sent).
     if (s && Notification.permission === "granted") post(s.toJSON()).catch(() => {});
   }).catch(() => {});
@@ -207,6 +255,8 @@ function initAlerts() {
       if (cur) {
         await cur.unsubscribe();
         paint(false);
+        showPrefs(false);
+        document.getElementById("alert-choice")?.remove();
         post({ endpoint: cur.endpoint, off: true }).catch(() => {}); // if this is lost, the next send removes it
         return;
       }
@@ -219,11 +269,15 @@ function initAlerts() {
       const raw = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
       paint(true);
+      showPrefs(true);
+      openChoice(prefsBtns[btns.indexOf(b)]); // straight after turning on: ask what they'd like
       // Saving can finish in the background; if our server says no, undo it so the button tells the truth.
       post(sub.toJSON()).then(async (r) => {
         if (r.ok) return;
         await sub.unsubscribe().catch(() => {});
         paint(false, "🔔 Couldn't turn on alerts. Try again");
+        showPrefs(false);
+        document.getElementById("alert-choice")?.remove();
       }).catch(() => {}); // offline: the next visit saves it
     } catch {
       paint(false, "🔔 Couldn't turn on alerts. Try again");

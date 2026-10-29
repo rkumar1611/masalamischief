@@ -98,6 +98,28 @@ export function toItem(n, d) {
   };
 }
 
+// The film's language from our own catalogue's search index (assets/catalog/s/<ab>.json), matched by title
+// and year, so the weekly alerts can go by language. No extra requests. "" when it isn't there.
+const CAT = new URL("assets/catalog/", ROOT);
+const LANG_NAMES = { hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", mr: "Marathi", bn: "Bengali", pa: "Punjabi", en: "English", ko: "Korean" };
+// Same normalising as scripts/build-catalog.mjs: "K.G.F: Chapter 1" → "kgf chapter 1".
+const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+export function langFromCatalogue(title, year, read = (path) => readFileSync(new URL(path, CAT), "utf8")) {
+  const t = norm(title);
+  const word = t.split(" ").find((w) => w.length >= 2 && !["the", "a", "an", "of", "and"].includes(w));
+  if (!word) return "";
+  let rows;
+  try { rows = JSON.parse(read(`s/${word.slice(0, 2)}.json`)); } catch { return ""; }
+  // [lang, id, title, year, series?, poster, votes, rating]: films only, best-known first.
+  const hit = rows.filter((r) => !r[4] && norm(r[2]) === t && (!year || !r[3] || Math.abs(r[3] - year) <= 1)).sort((a, b) => b[6] - a[6])[0];
+  return (hit && LANG_NAMES[hit[0]]) || "";
+}
+const withLang = (i) => {
+  const lang = langFromCatalogue(i.title, i.year) || i.lang;
+  const { title, year, lang: _, ...rest } = i;
+  return { title, year, ...(lang ? { lang } : {}), ...rest };
+};
+
 export function renderBlock(checked, items) {
   const line = (it) => "    " + JSON.stringify(it).replace(/"(\w+)":/g, "$1: ").replace(/,(\w+: )/g, ", $1").replace(/^\{/, "{ ").replace(/\}$/, " }") + ",";
   return `const NEW_ON_OTT = {\n  checked: "${checked}",\n  items: [\n${items.map(line).join("\n")}\n  ],\n};`;
@@ -152,7 +174,7 @@ async function main() {
   const cutoff = new Date(new Date(newest + "T00:00:00Z") - KEEP_DAYS * 864e5).toISOString().slice(0, 10);
   let items = all.filter((i) => i.added > cutoff);
   if (items.length < 6) items = all.slice(0, 6);
-  items = items.slice(0, MAX_ITEMS);
+  items = items.slice(0, MAX_ITEMS).map(withLang);
 
   const block = renderBlock(newest, items);
   const next = src.replace(BLOCK_RE, block);

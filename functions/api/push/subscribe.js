@@ -3,7 +3,7 @@
 // (already saved: no message), so a save that failed midway gets fixed.
 // POST /api/push/subscribe {endpoint, off: true} → turns the alerts off for that browser.
 import { json, notReady } from "../../../lib/community.js";
-import { ensurePushSchema, validSubscription, vapidKeys, sendPush } from "../../../lib/push.js";
+import { ensurePushSchema, validSubscription, vapidKeys, sendPush, cleanChoice, ALERT_LANGS, ALERT_APPS } from "../../../lib/push.js";
 
 const MAX_SUBS = 50000;
 
@@ -26,8 +26,12 @@ export async function onRequestPost({ request, env, waitUntil }) {
     if (n >= MAX_SUBS) return json({ error: "Alerts are full right now. Try again later." }, 503);
   }
   const sub = { endpoint: input.endpoint, p256dh: input.keys.p256dh, auth: input.keys.auth };
-  await env.DB.prepare("INSERT OR REPLACE INTO push_subs (endpoint, p256dh, auth, created) VALUES (?, ?, ?, ?)")
-    .bind(sub.endpoint, sub.p256dh, sub.auth, Date.now()).run();
+  // Languages and apps to hear about (the page sends its saved choice every time; none = everything).
+  const langs = cleanChoice(input.langs, ALERT_LANGS);
+  const apps = cleanChoice(input.apps, ALERT_APPS);
+  await env.DB.prepare(`INSERT INTO push_subs (endpoint, p256dh, auth, created, langs, apps) VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(endpoint) DO UPDATE SET p256dh = excluded.p256dh, auth = excluded.auth, langs = excluded.langs, apps = excluded.apps`)
+    .bind(sub.endpoint, sub.p256dh, sub.auth, Date.now(), langs, apps).run();
 
   // The welcome message goes out after we've answered, so the button switches straight away.
   if (!known) {
