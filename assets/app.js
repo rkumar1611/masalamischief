@@ -95,7 +95,7 @@ function renderChrome() {
           <a href="reviews.html">Our reviews</a><a href="films.html">Movies & series</a>
           <a href="films.html?view=top-movie">Top 50 movies</a><a href="films.html?view=top-tv">Top 50 series</a>
           <a href="films.html?view=top-anime">Anime</a>
-          <a href="ott.html">New on OTT</a><a href="upcoming.html">In theatres & upcoming</a><a href="best.html">Best-of lists</a>
+          <a href="ott.html">New on OTT</a><a href="upcoming.html?show=now">In theatres</a><a href="upcoming.html">Upcoming movies</a><a href="best.html">Best-of lists</a>
         </nav>
         <nav class="footer-col" aria-label="Pick something">
           <h4>Pick something</h4>
@@ -597,7 +597,7 @@ async function renderListTiles() {
   const showing = upcoming ? posters(upcoming.now) : [];
   box.querySelectorAll("a").forEach((a) => {
     const key = a.getAttribute("href");
-    const pics = key === "upcoming.html#now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
+    const pics = key === "upcoming.html?show=now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
     if (!pics || !pics.length) return;
     const label = a.textContent.trim();
     a.classList.add("ptile");
@@ -2091,21 +2091,31 @@ async function initBest() {
     </section>`;
 }
 
+// Two tabs on one page: ?show=now is "In theatres now", otherwise "Coming soon". Either takes ?l=<lang>.
 async function initUpcoming() {
   const root = document.getElementById("upcoming");
-  const l = new URLSearchParams(location.search).get("l") || "";
+  const params = new URLSearchParams(location.search);
+  const l = params.get("l") || "";
   const data = await loadCatalog("upcoming");
   if (!data) return notReadyYet(root);
-  const langs = [...new Set([...data.items, ...(data.now || [])].map((f) => f.l))];
+  const showNow = params.get("show") === "now" || (location.hash === "#now" && !params.has("show"));
+  const allNow = data.now || [];
+  const langs = [...new Set((showNow ? allNow : data.items).map((f) => f.l))];
   const lang = CAT_LANGS[l] ? langLabel(CAT_LANGS[l]) : "";
-  const heading = `Upcoming ${lang ? `${lang} ` : ""}movies`;
-  document.title = `${heading}: release dates and trailers · Masala Mischief`;
-  const items = data.items.filter((f) => !l || f.l === l);
-  const now = (data.now || []).filter((f) => !l || f.l === l);
+  const heading = showNow ? `${lang ? `${lang} movies` : "Movies"} in theatres now` : `Upcoming ${lang ? `${lang} ` : ""}movies`;
+  document.title = showNow ? `${heading}: book tickets · Masala Mischief` : `${heading}: release dates and trailers · Masala Mischief`;
+  const items = showNow ? [] : data.items.filter((f) => !l || f.l === l);
+  const now = showNow ? allNow.filter((f) => !l || f.l === l) : [];
+  const href = (show, code) => {
+    const q = new URLSearchParams();
+    if (show) q.set("show", "now");
+    if (code) q.set("l", code);
+    return `upcoming.html${q.toString() ? `?${q}` : ""}`;
+  };
+  const count = (list) => list.filter((f) => !l || f.l === l).length;
   const showDay = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
   const theatres = now.length ? `
-    <section id="now"><div class="section-head"><h2>🎟️ In theatres now</h2></div>
-      <p class="muted">${esc(lang || "Films")} in Indian cinemas and not streaming yet. Book tickets to pick your city, cinema and showtime.</p>
+    <section id="now">
       <div class="booking-row">${ticketLinks()}</div>
       <div class="ulist">${now.map((f) => {
         const name = f.pg ? `<a href="film.html?id=${f.l}-${f.id}">${esc(f.t)}</a>` : esc(f.t);
@@ -2126,13 +2136,19 @@ async function initUpcoming() {
   const groups = {};
   items.forEach((f) => (groups[month(f.d)] = groups[month(f.d)] || []).push(f));
   root.innerHTML = `
-    <div class="page-head"><p class="eyebrow">🎟️ In theatres · 🗓️ Coming soon</p><h1>${esc(heading)}</h1>
-      <p class="lead">What's in cinemas now, and the most-awaited ${lang ? `${esc(lang)} ` : ""}films of the next few months with release dates and trailers. Dates can move, so check closer to release.</p></div>
-    <nav class="chips app-tabs" aria-label="Languages">
-      <a class="chip" href="upcoming.html" aria-pressed="${!l}">All</a>
-      ${langs.map((c) => `<a class="chip" href="upcoming.html?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
+    <nav class="view-tabs" aria-label="In theatres or coming soon">
+      <a href="${href(true, l)}" aria-current="${showNow ? "page" : "false"}">🎟️ In theatres <small>${count(allNow)}</small></a>
+      <a href="${href(false, l)}" aria-current="${showNow ? "false" : "page"}">🗓️ Coming soon <small>${count(data.items)}</small></a>
     </nav>
-    ${theatres}
+    <div class="page-head"><h1>${esc(heading)}</h1>
+      <p class="lead">${showNow
+        ? `${lang ? `${esc(lang)} films` : "Films"} in Indian cinemas and not streaming yet. Book tickets to pick your city, cinema and showtime.`
+        : `The most-awaited ${lang ? `${esc(lang)} ` : ""}films of the next few months, with release dates and trailers. Dates can move, so check closer to release.`}</p></div>
+    <nav class="chips app-tabs" aria-label="Languages">
+      <a class="chip" href="${href(showNow, "")}" aria-pressed="${!l}">All</a>
+      ${langs.map((c) => `<a class="chip" href="${href(showNow, c)}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
+    </nav>
+    ${theatres || (showNow ? `<div class="empty">Nothing ${lang ? `in ${esc(lang)} ` : ""}in theatres right now that we know of. <a href="${href(false, l)}">See what's coming soon</a>.</div>` : "")}
     ${Object.entries(groups).map(([m, list]) => `
       <section><div class="section-head"><h2>🗓️ ${esc(m)}</h2></div>
         <div class="ulist">${list.map((f) => `
@@ -2146,9 +2162,9 @@ async function initUpcoming() {
               ${f.tr ? trailerBtn(f.tr, f.t) : ""}
             </div>
           </article>`).join("")}</div>
-      </section>`).join("") || `<div class="empty">No upcoming films found right now.</div>`}`;
-  // The list arrives after the page loads, so jump to #now (from the home page) once it's drawn.
-  if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+      </section>`).join("") || (showNow ? "" : `<div class="empty">No upcoming films found right now.</div>`)}`;
+  // The list arrives after the page loads, so jump to a film's card (#u-…, from search) once it's drawn.
+  if (location.hash.length > 4) document.getElementById(location.hash.slice(1))?.scrollIntoView();
 }
 
 renderChrome();
