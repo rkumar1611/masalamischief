@@ -138,7 +138,7 @@ const JW_PAGE = `query P($f: TitleFilter, $after: String, $pkg: [String!]) {
   popularTitles(country: IN, first: 100, after: $after, filter: $f) {
     pageInfo { endCursor hasNextPage }
     edges { node { objectType content(country: IN, language: "en") { externalIds { tmdbId imdbId } }
-      offers(country: IN, platform: WEB, filter: { packages: $pkg }) { monetizationType standardWebURL availableTo } } }
+      offers(country: IN, platform: WEB, filter: { packages: $pkg }) { monetizationType standardWebURL availableTo audioLanguages } } }
   }
 }`;
 
@@ -194,6 +194,10 @@ function bestOffer(offers) {
 // next LEAVE_DAYS days, as f.lv = { app: "YYYY-MM-DD" }, and listed in leaving.json.
 const LEAVE_DAYS = 45;
 const jwLeaving = new Map(); // same keys as the links → { app: date }
+// Dubbed versions: the audio languages of subscription offers (Prime Video, JioHotstar and ZEE5 list
+// them; Netflix doesn't), kept as f.au = other languages it can be watched in, and dubs-<code>.json.
+const jwAudio = new Map(); // same keys → Set of language codes
+const DUB_LIST = 1500;     // best-known titles per dubs-<code>.json
 
 // Map of TMDB id ("123", "tv123") and IMDb id ("tt…") → { app: url }, or null if JustWatch failed.
 async function appLinks() {
@@ -238,6 +242,11 @@ async function appLinks() {
                 .map((o) => String(o.availableTo).slice(0, 10)).sort()[0];
               addLeaving(tmdbKey, JW_APPS[pkg], ends);
               addLeaving(ids.imdbId, JW_APPS[pkg], ends);
+              const audio = (node.offers || []).filter((o) => o.monetizationType === "FLATRATE").flatMap((o) => o.audioLanguages || [])
+                .filter((c) => OUT_LANGS.includes(c));
+              for (const key of [tmdbKey, ids.imdbId].filter(Boolean)) {
+                if (audio.length) audio.forEach((c) => (jwAudio.get(key) || jwAudio.set(key, new Set()).get(key)).add(c));
+              }
             }
             if (!p.pageInfo.hasNextPage) break;
             after = p.pageInfo.endCursor;
@@ -270,6 +279,10 @@ function attachLinks(titles, links, have) {
     const ends = links ? { ...(f.im && jwLeaving.get(f.im)), ...jwLeaving.get(String(f.id)) } : oldLv;
     const lv = Object.fromEntries(f.w.filter((a) => ends[a] && ends[a] >= day(0)).map((a) => [a, ends[a]]));
     if (Object.keys(lv).length) f.lv = lv; else delete f.lv;
+    // Dubbed in: fresh from this sweep, or last week's; only languages other than its own.
+    const fresh = links && new Set([...(f.im && jwAudio.get(f.im) || []), ...(jwAudio.get(String(f.id)) || [])]);
+    const au = fresh ? [...fresh].filter((c) => c !== f.l).sort() : have.get(keyOf(f))?.au || f.au || [];
+    if (au.length) f.au = au; else delete f.au;
   }
   linkCount = n;
   console.log(`Direct app links on ${n} titles.`);
@@ -508,7 +521,7 @@ async function daily() {
   await writeTop10([...have.values()]);
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ...rest }) => rest;
 
 // More like this (ml): six titles for each title page, worked out here so the page doesn't have to
 // download a whole language list: TMDB's recommendations (rc) first, then titles in the same language
@@ -637,6 +650,13 @@ function writeCatalogue(titles, trendIds) {
     .sort((a, b) => a.d.localeCompare(b.d) || b.n - a.n).slice(0, 1500);
   writeIfChanged(new URL("leaving.json", OUT), JSON.stringify({ items: leaving }));
   console.log(`Leaving soon: ${leaving.length} titles.`);
+
+  // dubs-<code>.json: titles from other languages you can watch dubbed in <code> (best-known first),
+  // so "What should I watch" can include them without loading every language's list.
+  for (const code of OUT_LANGS) {
+    const dubbed = all.filter((f) => f.au && f.au.includes(code)).slice(0, DUB_LIST).map(compact);
+    writeIfChanged(new URL(`dubs-${code}.json`, OUT), JSON.stringify({ films: dubbed }));
+  }
 
   writeLists(all);
   writeSitemaps(all, people);
