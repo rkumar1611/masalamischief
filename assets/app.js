@@ -82,12 +82,27 @@ function currentTheme() {
 /* ---------- Header / footer ---------- */
 function renderChrome() {
   const page = document.body.dataset.page;
+  // The logo (same drawing as assets/logo.svg), inline so its dark parts follow the theme (--logo-ink).
+  const mark = `<svg class="logo-mark" viewBox="80 126 448 252" aria-hidden="true">
+    <path d="M270 266 L524 202 L524 372 L270 298 Z" fill="#f8d27c"/>
+    <text x="440" y="303" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="44" fill="#b3202f">MM</text>
+    <circle cx="130" cy="182" r="48" class="ink"/>
+    <g fill="#d7263d"><circle cx="130" cy="156" r="10"/><circle cx="107" cy="196" r="10"/><circle cx="153" cy="196" r="10"/></g>
+    <circle cx="130" cy="182" r="8" fill="#fff3dc"/>
+    <circle cx="217" cy="197" r="33" class="ink"/>
+    <g fill="#f2a900"><circle cx="217" cy="180" r="7"/><circle cx="202" cy="207" r="7"/><circle cx="232" cy="207" r="7"/></g>
+    <circle cx="217" cy="197" r="6" fill="#fff3dc"/>
+    <rect x="98" y="238" width="147" height="88" rx="12" fill="#d7263d"/>
+    <g fill="#8e1b2b"><rect x="117" y="256" width="66" height="8" rx="4"/><rect x="117" y="274" width="66" height="8" rx="4"/><rect x="117" y="292" width="66" height="8" rx="4"/></g>
+    <rect x="242" y="262" width="29" height="38" rx="4" class="ink"/>
+    <g class="ink-line" stroke-width="9" stroke-linecap="round"><path d="M133 324 L117 370"/><path d="M208 324 L226 370"/></g>
+  </svg>`;
   const links = NAV.map((n) =>
     `<a href="${n.href}" class="${n.page === page ? "active" : ""}">${n.label}${n.soon ? '<span class="soon">soon</span>' : ""}</a>`
   ).join("");
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="site-header"><div class="wrap">
-      <a class="logo" href="index.html"><img class="logo-mark" src="assets/logo.svg" alt="" width="40" height="40">Masala <span>Mischief</span></a>
+      <a class="logo" href="index.html">${mark}Masala <span>Mischief</span></a>
       <button class="theme-btn search-btn" id="search-btn" type="button" aria-label="Search movies and series" aria-expanded="false">🔍</button>
       <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch light or dark mode"></button>
       <button class="theme-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="main-nav">☰</button>
@@ -103,7 +118,7 @@ function renderChrome() {
     <footer class="site-footer"><div class="wrap">
       <div class="footer-top">
         <div class="footer-brand">
-          <a class="logo" href="index.html"><img class="logo-mark" src="assets/logo.svg" alt="" width="40" height="40">Masala <span>Mischief</span></a>
+          <a class="logo" href="index.html">${mark}Masala <span>Mischief</span></a>
           <p>Indian and Hollywood film reviews with extra chilli, and where to stream them in India.</p>
           <div class="how-rate">
             <span><b>🌶️ Masala Meter</b> how much fun, 1 to 5</span>

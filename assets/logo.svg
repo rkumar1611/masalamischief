@@ -1,28 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <clipPath id="arm"><rect x="0" y="0" width="330" height="64" rx="14"/></clipPath>
-    <clipPath id="bar"><rect x="94" y="196" width="330" height="52" rx="12"/></clipPath>
-  </defs>
-  <!-- devil horns -->
-  <path d="M150 128 C126 92 132 52 150 30 C156 70 176 98 206 116 Z" fill="#f6b73c"/>
-  <path d="M370 128 C394 92 388 52 370 30 C364 70 344 98 314 116 Z" fill="#f6b73c"/>
-  <!-- clapper arm, flipped open -->
-  <g transform="translate(94 188) rotate(-16)">
-    <g clip-path="url(#arm)">
-      <rect width="330" height="64" fill="#fff8ee"/>
-      <g fill="#d7263d"><path d="M0 0h44l-40 64H-40z"/><path d="M88 0h44l-40 64H48z"/><path d="M176 0h44l-40 64h-44z"/><path d="M264 0h44l-40 64h-44z"/></g>
-    </g>
-  </g>
-  <!-- fixed bar -->
-  <g clip-path="url(#bar)">
-    <rect x="94" y="196" width="330" height="52" fill="#fff8ee"/>
-    <g fill="#d7263d"><path d="M94 196h44l-34 52H60z"/><path d="M182 196h44l-34 52h-44z"/><path d="M270 196h44l-34 52h-44z"/><path d="M358 196h44l-34 52h-44z"/></g>
-  </g>
-  <!-- slate with a cheeky face -->
-  <rect x="94" y="256" width="330" height="200" rx="30" fill="#d7263d"/>
-  <circle cx="200" cy="328" r="30" fill="#fff8ee"/>
-  <circle cx="212" cy="334" r="14" fill="#26121a"/>
-  <path d="M292 334 q26 -30 52 0" fill="none" stroke="#fff8ee" stroke-width="16" stroke-linecap="round"/>
-  <path d="M262 398 q0 38 26 38 q26 0 24 -40 z" fill="#f6b73c"/>
-  <path d="M184 384 q80 34 150 -16" fill="none" stroke="#fff8ee" stroke-width="16" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="80 126 448 252">
+  <!-- Masala Mischief: a film projector throwing "MM" into its beam -->
+  <!-- beam and monogram -->
+  <path d="M270 266 L524 202 L524 372 L270 298 Z" fill="#f8d27c"/>
+  <text x="440" y="303" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="44" fill="#b3202f">MM</text>
+  <!-- reels -->
+  <circle cx="130" cy="182" r="48" fill="#1d1416"/>
+  <g fill="#d7263d"><circle cx="130" cy="156" r="10"/><circle cx="107" cy="196" r="10"/><circle cx="153" cy="196" r="10"/></g>
+  <circle cx="130" cy="182" r="8" fill="#fff3dc"/>
+  <circle cx="217" cy="197" r="33" fill="#1d1416"/>
+  <g fill="#f2a900"><circle cx="217" cy="180" r="7"/><circle cx="202" cy="207" r="7"/><circle cx="232" cy="207" r="7"/></g>
+  <circle cx="217" cy="197" r="6" fill="#fff3dc"/>
+  <!-- body, vents and lens -->
+  <rect x="98" y="238" width="147" height="88" rx="12" fill="#d7263d"/>
+  <g fill="#8e1b2b"><rect x="117" y="256" width="66" height="8" rx="4"/><rect x="117" y="274" width="66" height="8" rx="4"/><rect x="117" y="292" width="66" height="8" rx="4"/></g>
+  <rect x="242" y="262" width="29" height="38" rx="4" fill="#1d1416"/>
+  <!-- legs -->
+  <g stroke="#1d1416" stroke-width="9" stroke-linecap="round"><path d="M133 324 L117 370"/><path d="M208 324 L226 370"/></g>
 </svg>

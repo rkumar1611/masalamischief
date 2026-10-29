@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Masala Mischief icon: the logo's projector, close up (reels, body, lens and the start of the beam), on cream -->
+  <rect width="512" height="512" rx="112" fill="#fff3dc"/>
+  <g transform="translate(-76 -151) scale(1.61)">
+    <path d="M270 266 L330 251 L330 314 L270 298 Z" fill="#f8d27c"/>
+    <circle cx="130" cy="182" r="48" fill="#1d1416"/>
+    <g fill="#d7263d"><circle cx="130" cy="156" r="10"/><circle cx="107" cy="196" r="10"/><circle cx="153" cy="196" r="10"/></g>
+    <circle cx="130" cy="182" r="8" fill="#fff3dc"/>
+    <circle cx="217" cy="197" r="33" fill="#1d1416"/>
+    <g fill="#f2a900"><circle cx="217" cy="180" r="7"/><circle cx="202" cy="207" r="7"/><circle cx="232" cy="207" r="7"/></g>
+    <circle cx="217" cy="197" r="6" fill="#fff3dc"/>
+    <rect x="98" y="238" width="147" height="88" rx="12" fill="#d7263d"/>
+    <g fill="#8e1b2b"><rect x="117" y="256" width="66" height="8" rx="4"/><rect x="117" y="274" width="66" height="8" rx="4"/><rect x="117" y="292" width="66" height="8" rx="4"/></g>
+    <rect x="242" y="262" width="29" height="38" rx="4" fill="#1d1416"/>
+    <g stroke="#1d1416" stroke-width="9" stroke-linecap="round"><path d="M133 324 L117 370"/><path d="M208 324 L226 370"/></g>
+  </g>
+</svg>
