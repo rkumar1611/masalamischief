@@ -1654,11 +1654,11 @@ const listLang = (l) => (l === "en" ? "Hollywood" : l === "ja" ? "anime" : CAT_L
 
 // "Best Malayalam thriller movies", "Best Tamil movies of 2025", "Best Korean drama series".
 // Same wording as lib/lists.js (used for the page titles on the server).
-function bestTitle(l, genre, year, kind) {
+function bestTitle(l, genre, year, kind, app) {
   const what = kind === "tv" ? "series" : "movies";
   const lang = listLang(l);
   if (year) return `Best ${lang} movies of ${year}`;
-  return `Best ${lang}${genre ? ` ${genre.toLowerCase()}` : ""} ${what}`;
+  return `Best ${lang}${genre ? ` ${genre.toLowerCase()}` : ""} ${what}${app ? ` on ${app}` : ""}`;
 }
 
 function addFilmControls(el, items, render) {
@@ -1703,6 +1703,12 @@ async function initOtt() {
   }
   document.title = `New on ${L.name} India: latest movies & series · Masala Mischief`;
   const justAdded = NEW_ON_OTT.items.filter((n) => n.app === L.name);
+  // Ranked lists per language on this app ("Best Hindi movies on Netflix"), from the best-of lists.
+  const bestOnApp = Object.entries(index.best).flatMap(([code, b]) => {
+    const r = (b.apps || []).find((row) => row[0] === appSlug);
+    return !r ? [] : ["movie", "tv"].filter((kind) => r[kind === "tv" ? 3 : 2])
+      .map((kind) => `<a href="best.html?l=${code}&app=${appSlug}${kind === "tv" ? "&k=tv" : ""}">${esc(bestTitle(code, "", "", kind, L.name))}</a>`);
+  });
   root.innerHTML = `
     <div class="page-head"><p class="eyebrow">📺 Streaming in India</p><h1>New on ${esc(L.name)}</h1>
       <p class="lead">The newest movies and series you can stream on ${esc(L.name)} in India, latest releases first. ${L.count.toLocaleString("en-IN")} titles on ${esc(L.name)} in all.</p></div>
@@ -1716,7 +1722,8 @@ async function initOtt() {
         <a class="btn primary" href="films.html?a=${encodeURIComponent(L.name)}&s=rating">Top rated on ${esc(L.name)} →</a>
         <a class="btn" href="films.html?a=${encodeURIComponent(L.name)}">All ${L.count.toLocaleString("en-IN")} titles on ${esc(L.name)}</a>
       </div>
-    </section>`;
+    </section>
+    ${bestOnApp.length ? `<section class="more-lists"><h2>Best on ${esc(L.name)}</h2><p class="hub-links">${bestOnApp.join("")}</p></section>` : ""}`;
   addFilmControls(document.getElementById("ott-filter"), L.items.map(withMine),
     (items) => { document.getElementById("ott-grid").innerHTML = items.map((f) => filmCard(f)).join("") || `<div class="empty">Nothing here.</div>`; });
 }
@@ -1747,24 +1754,43 @@ async function initBest() {
           </p>
           <p class="hub-links small">${b.genres.filter((r) => r[2]).slice(0, 8).map(([s, name]) => link(`l=${code}&g=${s}`, name)).join("")}</p>
           <p class="hub-links small">${b.years.slice(0, 6).map(([yr]) => link(`l=${code}&y=${yr}`, String(yr))).join("")}</p>
+          ${(b.apps || []).length ? `<p class="hub-links small">${b.apps.slice(0, 6).map(([s, name, movies]) => link(`l=${code}&app=${s}${movies ? "" : "&k=tv"}`, `On ${name}`)).join("")}</p>` : ""}
         </div>`).join("")}</div>`;
     return;
   }
-  const data = await loadCatalog(`lists/best-${l}`);
+  // A per-app list (&app=netflix) is in its own file, best-<lang>-<app>.json.
+  const app = p.get("app") || "";
+  const apps = info.apps || [];
+  const appRow = app && apps.find((r) => r[0] === app);
+  const data = app && !appRow ? null : await loadCatalog(`lists/best-${l}${app ? `-${app}` : ""}`);
   const gInfo = g && data && data.genres[g];
-  const list = !data ? null : y ? data.years[y] : g ? gInfo && gInfo[k] : data.all[k];
+  const list = !data ? null : y ? !app && data.years[y] : g ? gInfo && gInfo[k] : data.all[k];
   if (!list) { root.innerHTML = `<div class="empty">We couldn't find that list. <a href="best.html">See all lists</a>.</div>`; return; }
-  const heading = bestTitle(l, gInfo ? gInfo.name : "", y, k);
-  document.title = `${heading}${y ? "" : " of all time"} · top ${list.length} · Masala Mischief`;
+  const heading = bestTitle(l, gInfo ? gInfo.name : "", y, k, appRow ? appRow[1] : "");
+  document.title = `${heading}${y || app ? "" : " of all time"}${app ? " India" : ""} · top ${list.length} · Masala Mischief`;
   const byTmdb = reviewedByTmdb();
   const lang = langLabel(CAT_LANGS[l]);
   const kindRows = info.genres.filter((r) => r[k === "tv" ? 3 : 2]);
+  const ki = k === "tv" ? 3 : 2;
+  const tvq = k === "tv" ? "&k=tv" : "";
+  // Links to the same kind of list on each app ("Best Hindi movies on Netflix").
+  const appLinks = (genre) => apps.filter((r) => r[0] !== app && (genre ? r[4].some((gr) => gr[0] === genre[0] && gr[ki]) : r[ki]))
+    .map((r) => link(`l=${l}&app=${r[0]}${genre ? `&g=${genre[0]}` : ""}${tvq}`, bestTitle(l, genre ? genre[1] : "", "", k, r[1]))).join("");
+  const appMore = appRow ? `
+      <h2>More ${esc(lang)} on ${esc(appRow[1])}</h2>
+      <p class="hub-links">
+        ${["movie", "tv"].filter((kind) => appRow[kind === "tv" ? 3 : 2]).map((kind) => link(`l=${l}&app=${app}${kind === "tv" ? "&k=tv" : ""}`, bestTitle(l, "", "", kind, appRow[1]))).join("")}
+        ${appRow[4].filter((r) => r[ki]).map(([s, name]) => link(`l=${l}&app=${app}&g=${s}${tvq}`, bestTitle(l, name, "", k, appRow[1]))).join("")}
+      </p>` : "";
+  const otherApps = y ? "" : appLinks(gInfo ? [g, gInfo.name] : null);
   root.innerHTML = `
-    <div class="page-head"><p class="eyebrow">🏆 ${esc(lang)} · top ${list.length}</p><h1>${esc(heading)}</h1>
-      <p class="lead">Ranked by a weighted TMDB rating, so a film with a handful of perfect votes can't beat a well-loved classic.
+    <div class="page-head"><p class="eyebrow">🏆 ${esc(lang)}${appRow ? ` · ${esc(appRow[1])}` : ""} · top ${list.length}</p><h1>${esc(heading)}</h1>
+      <p class="lead">${appRow ? `The best ${esc(lang)} ${k === "tv" ? "series" : "movies"} you can stream on ${esc(appRow[1])} in India right now. ` : ""}Ranked by a weighted TMDB rating, so a film with a handful of perfect votes can't beat a well-loved classic.
         Tap any title for the trailer, cast and where to stream it in India.</p></div>
     <div class="fgrid">${list.map((f, i) => filmCard({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }, i + 1)).join("")}</div>
     <section class="more-lists">
+      ${appMore}
+      ${otherApps ? `<h2>${appRow ? "On other apps" : "By streaming app"}</h2><p class="hub-links">${otherApps}</p>` : ""}
       <h2>More ${esc(lang)} lists</h2>
       <p class="hub-links">
         ${info.kinds.map((kind) => link(`l=${l}${kind === "tv" ? "&k=tv" : ""}`, bestTitle(l, "", "", kind))).join("")}

@@ -403,6 +403,7 @@ function writeCatalogue(titles, trendIds) {
 // Ready-made lists for the traffic pages, so each page loads one small file (assets/catalog/lists/):
 //   ott.json        newest titles on each streaming app ("New on Netflix")
 //   best-<lang>.json best movies/series per language, by genre and by year (weighted TMDB rating)
+//   best-<lang>-<app>.json the same per streaming app, by genre ("Best Hindi movies on Netflix")
 //   index.json      which lists exist, for the hub page and the sitemap
 const LIST_SIZE = 30;
 const OTT_SIZE = 60;
@@ -428,6 +429,7 @@ function writeLists(all) {
   const today = day(0);
   const released = all.filter((f) => !f.rd || f.rd <= today);
   const index = { ott: [], best: {} };
+  const written = new Set();
   // previews.json: four posters per list, keyed by the list page's link, for the homepage tiles.
   const previews = {};
   const posters = (items) => items.filter((f) => f.p).slice(0, 4).map((f) => f.p);
@@ -480,11 +482,47 @@ function writeLists(all) {
     }
     info.genres.sort((a, b) => b[2] + b[3] - (a[2] + a[3]));
     writeIfChanged(new URL(`best-${lang}.json`, dir), JSON.stringify(out));
+
+    // Best on each app ("Best Hindi movies on Netflix", "Best Tamil thriller movies on Prime Video"):
+    // one file per language and app, best-<lang>-<app>.json, same shape as best-<lang>.json without years.
+    info.apps = [];
+    for (const app of apps) {
+      const s = slugOf(app);
+      const on = mine.filter((f) => (f.w || []).includes(app));
+      const appOut = { name: app, all: {}, genres: {} };
+      const row = [s, app, 0, 0, []];
+      for (const kind of ["movie", "tv"]) {
+        const ranked = weightedRank(on.filter((f) => (kind === "tv" ? f.k === "tv" : f.k !== "tv")));
+        if (ranked.length < LIST_MIN) continue;
+        const tvq = kind === "tv" ? "&k=tv" : "";
+        appOut.all[kind] = ranked.slice(0, LIST_SIZE).map(compact);
+        row[kind === "tv" ? 3 : 2] = ranked.length;
+        previews[`best.html?l=${lang}&app=${s}${tvq}`] = posters(ranked);
+        for (const g of [...new Set(ranked.flatMap((f) => f.g || []))]) {
+          const list = ranked.filter((f) => (f.g || []).includes(g));
+          if (list.length < LIST_MIN) continue;
+          const gs = slugOf(g);
+          (appOut.genres[gs] = appOut.genres[gs] || { name: g })[kind] = list.slice(0, LIST_SIZE).map(compact);
+          const gr = row[4].find((r) => r[0] === gs) || (row[4].push([gs, g, 0, 0]), row[4][row[4].length - 1]);
+          gr[kind === "tv" ? 3 : 2] = list.length;
+        }
+      }
+      if (!row[2] && !row[3]) continue;
+      row[4].sort((a, b) => b[2] + b[3] - (a[2] + a[3]));
+      writeIfChanged(new URL(`best-${lang}-${s}.json`, dir), JSON.stringify(appOut));
+      written.add(`best-${lang}-${s}.json`);
+      info.apps.push(row);
+    }
+    info.apps.sort((a, b) => b[2] + b[3] - (a[2] + a[3]));
     index.best[lang] = info;
+  }
+  // Per-app lists that no longer have enough titles.
+  for (const name of readdirSync(dir)) {
+    if (/^best-[a-z]{2}-[a-z0-9-]+\.json$/.test(name) && !written.has(name)) rmSync(new URL(name, dir));
   }
   writeIfChanged(new URL("index.json", dir), JSON.stringify(index));
   writeIfChanged(new URL("previews.json", dir), JSON.stringify(previews));
-  console.log(`Lists: ${index.ott.length} apps, ${Object.values(index.best).reduce((s, b) => s + b.genres.length + b.years.length + b.kinds.length, 0)} best-of lists.`);
+  console.log(`Lists: ${index.ott.length} apps, ${Object.values(index.best).reduce((s, b) => s + b.genres.length + b.years.length + b.kinds.length, 0)} best-of lists, ${written.size} app files.`);
 }
 
 // Sitemaps, ready-made so the site doesn't have to read big files on each request
@@ -523,6 +561,14 @@ function writeListsSitemap(upcoming) {
       if (tv) paths.push(`/best?l=${l}&g=${g}&k=tv`);
     });
     b.years.forEach(([y]) => paths.push(`/best?l=${l}&y=${y}`));
+    (b.apps || []).forEach(([a, , movies, tv, genres]) => {
+      if (movies) paths.push(`/best?l=${l}&app=${a}`);
+      if (tv) paths.push(`/best?l=${l}&app=${a}&k=tv`);
+      genres.forEach(([g, , gm, gt]) => {
+        if (gm) paths.push(`/best?l=${l}&app=${a}&g=${g}`);
+        if (gt) paths.push(`/best?l=${l}&app=${a}&g=${g}&k=tv`);
+      });
+    });
   }
   if (upcoming.length) paths.push("/upcoming", ...[...new Set(upcoming.map((f) => f.l))].map((l) => `/upcoming?l=${l}`));
   writeIfChanged(new URL("sitemaps/lists.xml", OUT), xml(paths));

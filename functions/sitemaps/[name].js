@@ -43,6 +43,14 @@ export async function onRequestGet(context) {
         if (tv) paths.push(`/best?l=${l}&g=${g}&k=tv`);
       });
       b.years.forEach(([y]) => paths.push(`/best?l=${l}&y=${y}`));
+      (b.apps || []).forEach(([a, , movies, tv, genres]) => {
+        if (movies) paths.push(`/best?l=${l}&app=${a}`);
+        if (tv) paths.push(`/best?l=${l}&app=${a}&k=tv`);
+        genres.forEach(([g, , gm, gt]) => {
+          if (gm) paths.push(`/best?l=${l}&app=${a}&g=${g}`);
+          if (gt) paths.push(`/best?l=${l}&app=${a}&g=${g}&k=tv`);
+        });
+      });
     }
     if (upcoming && upcoming.items.length) {
       paths.push("/upcoming", ...[...new Set(upcoming.items.map((f) => f.l))].map((l) => `/upcoming?l=${l}`));
