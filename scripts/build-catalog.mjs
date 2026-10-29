@@ -117,6 +117,117 @@ const votes = (n) => (n < 100 ? n : Number(n.toPrecision(2)));
 const appsOf = (d) => [...new Set((d["watch/providers"]?.results?.IN?.flatrate || [])
   .map((p) => (APP_RULES.find(([re]) => re.test(p.provider_name)) || [])[1]).filter(Boolean))];
 
+// Direct links to each title on the apps, from JustWatch India (TMDB only says which app has it).
+// JustWatch package code → our app name. Every run sweeps each app's whole list, a slice of release
+// years at a time (a query stops at 2,000 results), about 400 requests in all.
+const JW_APPS = {
+  nfx: "Netflix", prv: "Prime Video", jhs: "JioHotstar", zee: "ZEE5", snl: "SonyLIV", snx: "Sun NXT",
+  aha: "aha", mrx: "ManoramaMAX", mxp: "MX Player", lgp: "Lionsgate Play", cru: "Crunchyroll",
+};
+const JW_SLICE = 1900;
+const JW_WORKERS = 3;
+const JW_COUNT = `query C($f: TitleFilter) { popularTitles(country: IN, first: 1, filter: $f) { totalCount } }`;
+const JW_PAGE = `query P($f: TitleFilter, $after: String, $pkg: [String!]) {
+  popularTitles(country: IN, first: 100, after: $after, filter: $f) {
+    pageInfo { endCursor hasNextPage }
+    edges { node { objectType content(country: IN, language: "en") { externalIds { tmdbId imdbId } }
+      offers(country: IN, platform: WEB, filter: { packages: $pkg }) { monetizationType standardWebURL } } }
+  }
+}`;
+
+async function jw(query, variables) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const res = await fetch("https://apis.justwatch.com/graphql", {
+        method: "POST",
+        headers: { "content-type": "application/json", "user-agent": "Mozilla/5.0 (compatible; MasalaMischiefBot/1.0; +https://masalamischief.in)" },
+        body: JSON.stringify({ query, variables }),
+      });
+      if (res.ok) {
+        const j = await res.json();
+        if (j.data) return j.data;
+      }
+    } catch {}
+    await sleep(3000 * (attempt + 1));
+  }
+  throw new Error("JustWatch didn't answer");
+}
+
+// The title's own page on the app: subscription offers first, then the shortest link (a season or the
+// show rather than one episode). App home pages don't count.
+function bestOffer(offers) {
+  const urls = (offers || [])
+    .map((o) => [o.monetizationType === "FLATRATE" ? 0 : 1, (o.standardWebURL || "").replace("://app.primevideo.com/", "://www.primevideo.com/")])
+    .filter(([, u]) => { try { const x = new URL(u); return x.protocol === "https:" && x.pathname.length > 1 && !/offers|homepage/.test(x.pathname); } catch { return false; } })
+    .sort((a, b) => a[0] - b[0] || a[1].length - b[1].length);
+  const best = urls[0]?.[1];
+  // Hotstar lists both /in/123 and /in/movies/name/123; the one with the name is its usual page.
+  const id = best && new URL(best).pathname.split("/").pop();
+  return (id && urls.map(([, u]) => u).find((u) => u.length > best.length && u.endsWith(`/${id}`))) || best;
+}
+
+// Map of TMDB id ("123", "tv123") and IMDb id ("tt…") → { app: url }, or null if JustWatch failed.
+async function appLinks() {
+  const links = new Map();
+  const add = (key, app, url) => { if (key) (links.get(key) || links.set(key, {}).get(key))[app] ||= url; };
+  const jobs = Object.keys(JW_APPS).flatMap((pkg) => ["MOVIE", "SHOW"].map((type) => [pkg, type]));
+  const last = new Date().getUTCFullYear() + 1;
+  let requests = 0;
+  try {
+    await Promise.all(Array.from({ length: JW_WORKERS }, async () => {
+      while (jobs.length) {
+        const [pkg, type] = jobs.shift();
+        const slices = [[1900, last]];
+        while (slices.length) {
+          const [min, max] = slices.pop();
+          const f = { packages: [pkg], objectTypes: [type], releaseYear: { min, max } };
+          const count = (await jw(JW_COUNT, { f })).popularTitles.totalCount;
+          requests++;
+          if (!count) continue;
+          if (count > JW_SLICE && min < max) {
+            const mid = Math.floor((min + max) / 2);
+            slices.push([min, mid], [mid + 1, max]);
+            continue;
+          }
+          let after = null;
+          for (let page = 0; page < 20; page++) {
+            const p = (await jw(JW_PAGE, { f, after, pkg: [pkg] })).popularTitles;
+            requests++;
+            for (const { node } of p.edges) {
+              const url = bestOffer(node.offers);
+              if (!url) continue;
+              const ids = node.content?.externalIds || {};
+              if (ids.tmdbId) add(`${type === "SHOW" ? "tv" : ""}${ids.tmdbId}`, JW_APPS[pkg], url);
+              add(ids.imdbId, JW_APPS[pkg], url);
+            }
+            if (!p.pageInfo.hasNextPage) break;
+            after = p.pageInfo.endCursor;
+            await sleep(200);
+          }
+        }
+      }
+    }));
+  } catch (e) {
+    console.log(`App links: ${e.message}; keeping the links we had.`);
+    return null;
+  }
+  console.log(`App links: ${links.size} titles from ${requests} JustWatch requests.`);
+  return links.size > 1000 ? links : null;
+}
+
+// f.u = { app: direct link } for the apps in f.w that JustWatch has a page for (title pages only).
+// Without fresh links (JustWatch down), each title keeps the links it had.
+function attachLinks(titles, links, have) {
+  let n = 0;
+  for (const f of titles) {
+    const old = { ...have.get(keyOf(f))?.u, ...f.u };
+    const found = links ? { ...(f.im && links.get(f.im)), ...links.get(String(f.id)) } : old;
+    const u = Object.fromEntries(f.w.filter((a) => found[a]).map((a) => [a, found[a]]));
+    if (Object.keys(u).length) { f.u = u; n++; } else delete f.u;
+  }
+  console.log(`Direct app links on ${n} titles.`);
+}
+
 function toFilm(d, lang) {
   const apps = appsOf(d);
   const cert = (d.release_dates?.results?.find((r) => r.iso_3166_1 === "IN")?.release_dates || [])
@@ -290,6 +401,7 @@ async function main() {
     throw new Error(`Only ${films.length} films came back; not writing a broken catalogue.`);
   }
 
+  attachLinks([...films, ...keptSeries], await appLinks(), have);
   writeCatalogue([...films, ...keptSeries], trendIds);
   await writeUpcoming();
   console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series.`);
@@ -328,12 +440,14 @@ async function daily() {
   const fresh = new Map([...(await movieDetails(moviePicks)), ...(await seriesDetails(tvPicks))].map((f) => [keyOf(f), f]));
   const added = [...fresh.keys()].filter((k) => !have.has(k));
   console.log(`New titles: ${added.length}${added.length ? ` (${added.slice(0, 20).join(", ")}${added.length > 20 ? "…" : ""})` : ""}.`);
+  const before = new Map(have);
   for (const [k, f] of fresh) have.set(k, f);
+  attachLinks([...have.values()], await appLinks(), before);
   writeCatalogue([...have.values()], trendIds);
   await writeUpcoming();
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, ...rest }) => rest;
 // Same as searchNorm() in assets/app.js: "K.G.F: Chapter 1" → "kgf chapter 1".
 const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ");
 const STOPWORDS = new Set(["the", "a", "an", "of", "and"]);

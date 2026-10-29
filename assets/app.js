@@ -1205,7 +1205,8 @@ const CAT_LANGS = {
 const PICK_LANGUAGES = [...LANGUAGES, "Marathi", "Bengali", "Punjabi", "Korean"];
 const LANG_CODE = Object.fromEntries(Object.entries(CAT_LANGS).map(([c, l]) => [l, c]));
 
-// Catalogue films only know which app has them, not the exact page, so we open the app's search.
+// Title pages link straight to the title on the app (f.u, from JustWatch). Where we don't have that
+// link, we open the app's search for the title instead.
 const APP_SEARCH = {
   "Netflix": "https://www.netflix.com/search?q=",
   "Prime Video": "https://www.primevideo.com/search/ref=atv_nb_sug?ie=UTF8&phrase=",
@@ -1217,6 +1218,8 @@ const APP_SEARCH = {
 };
 const appSearchUrl = (app, title) =>
   APP_SEARCH[app] ? (APP_SEARCH[app].endsWith("=") ? APP_SEARCH[app] + encodeURIComponent(title) : APP_SEARCH[app]) : PLATFORM_HOME[app];
+const directUrl = (f, app) => (f.u && /^https:\/\//.test(f.u[app] || "") ? f.u[app] : "");
+const appUrl = (f, app) => directUrl(f, app) || appSearchUrl(app, f.t);
 
 const catCache = {};
 function loadCatalog(name) {
@@ -1549,7 +1552,7 @@ async function initFilm() {
     <div class="review-layout">
       <article>
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
-        ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appSearchUrl(a, f.t))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
+        ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
         ${castRow({ ...f, kind: f.k })}
         <div class="panel not-reviewed">
@@ -1568,7 +1571,7 @@ async function initFilm() {
         <div class="side panel-watch">
           <h3>📺 Where to watch</h3>
           ${f.w.length
-            ? `<p class="muted small">Included with subscription · opens a search in the app</p><div class="otts">${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appSearchUrl(a, f.t))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>`
+            ? `<p class="muted small">Included with subscription · ${f.w.every((a) => directUrl(f, a)) ? "opens the title in the app" : "opens the app's search where we don't have a direct link"}</p><div class="otts">${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>`
             : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
           <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}. Availability changes, so confirm in the app.</p>
         </div>
