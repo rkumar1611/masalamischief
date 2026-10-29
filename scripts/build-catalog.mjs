@@ -291,7 +291,16 @@ function toFilm(d, lang) {
     w: apps,
     ov: shorten(d.overview),
     ...extrasOf(d, "movie"),
+    ...recsOf(d, ""),
   };
+}
+
+// More like this: TMDB's recommendations as catalogue keys ("hi-123", "ta-tv456"), best first. Ones not
+// in the catalogue are dropped when the files are written.
+function recsOf(d, prefix) {
+  const rc = (d.recommendations?.results || []).filter((r) => r.poster_path && OUT_LANGS.includes(r.original_language))
+    .slice(0, 12).map((r) => `${r.original_language}-${prefix}${r.id}`);
+  return rc.length ? { rc } : {};
 }
 
 // Series get id "tv<tmdb id>" (TMDB film and series ids can clash) and k: "tv".
@@ -322,6 +331,7 @@ function toSeries(d, lang) {
     w: appsOf(d),
     ov: shorten(d.overview),
     ...extrasOf(d, "tv"),
+    ...recsOf(d, "tv"),
   };
 }
 
@@ -342,10 +352,11 @@ async function details(picks, kind, append, toItem, keep = () => true) {
   return out;
 }
 
-const movieDetails = (picks) => details(picks, "movie", "watch/providers,release_dates", toFilm);
+// "recommendations" rides along in the same request (no extra calls) for More like this (rc).
+const movieDetails = (picks) => details(picks, "movie", "watch/providers,release_dates,recommendations", toFilm);
 // Long-running daily soaps swamp Indian TV on TMDB; keep web and prime-time series. Long-running
 // anime (One Piece, Detective Conan) is the real thing, so the episode limit doesn't apply there.
-const seriesDetails = (picks) => details(picks, "tv", "watch/providers,content_ratings", toSeries,
+const seriesDetails = (picks) => details(picks, "tv", "watch/providers,content_ratings,recommendations", toSeries,
   (d, lang) => lang === ANIME || (d.number_of_episodes || 0) <= MAX_EPISODES);
 
 // Everything we already have, from the current files (layout 2) or the older one-file-per-language
@@ -488,7 +499,7 @@ async function daily() {
   await writeUpcoming(new Set(have.keys()));
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ...rest }) => rest;
 // Same as searchNorm() in assets/app.js: "K.G.F: Chapter 1" → "kgf chapter 1".
 const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ");
 const STOPWORDS = new Set(["the", "a", "an", "of", "and"]);
@@ -499,6 +510,13 @@ function writeCatalogue(titles, trendIds) {
   mkdirSync(OUT, { recursive: true });
   const built = day(0);
   const counts = {};
+  // More like this only points at titles we have pages for.
+  const keys = new Set(all.map(keyOf));
+  for (const f of all) {
+    if (!f.rc) continue;
+    f.rc = f.rc.filter((k) => keys.has(k) && k !== keyOf(f)).slice(0, 10);
+    if (!f.rc.length) delete f.rc;
+  }
 
   for (const lang of OUT_LANGS) {
     const mine = all.filter((f) => f.l === lang);
