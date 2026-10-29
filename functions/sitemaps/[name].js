@@ -76,6 +76,6 @@ export async function onRequestGet(context) {
   const cat = await res.json();
   const reviewed = new Set(Object.values(IMAGES).map((i) => i.tmdb));
   const urls = cat.films.filter((f) => !reviewed.has(f.id))
-    .map((f) => `<url><loc>${SITE}/film?id=${f.l}-${f.id}</loc><lastmod>${cat.built}</lastmod></url>`);
+    .map((f) => `<url><loc>${SITE}/film?id=${f.l || name}-${f.id}</loc><lastmod>${cat.built}</lastmod></url>`);
   return xmlResponse(urls);
 }

@@ -10,6 +10,7 @@
 //   manifest.json          languages, counts, layout version, shard counts
 //   list-<lang>.json       compact list of one language (Movies & series page, Suggest, Group Pick)
 //   popular.json           the best-known titles across all languages (the "All languages" views)
+//   head-<lang>.json, head-all.json  the first page of those lists, shown while the full list loads
 //   t/<lang>/<n>.json      full details, n = TMDB id % TITLE_SHARDS (title pages)
 //   p/<n>.json             people: name, photo and their titles, n = person id % PEOPLE_SHARDS (actor pages)
 //   s/<ab>.json            search index: titles with a word starting with those two letters (search)
@@ -49,6 +50,7 @@ const LAYOUT = 2;
 const TITLE_SHARDS = 128;
 const PEOPLE_SHARDS = 512;
 const POPULAR_SIZE = 2500;
+const HEAD_SIZE = 60;        // head-<lang>.json / head-all.json: one page of the Movies & series grid
 // Weekly refresh: titles from the last RECENT_DAYS every week, older ones once every REFRESH_WEEKS.
 const RECENT_DAYS = 730;
 const REFRESH_WEEKS = 4;
@@ -347,7 +349,10 @@ function writeCatalogue(titles, trendIds) {
     const mine = all.filter((f) => f.l === lang);
     if (!mine.length) continue;
     counts[lang] = mine.length;
-    writeIfChanged(new URL(`list-${lang}.json`, OUT), JSON.stringify({ films: mine.map(compact) }));
+    // Without the language (the file says it) and release date (not used by the site), to keep it small.
+    writeIfChanged(new URL(`list-${lang}.json`, OUT), JSON.stringify({ films: mine.map((f) => { const { l, rd, ...rest } = compact(f); return rest; }) }));
+    // The first page of the Movies & series page (most popular first), shown while the full list loads.
+    writeIfChanged(new URL(`head-${lang}.json`, OUT), JSON.stringify({ films: mine.slice(0, HEAD_SIZE).map(compact) }));
     // Full details in TITLE_SHARDS small files per language.
     const shards = Array.from({ length: TITLE_SHARDS }, () => ({}));
     mine.forEach((f) => { shards[numId(f.id) % TITLE_SHARDS][f.id] = f; });
@@ -356,6 +361,7 @@ function writeCatalogue(titles, trendIds) {
     rmSync(new URL(`${lang}.json`, OUT), { force: true }); // older layout
   }
   writeIfChanged(new URL("popular.json", OUT), JSON.stringify({ films: all.slice(0, POPULAR_SIZE).map(compact) }));
+  writeIfChanged(new URL("head-all.json", OUT), JSON.stringify({ films: all.slice(0, HEAD_SIZE).map(compact) }));
 
   // Actor pages: p/<n>.json. Each person: [name, photo, [[lang, id, title, year, series?, poster, rating], ...]].
   const people = {};

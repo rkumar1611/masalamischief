@@ -1212,7 +1212,8 @@ async function loadIndex(codes) {
   }
   const want = (asked.length ? asked : Object.keys(man.langs)).filter((c) => man.langs[c]);
   const parts = await Promise.all(want.map((c) => loadCatalog(`list-${c}`)));
-  return { built: man.built, films: parts.flatMap((p) => (p ? p.films : [])) };
+  // Newer builds leave the language out of each entry (the file is per language).
+  return { built: man.built, films: parts.flatMap((p, i) => (p ? p.films.map((f) => (f.l ? f : { ...f, l: want[i] })) : [])) };
 }
 
 // One title's full details (raw id like "12345" or "tv12345"), or null.
@@ -1354,7 +1355,23 @@ async function initFilms() {
     });
     return (cache[key] = { list, popular, ok: !!films });
   }
-  const first = await getList(layout >= 2 ? new URLSearchParams(location.search).get("l") || "" : "");
+  // While a big list downloads, the first page of it (head-<key>.json, most popular first) is shown,
+  // when nothing but the language is chosen. Returns true if it painted.
+  const plainView = (p) => !["q", "t", "g", "a", "view"].some((k) => p.get(k)) && !["r", "k", "w"].some((k) => p.get(k) === "1")
+    && (p.get("s") || "popular") === "popular";
+  async function quickPaint(key, full, isCurrent) {
+    if (layout < 2 || key.startsWith("q:") || cache[key]) return false;
+    const head = await Promise.race([loadCatalog(`head-${key || "all"}`), full.then(() => null)]);
+    if (!head || !head.films || !isCurrent()) return false;
+    $("fgrid").innerHTML = head.films.map((f) => filmCard({ ...f, mine: f.k !== "tv" && byTmdb[f.id] })).join("");
+    $("fcount").textContent = "Loading all titles…";
+    $("fmore").hidden = true;
+    return true;
+  }
+  const firstKey = layout >= 2 ? new URLSearchParams(location.search).get("l") || "" : "";
+  const firstFull = getList(firstKey);
+  if (plainView(new URLSearchParams(location.search))) await quickPaint(firstKey, firstFull, () => true);
+  const first = await firstFull;
   const cat = first.ok;
   if (!cat) $("films-lead").textContent = "The full catalogue is being prepared. Meanwhile, here are all the films we've reviewed.";
 
@@ -1417,7 +1434,10 @@ async function initFilms() {
     if (key !== listKey) {
       const mine = ++run;
       if (listKey !== null) $("fcount").textContent = "Loading…";
-      const got = await getList(key);
+      const full = getList(key);
+      const plain = !q && !isTop() && !state.t && !state.g && !state.a && !state.r && !state.k && !state.w && state.s === "popular";
+      if (listKey !== null && plain) await quickPaint(key, full, () => mine === run);
+      const got = await full;
       if (mine !== run) return; // a newer choice is loading
       list = got.list;
       listIsPopular = got.popular;

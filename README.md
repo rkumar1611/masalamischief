@@ -65,7 +65,7 @@ Visit counts come from Cloudflare Web Analytics (turned on in the Cloudflare das
 personal profiles, just anonymous page-view totals.
 
 After changing anything in `assets/`, bump the `?v=33` number on the `<link>`/`<script>` tags in every
-`.html` file (e.g. to `?v=34`), otherwise returning visitors may keep seeing the old cached version.
+`.html` file (e.g. to `?v=35`), otherwise returning visitors may keep seeing the old cached version.
 
 The bundled reviews are starter copy in the house voice: rewrite them in your own words before
 launch, and check the `audio` (dubbed languages) for each film, since that varies by platform.
