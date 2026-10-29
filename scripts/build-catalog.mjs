@@ -629,6 +629,19 @@ function writeCatalogue(titles, trendIds) {
   rmSync(new URL("people/", OUT), { recursive: true, force: true }); // older layout
   console.log(`People: ${Object.keys(people).length}.`);
 
+  // People search: ps/<ab>.json holds everyone with 3+ titles (the ones with pages in the sitemap) who has
+  // a name word starting with "ab": [person id, name, photo, titles], most titles first.
+  const psearch = {};
+  for (const [pid, p] of Object.entries(people)) {
+    if (p[2].length < 3) continue;
+    const starts = new Set(norm(p[0]).split(/\s+/).filter((w) => w.length >= 2).map((w) => w.slice(0, 2)));
+    for (const c of starts) (psearch[c] ||= []).push([+pid, p[0], p[1] || "", p[2].length]);
+  }
+  const psDir = new URL("ps/", OUT);
+  mkdirSync(psDir, { recursive: true });
+  for (const c of Object.keys(psearch)) writeIfChanged(new URL(`${c}.json`, psDir), JSON.stringify(psearch[c].sort((a, b) => b[3] - a[3])));
+  readdirSync(psDir).filter((f) => !psearch[f.replace(".json", "")]).forEach((f) => rmSync(new URL(f, psDir)));
+
   // Search: s/<ab>.json holds every title with a word starting with "ab": [lang, id, title, year, series?, poster, votes, rating].
   const search = {};
   for (const f of all) {
