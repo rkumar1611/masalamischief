@@ -419,7 +419,7 @@ function initSiteSearch() {
     t = setTimeout(async () => {
       const term = searchNorm(q.value);
       if (term.length < 2) { out.innerHTML = ""; return; }
-      const found = await searchCatalog(term);
+      const [found, people] = await Promise.all([searchCatalog(term), searchPeople(term, 3)]);
       if (searchNorm(q.value) !== term) return; // a newer search is on its way
       const mineIds = new Set();
       const theirs = found.filter((f) => !(f.k !== "tv" && byTmdb[f.id] && mineIds.add(byTmdb[f.id].id)));
@@ -428,13 +428,24 @@ function initSiteSearch() {
         ...theirs.map((f) => ({ ...f, score: titleMatch(term, f.t) }))]
         .sort((a, b) => matchStep(b.score) - matchStep(a.score) || (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || b.n - a.n)
         .slice(0, 8);
-      out.innerHTML = hits.length
-        ? hits.map((f) => `
+      // Actors and directors first when the search is clearly a name: their match beats the titles', or
+      // it's a close match for someone well known ("mohanlal" → the actor before the 2018 film Mohanlal).
+      const pScore = people.length ? titleMatch(term, people[0].name) : 0;
+      const peopleFirst = people.length && (!hits.length || pScore > hits[0].score || (pScore >= 2.5 && people[0].titles >= 10));
+      const peopleHtml = people.map((p) => `
+            <a class="sr" href="person.html?id=${p.id}">
+              ${p.photo ? `<img class="sr-face" src="${tmdb(p.photo, "w92")}" alt="" loading="lazy">` : `<span class="sr-none">👤</span>`}
+              <span><strong>${esc(p.name)}</strong><span class="muted small">Actor / director · ${p.titles} titles</span></span>
+            </a>`).join("");
+      const titlesHtml = hits.slice(0, people.length ? 5 : 8).map((f) => `
             <a class="sr" href="${filmHref(f)}">
               ${f.p ? `<img src="${tmdb(f.p, "w92")}" alt="" loading="lazy">` : `<span class="sr-none">🎬</span>`}
               <span><strong>${esc(f.t)}</strong>
               <span class="muted small">${esc(langLabel(CAT_LANGS[f.l] || ""))}${f.k === "tv" ? " · Series" : ""}${f.y ? ` · ${f.y}` : ""}${f.mine ? " · 🌶️ Reviewed" : ""}</span></span>
-            </a>`).join("") + `<a class="sr-all" href="films.html?q=${encodeURIComponent(q.value.trim())}">See all results →</a>`
+            </a>`).join("");
+      out.innerHTML = hits.length || people.length
+        ? (peopleFirst ? peopleHtml + titlesHtml : titlesHtml + peopleHtml) +
+          (hits.length ? `<a class="sr-all" href="films.html?q=${encodeURIComponent(q.value.trim())}">See all results →</a>` : "")
         : `<p class="muted small sr-empty">No matches. Try another spelling.</p>`;
     }, 120);
   });
@@ -1769,10 +1780,16 @@ function titleMatch(query, title) {
   for (const [i, q] of qw.entries()) {
     const best = Math.max(...tw.map((t) => wordFit(q, t, i === qw.length - 1)));
     if (!best) {
-      // "spiderman", "brakingbad": the whole thing without spaces, against the title's start. Only for
-      // long enough searches, so "salar" doesn't turn into "Sahara".
-      return joinedQ.length >= 6 && joinedT.length >= joinedQ.length && (joinedT.startsWith(joinedQ) ||
-        (joinedQ.length >= 8 && editDistance(joinedQ, joinedT.slice(0, joinedQ.length), 1) <= 1)) ? 1.8 : 0;
+      // "spiderman", "brakingbad", "shahrukh": the whole thing without spaces, against the title's start.
+      // Only for long enough searches, so "salar" doesn't turn into "Sahara". Ending exactly where a word
+      // of the title ends ("shahrukh" = "Shah Rukh") is as good as typing the words.
+      if (joinedQ.length < 6 || joinedT.length < joinedQ.length) return 0;
+      if (joinedT.startsWith(joinedQ)) {
+        const words = tw.filter((w) => !SEARCH_STOP.has(w));
+        const onBoundary = words.some((_, k) => skeleton(words.slice(0, k + 1).join("")) === joinedQ);
+        return onBoundary ? 2.8 : 1.8;
+      }
+      return joinedQ.length >= 8 && editDistance(joinedQ, joinedT.slice(0, joinedQ.length), 1) <= 1 ? 1.8 : 0;
     }
     total += best;
   }
@@ -1786,18 +1803,11 @@ function titleMatch(query, title) {
 const matchStep = (s) => Math.round(s);
 const byMatch = (score, votes) => (a, b) => matchStep(score(b)) - matchStep(score(a)) || votes(b) - votes(a);
 
-async function searchCatalog(term) {
-  const q = searchNorm(term);
-  if (!q) return [];
-  if ((await catLayout()) < 2) {
-    const cat = await loadIndex();
-    return (cat ? cat.films : []).map((f) => [f, Math.max(titleMatch(q, f.t), titleMatch(q, f.o || ""))]).filter(([, s]) => s)
-      .sort(byMatch((x) => x[1], (x) => x[0].n)).map(([f]) => f);
-  }
-  // The index files go by a word's first two letters; a misspelling can start differently ("bahubali",
-  // "doom" for "Dhoom"), so look in the files for the sound-alike start too, for the first two words.
+// The search index files go by a word's first two letters; a misspelling can start differently
+// ("bahubali", "doom" for "Dhoom"), so look in the files for the sound-alike start too, for the first
+// two words. Same for titles (s/) and people (ps/).
+function searchFiles(q) {
   const words = searchWords(q).filter((w) => w.length >= 2 && !SEARCH_STOP.has(w)).slice(0, 2);
-  if (!words.length) return [];
   const files = new Set();
   for (const w of words) {
     files.add(w.slice(0, 2));
@@ -1806,7 +1816,43 @@ async function searchCatalog(term) {
     if (/^[bcdgjkpst][^h]/.test(w)) files.add(`${w[0]}h`);
     if (/^[aeiou][^aeiou]/.test(w)) files.add(w[0] + w[0]); // "ashiqui" for "Aashiqui"
   }
-  const parts = await Promise.all([...files].filter((f) => /^[a-z0-9]{2}$/.test(f)).map((f) => loadCatalog(`s/${f}`)));
+  return [...files].filter((f) => /^[a-z0-9]{2}$/.test(f));
+}
+
+// Actors and directors matching a search (ps/<ab>.json, built with the catalogue): { id, name, photo,
+// titles }, best match first, then whoever has more titles. Empty until the index exists.
+async function searchPeople(term, limit = 6) {
+  const q = searchNorm(term);
+  if (q.length < 3) return [];
+  const parts = await Promise.all(searchFiles(q).map((f) => loadCatalog(`ps/${f}`)));
+  const longName = skeleton(searchWords(q).join("")).length >= 7;
+  const seen = new Set();
+  const scored = [];
+  for (const rows of parts) for (const r of rows || []) {
+    if (seen.has(r[0])) continue;
+    seen.add(r[0]);
+    const score = titleMatch(q, r[1]);
+    // Names: close spellings and joined-up names ("shahrukh"); a typo only in a long name ("rajnikanth").
+    if (score >= 1.8 || (score && longName)) scored.push([r, score]);
+  }
+  // Match quality plus how well-known they are (titles in the catalogue), so "nolan" finds Christopher
+  // Nolan before Nolan North, and "ranbir" Ranbir Kapoor before Rana Ranbir.
+  const rank = ([r, s]) => s + 0.7 * Math.log10(r[3] + 1);
+  return scored.sort((a, b) => rank(b) - rank(a)).slice(0, limit)
+    .map(([[id, name, photo, titles]]) => ({ id, name, photo, titles }));
+}
+
+async function searchCatalog(term) {
+  const q = searchNorm(term);
+  if (!q) return [];
+  if ((await catLayout()) < 2) {
+    const cat = await loadIndex();
+    return (cat ? cat.films : []).map((f) => [f, Math.max(titleMatch(q, f.t), titleMatch(q, f.o || ""))]).filter(([, s]) => s)
+      .sort(byMatch((x) => x[1], (x) => x[0].n)).map(([f]) => f);
+  }
+  const files = searchFiles(q);
+  if (!files.length) return [];
+  const parts = await Promise.all(files.map((f) => loadCatalog(`s/${f}`)));
   const seen = new Set();
   const scored = [];
   for (const rows of parts) for (const r of rows || []) {
@@ -2057,11 +2103,24 @@ async function initFilms() {
   const isTop = () => state.view !== "all";
   const paint = () => {
     $("fgrid").innerHTML = results.slice(0, shown).map((f, i) => filmCard(f, isTop() ? i + 1 : 0)).join("") ||
-      `<div class="empty">Nothing matches. Try fewer filters.</div>`;
+      `<div class="empty">${$("fpeople").hidden ? "Nothing matches. Try fewer filters." : "No titles by that name. Tap the name above for their films and series."}</div>`;
     $("fmore").hidden = isTop() || shown >= results.length;
+  };
+  // Actors and directors matching the search, as a row of faces above the titles.
+  let peopleFor = null;
+  const paintPeople = async (q) => {
+    if (q === peopleFor) return;
+    peopleFor = q;
+    const box = $("fpeople");
+    const people = q.length >= 3 ? await searchPeople(q, 8) : [];
+    if (peopleFor !== q) return;
+    box.hidden = !people.length;
+    box.innerHTML = people.map((p) => `<a href="person.html?id=${p.id}">${p.photo ? `<img src="${tmdb(p.photo, "w92")}" alt="" loading="lazy">` : `<span class="face-none">👤</span>`}<span>${esc(p.name)}<small>${p.titles} titles</small></span></a>`).join("");
+    if (!results.length) paint(); // the empty message depends on whether anyone was found
   };
   const apply = async () => {
     const q = searchNorm(state.q);
+    paintPeople(q);
     // Top 50 anime covers films and series together, so it sets the language rather than the type.
     const animeTop = state.view === "top-anime";
     const type = animeTop ? "" : isTop() ? state.view.slice(4) : state.t;
