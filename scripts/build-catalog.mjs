@@ -732,8 +732,10 @@ async function writeUpcoming(known) {
   }
   const now = await details(nowPicks, "movie", "release_dates,watch/providers", (d, lang) => {
     const f = toFilm(d, lang);
+    // The latest Indian cinema date in the window, so a re-release shows when it came back, not 1994.
     const inCinemas = (d.release_dates?.results?.find((r) => r.iso_3166_1 === "IN")?.release_dates || [])
-      .filter((x) => x.type === 2 || x.type === 3).map((x) => x.release_date.slice(0, 10)).sort()[0];
+      .filter((x) => x.type === 2 || x.type === 3).map((x) => x.release_date.slice(0, 10))
+      .filter((x) => x >= day(-NOW_DAYS) && x <= day(0)).sort().pop();
     return { l: f.l, id: f.id, t: f.t, d: inCinemas || d.release_date, p: f.p, g: f.g, ...(f.n >= 10 ? { v: f.v } : {}),
       ...(f.c ? { c: f.c } : {}), ...(f.tr ? { tr: f.tr } : {}), cast: (f.cast || []).slice(0, 2).map((c) => [c[0], c[1]]),
       ...(known.has(keyOf(f)) ? { pg: 1 } : {}) };
