@@ -324,6 +324,9 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 .ott-lionsgate-play { background: #333; color: #fff; }
 .ott-mx-player { background: #1565c0; color: #fff; }
 .ott-apple-tv, .ott-amazon { background: var(--ink); color: var(--bg); }
+.ott-tickets { background: var(--chilli); color: #fff; }
+.booking-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.booking-row .ott { padding: 9px 16px; font-size: 0.95rem; }
 
 /* Chips & filters */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }

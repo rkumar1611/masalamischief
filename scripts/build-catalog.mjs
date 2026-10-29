@@ -64,6 +64,10 @@ const DAILY_DAYS = 45;     // the daily run looks for titles released in this ma
 const UPCOMING_LANGS = ["hi", "ta", "te", "ml", "kn", "mr", "bn", "pa", "en", "ko"];
 const UPCOMING_DAYS = 120;
 const UPCOMING_PER_LANG = 12;
+// "In theatres now" on the same page: released in Indian cinemas in the last NOW_DAYS days and not
+// streaming yet, most popular first in each language.
+const NOW_DAYS = 35;
+const NOW_PER_LANG = 8;
 
 // TMDB provider names (India) → our app names. Anything else is left out.
 const APP_RULES = [
@@ -420,7 +424,7 @@ async function main() {
 
   attachLinks([...films, ...keptSeries], await appLinks(), have);
   writeCatalogue([...films, ...keptSeries], trendIds);
-  await writeUpcoming();
+  await writeUpcoming(new Set(films.map(keyOf)));
   console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series.`);
 }
 
@@ -461,7 +465,7 @@ async function daily() {
   for (const [k, f] of fresh) have.set(k, f);
   attachLinks([...have.values()], null, before);
   writeCatalogue([...have.values()], trendIds);
-  await writeUpcoming();
+  await writeUpcoming(new Set(have.keys()));
 }
 
 const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, ...rest }) => rest;
@@ -712,22 +716,38 @@ function writeListsSitemap(upcoming) {
 }
 
 // upcoming.json: the most-awaited films releasing in the next UPCOMING_DAYS days, per language, with
-// trailer and lead cast, for the Upcoming releases page. Rebuilt on every run (daily and Sunday).
-async function writeUpcoming() {
+// trailer and lead cast, for the Upcoming releases page, plus the films in cinemas now (`now`).
+// Rebuilt on every run (daily and Sunday). `known` is the catalogue's keys, so films with their own
+// page get pg: 1 and link to it.
+async function writeUpcoming(known) {
   const picks = [];
+  const nowPicks = [];
   for (const lang of UPCOMING_LANGS) {
-    const params = { sort_by: "popularity.desc", "primary_release_date.gte": day(1), "primary_release_date.lte": day(UPCOMING_DAYS), ...(PLAN[lang]?.noAnimation ? { without_genres: ANIMATION } : {}) };
+    const noAnim = PLAN[lang]?.noAnimation ? { without_genres: ANIMATION } : {};
+    const params = { sort_by: "popularity.desc", "primary_release_date.gte": day(1), "primary_release_date.lte": day(UPCOMING_DAYS), ...noAnim };
     picks.push(...(await discover("movie", lang, params, 1)).slice(0, UPCOMING_PER_LANG).map((id) => [id, lang]));
+    // Release type 2|3 = limited or wide cinema release, dated for India.
+    const nowParams = { sort_by: "popularity.desc", region: "IN", with_release_type: "2|3", "release_date.gte": day(-NOW_DAYS), "release_date.lte": day(0), ...noAnim };
+    nowPicks.push(...(await discover("movie", lang, nowParams, 1)).slice(0, NOW_PER_LANG).map((id) => [id, lang]));
   }
+  const now = await details(nowPicks, "movie", "release_dates,watch/providers", (d, lang) => {
+    const f = toFilm(d, lang);
+    const inCinemas = (d.release_dates?.results?.find((r) => r.iso_3166_1 === "IN")?.release_dates || [])
+      .filter((x) => x.type === 2 || x.type === 3).map((x) => x.release_date.slice(0, 10)).sort()[0];
+    return { l: f.l, id: f.id, t: f.t, d: inCinemas || d.release_date, p: f.p, g: f.g, ...(f.n >= 10 ? { v: f.v } : {}),
+      ...(f.c ? { c: f.c } : {}), ...(f.tr ? { tr: f.tr } : {}), cast: (f.cast || []).slice(0, 2).map((c) => [c[0], c[1]]),
+      ...(known.has(keyOf(f)) ? { pg: 1 } : {}) };
+  }, (d) => !appsOf(d).length);
+  now.sort((a, b) => b.d.localeCompare(a.d) || a.t.localeCompare(b.t));
   const films = await details(picks, "movie", "release_dates", (d, lang) => {
     const f = toFilm(d, lang);
     return { l: f.l, id: f.id, t: f.t, ...(f.o ? { o: f.o } : {}), d: d.release_date, p: f.p, ...(f.b ? { b: f.b } : {}), g: f.g,
       ov: shorten(d.overview, 200), ...(f.tr ? { tr: f.tr } : {}), cast: (f.cast || []).slice(0, 3).map((c) => [c[0], c[1]]) };
   });
   films.sort((a, b) => a.d.localeCompare(b.d) || a.t.localeCompare(b.t));
-  writeIfChanged(new URL("upcoming.json", OUT), JSON.stringify({ items: films }));
+  writeIfChanged(new URL("upcoming.json", OUT), JSON.stringify({ items: films, now }));
   writeListsSitemap(films);
-  console.log(`Upcoming: ${films.length} films.`);
+  console.log(`Upcoming: ${films.length} films; in theatres: ${now.length}.`);
 }
 
 function writeIfChanged(file, text) {

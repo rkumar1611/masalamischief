@@ -95,7 +95,7 @@ function renderChrome() {
           <a href="reviews.html">Our reviews</a><a href="films.html">Movies & series</a>
           <a href="films.html?view=top-movie">Top 50 movies</a><a href="films.html?view=top-tv">Top 50 series</a>
           <a href="films.html?view=top-anime">Anime</a>
-          <a href="ott.html">New on OTT</a><a href="upcoming.html">Upcoming movies</a><a href="best.html">Best-of lists</a>
+          <a href="ott.html">New on OTT</a><a href="upcoming.html">In theatres & upcoming</a><a href="best.html">Best-of lists</a>
         </nav>
         <nav class="footer-col" aria-label="Pick something">
           <h4>Pick something</h4>
@@ -369,6 +369,18 @@ function trailerBtn(key, title, query) {
     : `<a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(query)}">▶ Watch trailer</a>`;
 }
 
+// "Book tickets": BookMyShow and District don't offer links to one film, so these open each site's
+// movies page (it asks for your city once), where everything in cinemas is listed with showtimes.
+const TICKET_SITES = [["BookMyShow", "https://in.bookmyshow.com/explore/movies"], ["District", "https://www.district.in/movies/"]];
+const ticketLinks = () => TICKET_SITES.map(([name, url]) => `<a class="ott ott-tickets" href="${url}" target="_blank" rel="noopener">🎟️ ${name} ↗</a>`).join("");
+// A film that's likely in cinemas: out in the last six weeks (or within the next week, for advance
+// booking) and not on a streaming app yet.
+function inCinemas(f) {
+  if (f.k === "tv" || !f.rd || (f.w && f.w.length)) return false;
+  const days = (Date.now() - new Date(f.rd + "T00:00:00")) / 864e5;
+  return days >= -7 && days <= 42;
+}
+
 function initTrailers() {
   let box = null;
   const close = () => { if (box) { box.remove(); box = null; document.body.classList.remove("no-scroll"); } };
@@ -580,10 +592,12 @@ async function renderListTiles() {
   if (!box) return;
   const [previews, upcoming] = await Promise.all([loadCatalog("lists/previews"), loadCatalog("upcoming")]);
   if (!previews) return;
-  const soon = upcoming ? upcoming.items.filter((f) => f.p).slice(0, 4).map((f) => f.p) : [];
+  const posters = (list) => (list || []).filter((f) => f.p).slice(0, 4).map((f) => f.p);
+  const soon = upcoming ? posters(upcoming.items) : [];
+  const showing = upcoming ? posters(upcoming.now) : [];
   box.querySelectorAll("a").forEach((a) => {
     const key = a.getAttribute("href");
-    const pics = key.startsWith("upcoming.html") ? soon : previews[key];
+    const pics = key === "upcoming.html#now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
     if (!pics || !pics.length) return;
     const label = a.textContent.trim();
     a.classList.add("ptile");
@@ -1700,6 +1714,8 @@ async function initFilm() {
   const years = yearsOf(f);
   const seasons = tv && f.s ? `${f.s} season${f.s === 1 ? "" : "s"}` : "";
   document.title = `${f.t}${years ? ` (${years})` : ""}${tv ? " · series" : ""} · where to watch · Masala Mischief`;
+  const cinemas = inCinemas(f);
+  const out = cinemas && f.rd <= new Date().toISOString().slice(0, 10);
   const pageUrl = location.href;
   const shareText = `${f.t}${years ? ` (${years})` : ""}: ${f.w.length ? `streaming on ${f.w.join(", ")}` : "where to watch it"} · via Masala Mischief`;
   root.innerHTML = `
@@ -1716,6 +1732,7 @@ async function initFilm() {
       <article>
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
+        ${cinemas ? `<div class="stream-line"><span class="muted small">🎬 ${out ? "In cinemas · book on" : `In cinemas ${fmtDate(f.rd)} · book on`}</span>${ticketLinks()}</div>` : ""}
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
         ${castRow({ ...f, kind: f.k })}
         <div class="panel not-reviewed">
@@ -1735,7 +1752,9 @@ async function initFilm() {
           <h3>📺 Where to watch</h3>
           ${f.w.length
             ? `<p class="muted small">Included with subscription · ${f.w.every((a) => directUrl(f, a)) ? "opens the title in the app" : "opens the app's search where we don't have a direct link"}</p><div class="otts">${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>`
-            : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
+            : cinemas
+              ? `<p class="muted small">🎬 ${out ? "In cinemas now" : `In cinemas from ${fmtDate(f.rd)}`}, not streaming yet. Pick your city for showtimes and tickets:</p><div class="otts">${ticketLinks()}</div>`
+              : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
           <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}. Availability changes, so confirm in the app.</p>
         </div>
         <div class="side">
@@ -2029,23 +2048,45 @@ async function initUpcoming() {
   const l = new URLSearchParams(location.search).get("l") || "";
   const data = await loadCatalog("upcoming");
   if (!data) return notReadyYet(root);
-  const langs = [...new Set(data.items.map((f) => f.l))];
+  const langs = [...new Set([...data.items, ...(data.now || [])].map((f) => f.l))];
   const lang = CAT_LANGS[l] ? langLabel(CAT_LANGS[l]) : "";
   const heading = `Upcoming ${lang ? `${lang} ` : ""}movies`;
   document.title = `${heading}: release dates and trailers · Masala Mischief`;
   const items = data.items.filter((f) => !l || f.l === l);
+  const now = (data.now || []).filter((f) => !l || f.l === l);
+  const showDay = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+  const theatres = now.length ? `
+    <section id="now"><div class="section-head"><h2>🎟️ In theatres now</h2></div>
+      <p class="muted">${esc(lang || "Films")} in Indian cinemas and not streaming yet. Book tickets to pick your city, cinema and showtime.</p>
+      <div class="booking-row">${ticketLinks()}</div>
+      <div class="ulist">${now.map((f) => {
+        const name = f.pg ? `<a href="film.html?id=${f.l}-${f.id}">${esc(f.t)}</a>` : esc(f.t);
+        return `
+        <article class="ucard" id="n-${f.l}-${f.id}">
+          ${f.p ? `<img src="${tmdb(f.p, "w185")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
+          <div class="ucard-body">
+            <span class="udate">Out ${showDay(f.d)}</span>
+            <strong>${name}</strong>
+            <span class="muted small">${esc(langLabel(CAT_LANGS[f.l]))}${f.g.length ? ` · ${esc(f.g.slice(0, 2).join(", "))}` : ""}${f.c ? ` · ${esc(f.c)}` : ""}${f.v ? ` · ★ ${f.v}` : ""}</span>
+            ${f.cast.length ? `<span class="small">With ${f.cast.map(([id, n]) => `<a href="person.html?id=${id}">${esc(n)}</a>`).join(", ")}</span>` : ""}
+            ${f.tr ? trailerBtn(f.tr, f.t) : ""}
+          </div>
+        </article>`;
+      }).join("")}</div>
+    </section>` : "";
   const month = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { month: "long", year: "numeric" });
   const groups = {};
   items.forEach((f) => (groups[month(f.d)] = groups[month(f.d)] || []).push(f));
   root.innerHTML = `
-    <div class="page-head"><p class="eyebrow">🗓️ Coming soon</p><h1>${esc(heading)}</h1>
-      <p class="lead">The most-awaited ${lang ? `${esc(lang)} ` : ""}films of the next few months, with release dates and trailers. Dates can move, so check closer to release.</p></div>
+    <div class="page-head"><p class="eyebrow">🎟️ In theatres · 🗓️ Coming soon</p><h1>${esc(heading)}</h1>
+      <p class="lead">What's in cinemas now, and the most-awaited ${lang ? `${esc(lang)} ` : ""}films of the next few months with release dates and trailers. Dates can move, so check closer to release.</p></div>
     <nav class="chips app-tabs" aria-label="Languages">
       <a class="chip" href="upcoming.html" aria-pressed="${!l}">All</a>
       ${langs.map((c) => `<a class="chip" href="upcoming.html?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
     </nav>
+    ${theatres}
     ${Object.entries(groups).map(([m, list]) => `
-      <section><div class="section-head"><h2>${esc(m)}</h2></div>
+      <section><div class="section-head"><h2>🗓️ ${esc(m)}</h2></div>
         <div class="ulist">${list.map((f) => `
           <article class="ucard" id="u-${f.l}-${f.id}">
             ${f.p ? `<img src="${tmdb(f.p, "w185")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
@@ -2058,6 +2099,8 @@ async function initUpcoming() {
             </div>
           </article>`).join("")}</div>
       </section>`).join("") || `<div class="empty">No upcoming films found right now.</div>`}`;
+  // The list arrives after the page loads, so jump to #now (from the home page) once it's drawn.
+  if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
 }
 
 renderChrome();
