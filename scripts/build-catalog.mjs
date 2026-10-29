@@ -118,14 +118,17 @@ const appsOf = (d) => [...new Set((d["watch/providers"]?.results?.IN?.flatrate |
   .map((p) => (APP_RULES.find(([re]) => re.test(p.provider_name)) || [])[1]).filter(Boolean))];
 
 // Direct links to each title on the apps, from JustWatch India (TMDB only says which app has it).
-// JustWatch package code → our app name. Every run sweeps each app's whole list, a slice of release
-// years at a time (a query stops at 2,000 results), about 400 requests in all.
+// JustWatch package code → our app name. The Sunday run sweeps each app's whole list, a slice of release
+// years at a time (a query stops at 2,000 results): about 400 requests, one at a time with a pause
+// between them, waiting longer when JustWatch says "too many requests" (10–15 minutes). Daily runs
+// don't ask; titles keep last week's links.
 const JW_APPS = {
   nfx: "Netflix", prv: "Prime Video", jhs: "JioHotstar", zee: "ZEE5", snl: "SonyLIV", snx: "Sun NXT",
   aha: "aha", mrx: "ManoramaMAX", mxp: "MX Player", lgp: "Lionsgate Play", cru: "Crunchyroll",
 };
 const JW_SLICE = 1900;
-const JW_WORKERS = 3;
+const JW_WORKERS = 1;
+const JW_PAUSE = 1500;     // ms between requests
 const JW_COUNT = `query C($f: TitleFilter) { popularTitles(country: IN, first: 1, filter: $f) { totalCount } }`;
 const JW_PAGE = `query P($f: TitleFilter, $after: String, $pkg: [String!]) {
   popularTitles(country: IN, first: 100, after: $after, filter: $f) {
@@ -139,6 +142,8 @@ const JW_PAGE = `query P($f: TitleFilter, $after: String, $pkg: [String!]) {
 let jwProblem = "";
 async function jw(query, variables) {
   for (let attempt = 0; attempt < 4; attempt++) {
+    await sleep(JW_PAUSE);
+    let busy = false;
     try {
       const res = await fetch("https://apis.justwatch.com/graphql", {
         method: "POST",
@@ -150,9 +155,13 @@ async function jw(query, variables) {
         const j = JSON.parse(body);
         if (j.data && Object.values(j.data).every(Boolean)) return j.data;
         jwProblem = `GraphQL: ${JSON.stringify(j.errors || j).slice(0, 200)}`;
-      } else jwProblem = `HTTP ${res.status}: ${body.replace(/\s+/g, " ").slice(0, 200)}`;
+      } else {
+        busy = res.status === 429;
+        jwProblem = `HTTP ${res.status}: ${body.replace(/\s+/g, " ").slice(0, 200)}`;
+      }
     } catch (e) { jwProblem = `fetch: ${e.message}`; }
-    await sleep(3000 * (attempt + 1));
+    // "Too many requests": back off 30 s, 60 s, 90 s before trying again.
+    await sleep(busy ? 30000 * (attempt + 1) : 3000 * (attempt + 1));
   }
   throw new Error(`JustWatch didn't answer (${jwProblem})`);
 }
@@ -206,7 +215,6 @@ async function appLinks() {
             }
             if (!p.pageInfo.hasNextPage) break;
             after = p.pageInfo.endCursor;
-            await sleep(200);
           }
         }
       }
@@ -451,7 +459,7 @@ async function daily() {
   console.log(`New titles: ${added.length}${added.length ? ` (${added.slice(0, 20).join(", ")}${added.length > 20 ? "…" : ""})` : ""}.`);
   const before = new Map(have);
   for (const [k, f] of fresh) have.set(k, f);
-  attachLinks([...have.values()], await appLinks(), before);
+  attachLinks([...have.values()], null, before);
   writeCatalogue([...have.values()], trendIds);
   await writeUpcoming();
 }
