@@ -423,9 +423,10 @@ function initSiteSearch() {
       if (searchNorm(q.value) !== term) return; // a newer search is on its way
       const mineIds = new Set();
       const theirs = found.filter((f) => !(f.k !== "tv" && byTmdb[f.id] && mineIds.add(byTmdb[f.id].id)));
-      const hits = [...ours.filter((f) => f.key.includes(term) || mineIds.has(f.mine.id)),
-        ...theirs.map((f) => ({ ...f, key: searchNorm(f.t) }))]
-        .sort((a, b) => (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || (b.key.startsWith(term) ? 1 : 0) - (a.key.startsWith(term) ? 1 : 0) || b.n - a.n)
+      // Best match first (our reviews win a tie), then the better-known title.
+      const hits = [...ours.map((f) => ({ ...f, score: mineIds.has(f.mine.id) ? 4 : titleMatch(term, f.t) })).filter((f) => f.score),
+        ...theirs.map((f) => ({ ...f, score: titleMatch(term, f.t) }))]
+        .sort((a, b) => matchStep(b.score) - matchStep(a.score) || (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || b.n - a.n)
         .slice(0, 8);
       out.innerHTML = hits.length
         ? hits.map((f) => `
@@ -941,7 +942,7 @@ function initReviews() {
       m.masala >= minMasala &&
       (shared ? shared.includes(m.id) : !savedOnly.checked || saved.includes(m.id)) &&
       (!familyOnly.checked || PARENT_NOTES[m.id]) &&
-      (!term || [m.title, m.lang, langLabel(m.lang), ...m.genres].join(" ").toLowerCase().includes(term))
+      (!term || titleMatch(term, m.title) || [m.title, m.lang, langLabel(m.lang), ...m.genres].join(" ").toLowerCase().includes(term))
     );
     const sorters = {
       latest: (a, b) => b.reviewed.localeCompare(a.reviewed),
@@ -1714,18 +1715,109 @@ async function loadTitle(code, rawId) {
 // Same normalising as the build (scripts/build-catalog.mjs): "K.G.F: Chapter 1" → "kgf chapter 1".
 const searchNorm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
   .replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+
+// Spelling-tolerant matching. Indian titles get written many ways in English ("Baahubali"/"Bahubali",
+// "Drishyam"/"Drushyam", "Dhoom"/"Doom", "Spider-Man"/"spiderman"), so words are compared by a rough
+// sound-alike skeleton, allowing a typo or two in longer words.
+const SEARCH_STOP = new Set(["the", "a", "an", "of", "and"]);
+// Numbers as words count as digits ("three idiots" → "3 idiots").
+const NUMBER_WORDS = { one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9", ten: "10" };
+const searchWords = (s) => searchNorm(s).replace(/([a-z])(\d)|(\d)([a-z])/g, "$1$3 $2$4").split(" ").filter(Boolean)
+  .map((w) => NUMBER_WORDS[w] || w);
+const skeleton = (w) => w
+  .replace(/ph/g, "f").replace(/ksh/g, "x").replace(/([bcdgjkpstr])h+/g, "$1").replace(/w/g, "v").replace(/z/g, "j")
+  .replace(/q/g, "k").replace(/ck/g, "k").replace(/ee|ea|ie|y/g, "i").replace(/oo|ou/g, "u").replace(/ai|ay/g, "e")
+  .replace(/(.)\1+/g, "$1").replace(/(.)h$/, "$1");
+// Edit distance with swaps (Damerau), stopping early once it's over `max`.
+function editDistance(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let best = Infinity;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      best = Math.min(best, d[i][j]);
+    }
+    if (best > max) return max + 1;
+  }
+  return d[a.length][b.length];
+}
+// How well one typed word fits one title word: 3 exact, 2.5 sounds the same ("pathan"/"Pathaan"), 2.3
+// start of a longer word, 1.3 close typo, 0 no fit. The last typed word may be unfinished, so prefixes count.
+function wordFit(q, t, last) {
+  if (q === t) return 3;
+  if (/^\d+$/.test(q) || /^\d+$/.test(t)) return 0; // numbers only match exactly ("2" isn't "3")
+  const qs = skeleton(q), ts = skeleton(t);
+  if (qs === ts) return 2.5;
+  if (last && q.length >= 2 && t.startsWith(q)) return 2.3;
+  if (last && qs.length >= 3 && ts.startsWith(qs)) return 2.1;
+  const allowed = qs.length >= 7 ? 2 : qs.length >= 4 ? 1 : 0;
+  if (allowed && editDistance(qs, last && ts.length > qs.length + allowed ? ts.slice(0, qs.length) : ts, allowed) <= allowed) return 1.3;
+  return 0;
+}
+// 0 when the title doesn't match the search, otherwise a score (higher is better): every typed word
+// has to fit a word of the title. Words typed together ("spiderman") can match the title's split ones.
+function titleMatch(query, title) {
+  const qw = searchWords(query).filter((w) => !SEARCH_STOP.has(w) || searchWords(query).length === 1);
+  const tw = searchWords(title);
+  if (!qw.length || !tw.length) return 0;
+  const joinedQ = skeleton(qw.join("")), joinedT = skeleton(tw.filter((w) => !SEARCH_STOP.has(w)).join(""));
+  let total = 0;
+  for (const [i, q] of qw.entries()) {
+    const best = Math.max(...tw.map((t) => wordFit(q, t, i === qw.length - 1)));
+    if (!best) {
+      // "spiderman", "brakingbad": the whole thing without spaces, against the title's start. Only for
+      // long enough searches, so "salar" doesn't turn into "Sahara".
+      return joinedQ.length >= 6 && joinedT.length >= joinedQ.length && (joinedT.startsWith(joinedQ) ||
+        (joinedQ.length >= 8 && editDistance(joinedQ, joinedT.slice(0, joinedQ.length), 1) <= 1)) ? 1.8 : 0;
+    }
+    total += best;
+  }
+  const exactStart = searchNorm(title).startsWith(searchNorm(query)) ? 0.3 : 0;
+  // The whole title, as typed ("animal" → Animal before Animal House).
+  const wholeTitle = skeleton(searchWords(title).join("")) === joinedQ ? 1 : 0;
+  return total / qw.length + exactStart + wholeTitle - Math.max(0, tw.length - qw.length) * 0.05;
+}
+// Sort order for search results: how well they match, in whole-point steps (exact and sound-alike count
+// the same, so "lagan" finds the famous Lagaan before an old "Lagan"), then the better-known title.
+const matchStep = (s) => Math.round(s);
+const byMatch = (score, votes) => (a, b) => matchStep(score(b)) - matchStep(score(a)) || votes(b) - votes(a);
+
 async function searchCatalog(term) {
   const q = searchNorm(term);
   if (!q) return [];
   if ((await catLayout()) < 2) {
     const cat = await loadIndex();
-    return (cat ? cat.films : []).filter((f) => searchNorm(`${f.t} ${f.o || ""}`).includes(q));
+    return (cat ? cat.films : []).map((f) => [f, Math.max(titleMatch(q, f.t), titleMatch(q, f.o || ""))]).filter(([, s]) => s)
+      .sort(byMatch((x) => x[1], (x) => x[0].n)).map(([f]) => f);
   }
-  const word = q.split(" ").find((w) => w.length >= 2 && !["the", "an", "of", "and"].includes(w));
-  if (!word) return [];
-  const rows = (await loadCatalog(`s/${word.slice(0, 2)}`)) || [];
-  return rows.filter((r) => searchNorm(r[2]).includes(q))
-    .map(([l, id, t, y, tv, p, n, v]) => ({ l, id, t, y, ...(tv ? { k: "tv" } : {}), p, n, v }));
+  // The index files go by a word's first two letters; a misspelling can start differently ("bahubali",
+  // "doom" for "Dhoom"), so look in the files for the sound-alike start too, for the first two words.
+  const words = searchWords(q).filter((w) => w.length >= 2 && !SEARCH_STOP.has(w)).slice(0, 2);
+  if (!words.length) return [];
+  const files = new Set();
+  for (const w of words) {
+    files.add(w.slice(0, 2));
+    const s = skeleton(w);
+    if (s.length >= 2) files.add(s.slice(0, 2));
+    if (/^[bcdgjkpst][^h]/.test(w)) files.add(`${w[0]}h`);
+    if (/^[aeiou][^aeiou]/.test(w)) files.add(w[0] + w[0]); // "ashiqui" for "Aashiqui"
+  }
+  const parts = await Promise.all([...files].filter((f) => /^[a-z0-9]{2}$/.test(f)).map((f) => loadCatalog(`s/${f}`)));
+  const seen = new Set();
+  const scored = [];
+  for (const rows of parts) for (const r of rows || []) {
+    const key = `${r[0]}-${r[1]}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const score = titleMatch(q, r[2]);
+    if (score) scored.push([r, score]);
+  }
+  return scored.sort(byMatch((x) => x[1], (x) => x[0][6]))
+    .map(([[l, id, t, y, tv, p, n, v]]) => ({ l, id, t, y, ...(tv ? { k: "tv" } : {}), p, n, v }));
 }
 
 // Our reviewed films, keyed by TMDB id (from IMAGES), so the catalogue can link to the review instead.
@@ -1991,8 +2083,14 @@ async function initFilms() {
       listKey = key;
       fillOptions(list);
     }
+    const fit = new Map();
+    const matches = (f) => {
+      const s = Math.max(titleMatch(q, f.t), f.o ? titleMatch(q, f.o) : 0);
+      fit.set(f, s);
+      return s;
+    };
     results = list.filter((f) =>
-      (!q || searchNorm(f.t).includes(q) || searchNorm(f.o).includes(q)) &&
+      (!q || matches(f)) &&
       (!type || (type === "tv" ? f.k === "tv" : f.k !== "tv")) &&
       (!lang || f.l === lang) &&
       (!state.g || (f.g || []).includes(state.g)) &&
@@ -2001,6 +2099,8 @@ async function initFilms() {
       (!state.k || f.c === "U") &&
       (!state.w || (f.w && f.w.length))
     ).sort(sorters[state.s] || sorters.popular);
+    // A search sorted by "popular" puts the closest spelling first; another sort keeps its own order.
+    if (q && (state.s || "popular") === "popular") results.sort((a, b) => matchStep(fit.get(b)) - matchStep(fit.get(a)) || (sorters.popular)(a, b));
     if (isTop()) results = topRanked(results);
     shown = PAGE;
     const noun = type === "tv" ? ["series", "series"] : type === "movie" ? ["movie", "movies"] : ["title", "titles"];
