@@ -63,7 +63,7 @@ function renderChrome() {
   ).join("");
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="site-header"><div class="wrap">
-      <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">🌶️</span>Masala <span>Mischief</span></a>
+      <a class="logo" href="index.html"><img class="logo-mark" src="assets/logo.svg" alt="" width="40" height="40">Masala <span>Mischief</span></a>
       <button class="theme-btn search-btn" id="search-btn" type="button" aria-label="Search movies and series" aria-expanded="false">🔍</button>
       <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch light or dark mode"></button>
       <button class="theme-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="main-nav">☰</button>
@@ -79,7 +79,7 @@ function renderChrome() {
     <footer class="site-footer"><div class="wrap">
       <div class="footer-top">
         <div class="footer-brand">
-          <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">🌶️</span>Masala <span>Mischief</span></a>
+          <a class="logo" href="index.html"><img class="logo-mark" src="assets/logo.svg" alt="" width="40" height="40">Masala <span>Mischief</span></a>
           <p>Indian and Hollywood film reviews with extra chilli, and where to stream them in India.</p>
           <div class="how-rate">
             <span><b>🌶️ Masala Meter</b> how much fun, 1 to 5</span>

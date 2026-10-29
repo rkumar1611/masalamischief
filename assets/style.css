@@ -99,10 +99,8 @@ main { padding-bottom: 64px; }
   letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: 8px;
 }
 .logo span:not(.logo-mark) { color: var(--chilli); }
-.logo-mark {
-  display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
-  background: var(--turmeric); font-size: 1rem; transform: rotate(-12deg);
-}
+.logo-mark { display: block; width: 40px; height: 40px; flex: none; transition: transform 0.2s; }
+.logo:hover .logo-mark { transform: rotate(-8deg) scale(1.06); }
 .nav { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; order: 2; }
 .theme-btn {
   order: 3; border: 1.5px solid var(--line); background: var(--surface); border-radius: 50%;
@@ -133,7 +131,7 @@ main { padding-bottom: 64px; }
   .site-header .wrap #theme-btn { order: 3; margin-left: 0; }
   .site-header .wrap { gap: 6px; }
   .site-header .logo { font-size: 1.22rem; gap: 6px; }
-  .site-header .logo-mark { width: 30px; height: 30px; font-size: 0.9rem; }
+  .site-header .logo-mark { width: 34px; height: 34px; }
   .site-header .theme-btn { width: 36px; height: 36px; }
   .nav { display: none; }
   .nav.open { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; overflow: visible; padding: 4px 0 6px; }
