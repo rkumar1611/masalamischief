@@ -440,7 +440,10 @@ function leavesOn(d) {
   const days = Math.round((new Date(d + "T00:00:00") - new Date(new Date().toDateString())) / 864e5);
   return days <= 0 ? "today" : days === 1 ? "tomorrow" : days < 7 ? `in ${days} days` : `on ${new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
 }
-const leavingText = (lv, only) => Object.entries(lv || {}).filter(([a]) => !only || a === only)
+// Today on this device ("YYYY-MM-DD"), so dates that have passed since the weekly check are left out.
+const todayLocal = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const stillLeaving = (lv) => Object.entries(lv || {}).some(([, d]) => d >= todayLocal());
+const leavingText = (lv, only) => Object.entries(lv || {}).filter(([a, d]) => (!only || a === only) && d >= todayLocal())
   .sort((a, b) => a[1].localeCompare(b[1])).map(([a, d]) => `${a} ${leavesOn(d)}`).join(", ");
 const leavingLine = (lv) => (leavingText(lv) ? `<p class="leave-note">⏳ Leaving ${esc(leavingText(lv))}. Watch it before it goes.</p>` : "");
 // Our reviewed films that are leaving an app soon, as { review id: lv }.
@@ -448,7 +451,7 @@ async function reviewsLeaving() {
   const data = await loadCatalog("leaving");
   if (!data) return {};
   const byTmdb = reviewedByTmdb();
-  return Object.fromEntries(data.items.filter((f) => f.k !== "tv" && byTmdb[f.id]).map((f) => [byTmdb[f.id].id, f.lv]));
+  return Object.fromEntries(data.items.filter((f) => f.k !== "tv" && byTmdb[f.id] && stillLeaving(f.lv)).map((f) => [byTmdb[f.id].id, f.lv]));
 }
 
 function initTrailers() {
@@ -670,7 +673,7 @@ async function renderListTiles() {
   const posters = (list) => (list || []).filter((f) => f.p).slice(0, 4).map((f) => f.p);
   const soon = upcoming ? posters(upcoming.items) : [];
   const showing = upcoming ? posters(upcoming.now) : [];
-  const going = leaving ? posters(leaving.items.filter((f) => f.n >= 50)) : [];
+  const going = leaving ? posters(leaving.items.filter((f) => f.n >= 50 && stillLeaving(f.lv))) : [];
   box.querySelectorAll("a").forEach((a) => {
     const key = a.getAttribute("href");
     const pics = key === "ott.html#leaving" ? going : key === "upcoming.html?show=now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
@@ -2134,7 +2137,7 @@ async function initOtt() {
   const withMine = (f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] });
   // ⏳ Leaving soon: well-known titles first within the next few weeks (soonest first), on one app or all.
   const leavingSection = (app) => {
-    const items = (leaving ? leaving.items : []).filter((f) => !app || f.lv[app]);
+    const items = (leaving ? leaving.items : []).filter((f) => (!app || f.lv[app]) && leavingText(f.lv, app));
     const known = items.filter((f) => f.n >= 50);
     const pick = (known.length >= 6 ? known : items).slice(0, 12);
     if (!pick.length) return "";
