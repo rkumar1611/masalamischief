@@ -1822,6 +1822,9 @@ async function resolveDeckId(id) {
 const yearsOf = (f) => (f.k === "tv" && f.y ? (f.end ? (f.ye ? `${f.y}–${f.ye}` : `${f.y}`) : `${f.y}–`) : f.y ? `${f.y}` : "");
 
 function filmCard(f, rank, note) {
+  // Safe with .map(filmCard) too, which passes the position and the whole list as rank and note.
+  if (Array.isArray(note) || typeof rank !== "number") rank = 0;
+  if (typeof note !== "string") note = "";
   const m = f.mine;
   return `
     <a class="fcard" href="${filmHref(f)}">
