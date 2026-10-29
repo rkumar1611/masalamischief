@@ -4,19 +4,23 @@
 // each call fits Cloudflare's free-plan limits.
 import "../../../assets/data.js";
 import { json, notReady, isAdmin } from "../../../lib/community.js";
-import { ensurePushSchema, vapidKeys, sendPush, weeklyMessage } from "../../../lib/push.js";
+import { ensurePushSchema, vapidKeys, sendPush, weeklyMessage, seasonMessage } from "../../../lib/push.js";
+import { asset } from "../../../lib/lists.js";
 
 const BATCH = 20;
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost(context) {
+  const { request, env } = context;
   if (!env.DB) return notReady();
   if (!isAdmin(request, env)) return json({ error: "Not allowed." }, 401);
   const newOnOtt = globalThis.MM_DATA.NEW_ON_OTT;
-  if (!weeklyMessage(newOnOtt)) return json({ sent: 0, removed: 0, next: null, note: "Nothing new this week." });
+  // Series that got a new season in the last few weeks (built by scripts/build-catalog.mjs).
+  const newSeasons = await asset(context, "/assets/catalog/new-seasons.json");
+  if (!weeklyMessage(newOnOtt) && !(newSeasons && newSeasons.items.length)) return json({ sent: 0, removed: 0, next: null, note: "Nothing new this week." });
 
   await ensurePushSchema(env.DB);
   const after = Math.max(0, Math.round(+new URL(request.url).searchParams.get("after") || 0));
-  const { results } = await env.DB.prepare("SELECT rowid AS id, endpoint, p256dh, auth, langs, apps FROM push_subs WHERE rowid > ? ORDER BY rowid LIMIT ?")
+  const { results } = await env.DB.prepare("SELECT rowid AS id, endpoint, p256dh, auth, langs, apps, series FROM push_subs WHERE rowid > ? ORDER BY rowid LIMIT ?")
     .bind(after, BATCH).all();
   const keys = await vapidKeys(env.DB);
   let sent = 0;
@@ -24,7 +28,8 @@ export async function onRequestPost({ request, env }) {
   let skipped = 0;
   for (const sub of results) {
     // Each browser gets only its languages and apps; nothing that fits this week means no message.
-    const message = weeklyMessage(newOnOtt, sub);
+    // A new season of a series they saved comes first (with this week's count); otherwise the usual alert.
+    const message = seasonMessage(newSeasons, sub.series, newOnOtt, sub) || weeklyMessage(newOnOtt, sub);
     if (!message) { skipped++; continue; }
     const status = await sendPush(sub, message, keys).catch(() => 0);
     if (status >= 200 && status < 300) sent++;

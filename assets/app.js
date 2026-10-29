@@ -201,6 +201,19 @@ function blockedSteps(ua) {
   if (/android/i.test(ua)) return "Notifications are blocked for this site. Tap the icon left of the address (🔒 or ⚙) → <b>Permissions</b> or <b>Notifications</b> → <b>Allow</b>, then tap 🔔 again.";
   return "Notifications are blocked for this site. Click the icon left of the address bar → <b>Notifications</b> → <b>Allow</b>, then click 🔔 again.";
 }
+// What the weekly alert should cover, sent with the subscription: chosen languages and apps, and the
+// series on your watchlist ("hi-tv123"), so the alert can say when one gets a new season.
+const alertChoice = () => store.get("alertChoice", { langs: [], apps: [] });
+const savedSeries = () => watchlist().filter((id) => /^_[a-z]{2}-tv\d+$/.test(id)).map((id) => id.slice(1)).slice(-100);
+const alertPost = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" },
+  body: JSON.stringify({ ...body, ...alertChoice(), series: savedSeries() }) });
+// After saving or removing a series: if alerts are on, update the list we hold (no message is sent).
+function syncAlerts() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window) || location.protocol === "file:") return;
+  navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription())
+    .then((s) => { if (s) alertPost(s.toJSON()).catch(() => {}); }).catch(() => {});
+}
+
 function initAlerts() {
   const btns = [...document.querySelectorAll(".alert-btn")];
   if (!btns.length || location.protocol === "file:" || !("serviceWorker" in navigator) || !("PushManager" in window) ||
@@ -217,8 +230,8 @@ function initAlerts() {
     (b.closest(".section-head") || b).after(p);
   };
   // Which languages and apps to hear about (saved on this device and sent with the subscription).
-  const choice = () => store.get("alertChoice", { langs: [], apps: [] });
-  const post = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, ...choice() }) });
+  const choice = alertChoice;
+  const post = alertPost;
   const choiceText = (c) => {
     const langs = c.langs.map((l) => (l === "English" ? "Hollywood" : l));
     return `${langs.length ? langs.join(", ") : "all languages"} on ${c.apps.length ? c.apps.join(", ") : "every app"}`;
@@ -861,6 +874,7 @@ function initReviews() {
         catSaved.forEach((f) => { const id = catSaveId(f); if (missing.includes(id)) info[id] = f; });
         store.set("watchlistInfo", info);
         store.set("watchlist", [...saved, ...missing]);
+        syncAlerts();
         draw();
       });
       return;
@@ -2107,7 +2121,7 @@ async function initFilm() {
   const saveId = catSaveId(f);
   const save = document.getElementById("save");
   const paintSave = () => (save.textContent = inWatchlist(saveId) ? "✓ In your watchlist" : "♡ Save to watchlist");
-  save.addEventListener("click", () => { toggleWatchlist(saveId, f); paintSave(); });
+  save.addEventListener("click", () => { toggleWatchlist(saveId, f); paintSave(); if (tv) syncAlerts(); });
   paintSave();
 
   root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
