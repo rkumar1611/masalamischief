@@ -1216,20 +1216,33 @@ function initSuggest() {
   // dub info, so languages match the original language only, and runtime limits apply to movies.
   async function drawCatalogue() {
     const seq = ++drawSeq;
-    const cat = await loadIndex([...state.langs].map((l) => LANG_CODE[l]));
+    const codes = new Set([...state.langs].map((l) => LANG_CODE[l]));
+    // With dubbed versions on, also titles from other languages dubbed in the chosen ones (dubs-<code>.json).
+    const dubCodes = state.dubs ? [...codes] : [];
+    const [cat, ...dubLists] = await Promise.all([loadIndex([...codes]), ...dubCodes.map((c) => loadCatalog(`dubs-${c}`))]);
     if (seq !== drawSeq) return; // the choices changed while this was loading
     const section = document.getElementById("cat-section");
     if (!cat) { section.hidden = true; return; }
     const byTmdb = reviewedByTmdb();
-    const codes = new Set([...state.langs].map((l) => LANG_CODE[l]));
-    const picks = rankWithFallback(cat.films.filter((f) =>
+    const fits = (f) =>
       !byTmdb[f.id] &&
       fitsMood(f, state.mood) &&
-      (!codes.size || codes.has(f.l)) &&
       (!state.apps.size || f.w.some((a) => state.apps.has(a))) &&
       (!state.family || kidSafe(f)) &&
-      (!state.maxTime || f.k === "tv" || (f.r && f.r <= state.maxTime))
-    ), 24).slice(0, 24);
+      (!state.maxTime || f.k === "tv" || (f.r && f.r <= state.maxTime));
+    const originals = rankWithFallback(cat.films.filter((f) => (!codes.size || codes.has(f.l)) && fits(f)), 24);
+    const dubKey = new Map();
+    dubLists.forEach((d, i) => (d ? d.films : []).forEach((f) => {
+      const k = `${f.l}-${f.id}`;
+      if (!codes.has(f.l) && !dubKey.has(k)) dubKey.set(k, { ...f, dubIn: dubCodes[i] });
+    }));
+    const dubbed = rankWithFallback([...dubKey.values()].filter(fits), 12);
+    // Two in the original language for every dubbed one, so the chosen languages still come first.
+    const picks = [];
+    for (let i = 0, j = 0; picks.length < 24 && (i < originals.length || j < dubbed.length);) {
+      if (i < originals.length && (picks.length % 3 !== 2 || j >= dubbed.length)) picks.push(originals[i++]);
+      else picks.push(dubbed[j++]);
+    }
     catPicks = picks;
     section.hidden = !picks.length;
     // None of our reviews fit: say so briefly and point at the catalogue picks instead.
@@ -1244,7 +1257,8 @@ function initSuggest() {
     if (codes.size === 1) p.set("l", [...codes][0]);
     if (state.apps.size === 1) p.set("a", [...state.apps][0]);
     document.getElementById("cat-more").href = `films.html${p.toString() ? "?" + p : ""}`;
-    document.getElementById("cat-results").innerHTML = picks.map((f) => filmCard(f)).join("");
+    document.getElementById("cat-results").innerHTML = picks
+      .map((f) => filmCard(f, 0, f.dubIn ? `🗣️ Dubbed in ${langLabel(CAT_LANGS[f.dubIn])}` : "")).join("");
   }
   draw();
 }
@@ -2019,6 +2033,8 @@ async function initFilm() {
   const years = yearsOf(f);
   const seasons = tv && f.s ? `${f.s} season${f.s === 1 ? "" : "s"}` : "";
   document.title = `${f.t}${years ? ` (${years})` : ""}${tv ? " · series" : ""} · where to watch · Masala Mischief`;
+  // Dubbed versions on the apps that list them (f.au, from the weekly JustWatch check; not Netflix).
+  const dubs = f.w.length ? (f.au || []).map((c) => langLabel(CAT_LANGS[c] || "")).filter(Boolean) : [];
   const cinemas = inCinemas(f);
   const out = cinemas && f.rd <= new Date().toISOString().slice(0, 10);
   const pageUrl = location.href;
@@ -2037,6 +2053,7 @@ async function initFilm() {
       <article>
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
+        ${dubs.length ? `<p class="muted small dub-line">🗣️ Also in ${esc(dubs.join(", "))} (dubbed)</p>` : ""}
         ${leavingLine(f.lv)}
         ${cinemas ? `<div class="stream-line"><span class="muted small">🎬 ${out ? "In cinemas · book on" : `In cinemas ${fmtDate(f.rd)} · book on`}</span>${ticketLinks()}</div>` : ""}
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
@@ -2067,6 +2084,7 @@ async function initFilm() {
         <div class="side">
           <dl>
             <dt>Language</dt><dd>${esc(lang)}</dd>
+            ${dubs.length ? `<dt>Dubbed in</dt><dd>${esc(dubs.join(", "))}</dd>` : ""}
             ${f.o ? `<dt>Original title</dt><dd>${esc(f.o)}</dd>` : ""}
             ${years ? `<dt>${tv ? "Years" : "Year"}</dt><dd>${years}${tv && !f.end ? " (still running)" : ""}</dd>` : ""}
             ${seasons ? `<dt>Seasons</dt><dd>${seasons}</dd>` : ""}
