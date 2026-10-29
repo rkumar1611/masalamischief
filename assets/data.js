@@ -1266,6 +1266,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-10-29",
   items: [
+    { title: "Nowhere to Run", year: 1993, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/814862", note: "Directed by Robert Harmon · IMDb 5.7" },
     { title: "Baththa", year: 2026, app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/83064751", note: "Directed by Balaji Tharaneetharan · IMDb 9", kids: true },
     { title: "10 Cloverfield Lane", year: 2016, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/80082850", note: "Directed by Dan Trachtenberg · IMDb 7.2" },
     { title: "On the Waterfront", year: 1954, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/60000711", note: "Directed by Elia Kazan · IMDb 8.1" },
@@ -1279,7 +1280,6 @@ const NEW_ON_OTT = {
     { title: "The Conjuring: The Devil Made Me Do It", year: 2021, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/81238605", note: "Directed by Michael Chaves · IMDb 6.2" },
     { title: "The Conjuring 2", year: 2016, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/80091246", note: "Directed by James Wan · IMDb 7.3" },
     { title: "The Aviator", year: 2004, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/70011213", note: "Directed by Martin Scorsese · IMDb 7.5" },
-    { title: "Maayon", year: 2022, lang: "Tamil", app: "JioHotstar", added: "2026-10-28", url: "https://www.hotstar.com/in/movies/maayon/1271413412", note: "Tamil mystery thriller." },
   ],
 };
 
