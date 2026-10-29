@@ -138,7 +138,7 @@ const JW_PAGE = `query P($f: TitleFilter, $after: String, $pkg: [String!]) {
   popularTitles(country: IN, first: 100, after: $after, filter: $f) {
     pageInfo { endCursor hasNextPage }
     edges { node { objectType content(country: IN, language: "en") { externalIds { tmdbId imdbId } }
-      offers(country: IN, platform: WEB, filter: { packages: $pkg }) { monetizationType standardWebURL } } }
+      offers(country: IN, platform: WEB, filter: { packages: $pkg }) { monetizationType standardWebURL availableTo } } }
   }
 }`;
 
@@ -183,10 +183,20 @@ function bestOffer(offers) {
   return (id && urls.map(([, u]) => u).find((u) => u.length > best.length && u.endsWith(`/${id}`))) || best;
 }
 
+// Leaving soon: the same sweep says when a subscription offer ends (availableTo). Kept for dates in the
+// next LEAVE_DAYS days, as f.lv = { app: "YYYY-MM-DD" }, and listed in leaving.json.
+const LEAVE_DAYS = 45;
+const jwLeaving = new Map(); // same keys as the links → { app: date }
+
 // Map of TMDB id ("123", "tv123") and IMDb id ("tt…") → { app: url }, or null if JustWatch failed.
 async function appLinks() {
   const links = new Map();
   const add = (key, app, url) => { if (key) (links.get(key) || links.set(key, {}).get(key))[app] ||= url; };
+  const addLeaving = (key, app, date) => {
+    if (!key || !date || date < day(0) || date > day(LEAVE_DAYS)) return;
+    const m = jwLeaving.get(key) || jwLeaving.set(key, {}).get(key);
+    if (!m[app] || date < m[app]) m[app] = date;
+  };
   const jobs = Object.keys(JW_APPS).flatMap((pkg) => ["MOVIE", "SHOW"].map((type) => [pkg, type]));
   const last = new Date().getUTCFullYear() + 1;
   let requests = 0;
@@ -214,8 +224,13 @@ async function appLinks() {
               const url = bestOffer(node.offers);
               if (!url) continue;
               const ids = node.content?.externalIds || {};
-              if (ids.tmdbId) add(`${type === "SHOW" ? "tv" : ""}${ids.tmdbId}`, JW_APPS[pkg], url);
+              const tmdbKey = ids.tmdbId && `${type === "SHOW" ? "tv" : ""}${ids.tmdbId}`;
+              add(tmdbKey, JW_APPS[pkg], url);
               add(ids.imdbId, JW_APPS[pkg], url);
+              const ends = (node.offers || []).filter((o) => o.monetizationType === "FLATRATE" && o.availableTo)
+                .map((o) => String(o.availableTo).slice(0, 10)).sort()[0];
+              addLeaving(tmdbKey, JW_APPS[pkg], ends);
+              addLeaving(ids.imdbId, JW_APPS[pkg], ends);
             }
             if (!p.pageInfo.hasNextPage) break;
             after = p.pageInfo.endCursor;
@@ -243,6 +258,11 @@ function attachLinks(titles, links, have) {
     const found = links ? { ...(f.im && links.get(f.im)), ...links.get(String(f.id)) } : old;
     const u = Object.fromEntries(f.w.filter((a) => found[a]).map((a) => [a, found[a]]));
     if (Object.keys(u).length) { f.u = u; n++; } else delete f.u;
+    // Leaving dates: fresh from this sweep, or last week's ones that haven't passed yet.
+    const oldLv = { ...have.get(keyOf(f))?.lv, ...f.lv };
+    const ends = links ? { ...(f.im && jwLeaving.get(f.im)), ...jwLeaving.get(String(f.id)) } : oldLv;
+    const lv = Object.fromEntries(f.w.filter((a) => ends[a] && ends[a] >= day(0)).map((a) => [a, ends[a]]));
+    if (Object.keys(lv).length) f.lv = lv; else delete f.lv;
   }
   linkCount = n;
   console.log(`Direct app links on ${n} titles.`);
@@ -468,7 +488,7 @@ async function daily() {
   await writeUpcoming(new Set(have.keys()));
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, ...rest }) => rest;
 // Same as searchNorm() in assets/app.js: "K.G.F: Chapter 1" → "kgf chapter 1".
 const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ");
 const STOPWORDS = new Set(["the", "a", "an", "of", "and"]);
@@ -533,6 +553,14 @@ function writeCatalogue(titles, trendIds) {
   for (let i = 0; i < TREND_PER_LANG; i++) perLang.forEach((list) => list[i] && trending.push(compact(list[i])));
   writeIfChanged(new URL("trending.json", OUT), JSON.stringify({ items: trending }));
   console.log(`Trending: ${trending.length} films.`);
+
+  // leaving.json: titles leaving an app soon, soonest first (popular first on the same day), for the
+  // Leaving soon list and the watchlist warning. d is the first date it leaves any app.
+  const soonest = (f) => Object.values(f.lv).sort()[0];
+  const leaving = all.filter((f) => f.lv).map((f) => ({ ...compact(f), lv: f.lv, d: soonest(f) }))
+    .sort((a, b) => a.d.localeCompare(b.d) || b.n - a.n).slice(0, 1500);
+  writeIfChanged(new URL("leaving.json", OUT), JSON.stringify({ items: leaving }));
+  console.log(`Leaving soon: ${leaving.length} titles.`);
 
   writeLists(all);
   writeSitemaps(all, people);

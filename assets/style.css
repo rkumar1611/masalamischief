@@ -325,6 +325,12 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 .ott-mx-player { background: #1565c0; color: #fff; }
 .ott-apple-tv, .ott-amazon { background: var(--ink); color: var(--bg); }
 .ott-tickets { background: var(--chilli); color: #fff; }
+/* Leaving soon: a warning line on title pages, a box on the watchlist, a chip on cards */
+.leave-note { margin: 4px 0 0; padding: 9px 12px; border-radius: 12px; background: color-mix(in srgb, var(--turmeric, #f2a900) 18%, var(--surface)); border: 1px solid color-mix(in srgb, var(--turmeric, #f2a900) 45%, var(--line)); font-weight: 600; font-size: 0.95rem; }
+.leave-bar { margin: 0 0 16px; padding: 12px 14px; border-radius: var(--radius); background: color-mix(in srgb, var(--turmeric, #f2a900) 15%, var(--surface)); border: 1px solid color-mix(in srgb, var(--turmeric, #f2a900) 45%, var(--line)); }
+.leave-bar ul { margin: 6px 0 0; padding-left: 1.1em; }
+.leave-bar li { margin: 2px 0; }
+.leave-chip { display: inline-block; margin-top: 4px; font-size: 0.75rem; font-weight: 700; color: var(--chilli); }
 /* In theatres / Coming soon: two big tabs at the top of the upcoming page */
 .view-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; margin: 8px 0 4px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; }
 .view-tabs a { text-align: center; padding: 11px 8px; border-radius: 999px; font-weight: 800; text-decoration: none; color: var(--ink-soft); white-space: nowrap; }

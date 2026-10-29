@@ -381,6 +381,22 @@ function inCinemas(f) {
   return days >= -7 && days <= 42;
 }
 
+// Leaving soon (lv = { app: "YYYY-MM-DD" }, from JustWatch via the weekly build; leaving.json lists them).
+function leavesOn(d) {
+  const days = Math.round((new Date(d + "T00:00:00") - new Date(new Date().toDateString())) / 864e5);
+  return days <= 0 ? "today" : days === 1 ? "tomorrow" : days < 7 ? `in ${days} days` : `on ${new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+}
+const leavingText = (lv, only) => Object.entries(lv || {}).filter(([a]) => !only || a === only)
+  .sort((a, b) => a[1].localeCompare(b[1])).map(([a, d]) => `${a} ${leavesOn(d)}`).join(", ");
+const leavingLine = (lv) => (leavingText(lv) ? `<p class="leave-note">⏳ Leaving ${esc(leavingText(lv))}. Watch it before it goes.</p>` : "");
+// Our reviewed films that are leaving an app soon, as { review id: lv }.
+async function reviewsLeaving() {
+  const data = await loadCatalog("leaving");
+  if (!data) return {};
+  const byTmdb = reviewedByTmdb();
+  return Object.fromEntries(data.items.filter((f) => f.k !== "tv" && byTmdb[f.id]).map((f) => [byTmdb[f.id].id, f.lv]));
+}
+
 function initTrailers() {
   let box = null;
   const close = () => { if (box) { box.remove(); box = null; document.body.classList.remove("no-scroll"); } };
@@ -577,6 +593,11 @@ function initHome() {
   if (saved.length) {
     document.getElementById("saved-section").hidden = false;
     document.getElementById("saved").innerHTML = saved.slice(0, 4).map((m) => card(m)).join("");
+    reviewsLeaving().then((lv) => {
+      const soon = saved.filter((m) => lv[m.id]);
+      if (soon.length) document.getElementById("saved").insertAdjacentHTML("beforebegin", `<div class="leave-bar"><strong>⏳ Leaving soon from your watchlist</strong>
+        <ul>${soon.map((m) => `<li><a href="review.html?id=${encodeURIComponent(m.id)}">${esc(m.title)}</a> leaves ${esc(leavingText(lv[m.id]))}</li>`).join("")}</ul></div>`);
+    });
   }
 
   renderListTiles();
@@ -590,15 +611,16 @@ function initHome() {
 async function renderListTiles() {
   const box = document.querySelector(".popular-lists");
   if (!box) return;
-  const [previews, upcoming] = await Promise.all([loadCatalog("lists/previews"), loadCatalog("upcoming")]);
+  const [previews, upcoming, leaving] = await Promise.all([loadCatalog("lists/previews"), loadCatalog("upcoming"), loadCatalog("leaving")]);
   if (!previews) return;
   const posters = (list) => (list || []).filter((f) => f.p).slice(0, 4).map((f) => f.p);
   const soon = upcoming ? posters(upcoming.items) : [];
   const showing = upcoming ? posters(upcoming.now) : [];
+  const going = leaving ? posters(leaving.items.filter((f) => f.n >= 50)) : [];
   box.querySelectorAll("a").forEach((a) => {
     const key = a.getAttribute("href");
-    const pics = key === "upcoming.html?show=now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
-    if (!pics || !pics.length) return;
+    const pics = key === "ott.html#leaving" ? going : key === "upcoming.html?show=now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
+    if (!pics || !pics.length) { if (key === "ott.html#leaving") a.remove(); return; }
     const label = a.textContent.trim();
     a.classList.add("ptile");
     a.innerHTML = `<span class="ptile-posters">${pics.map((p) => `<img src="${tmdb(p, "w154")}" alt="" loading="lazy" decoding="async">`).join("")}</span>
@@ -748,6 +770,18 @@ function initReviews() {
     if (more) more.addEventListener("click", () => navigator.share({ title: "My watchlist · Masala Mischief", text, url: link }).catch(() => {}));
   }
 
+  // "Leaving soon from your watchlist" (or from a friend's list), above the list.
+  const leaveBar = document.getElementById("leave-bar");
+  let leavingMap = null;
+  reviewsLeaving().then((lv) => { leavingMap = lv; draw(); });
+  function paintLeaving(ids) {
+    const soon = (leavingMap ? ids.filter((id) => leavingMap[id]) : []).map((id) => [movieById(id), leavingMap[id]]).filter(([m]) => m)
+      .sort((a, b) => Object.values(a[1]).sort()[0].localeCompare(Object.values(b[1]).sort()[0]));
+    leaveBar.hidden = !soon.length || !(shared || savedOnly.checked || ids.length);
+    leaveBar.innerHTML = soon.length ? `<strong>⏳ Leaving soon from ${shared ? "this list" : "your watchlist"}</strong>
+      <ul>${soon.map(([m, lv]) => `<li><a href="review.html?id=${encodeURIComponent(m.id)}">${esc(m.title)}</a> leaves ${esc(leavingText(lv))}</li>`).join("")}</ul>` : "";
+  }
+
   let minMasala = 0;
   chips(document.getElementById("masala-chips"), [["0", "Any"], ["3", "🌶️ 3+"], ["4", "🌶️ 4+"], ["5", "🌶️ 5 only"]],
     (v) => +v === minMasala, (v) => { minMasala = +v; draw(); });
@@ -772,6 +806,7 @@ function initReviews() {
     };
     list.sort(sorters[sort.value]);
     paintBar(saved);
+    paintLeaving(shared || saved);
     count.textContent = `${list.length} film${list.length === 1 ? "" : "s"}`;
     out.innerHTML = list.length
       ? list.map((m) => card(m)).join("")
@@ -807,6 +842,7 @@ function initReview() {
           <div><div class="label">Quality</div><span class="num">${m.quality}</span><span class="muted">/10</span></div>
         </div>
         ${watch.stream.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${platformLinks(m, watch.stream)}</div>` : ""}
+        <div id="leave-slot"></div>
         ${m.review.map((p) => `<p>${esc(p)}</p>`).join("")}
         <div class="hm">
           <div class="hits"><h3>Full masala</h3><ul>${m.hits.map((h) => `<li>${esc(h)}</li>`).join("")}</ul></div>
@@ -901,6 +937,8 @@ function initReview() {
     const img = IMAGES[m.id] || {};
     document.getElementById("ext-slot").innerHTML = extLinks({ im: img.imdb, wd: x.wd, tmdbUrl: img.tmdb ? `https://www.themoviedb.org/movie/${img.tmdb}` : "" });
   });
+
+  reviewsLeaving().then((lv) => { if (lv[m.id]) document.getElementById("leave-slot").innerHTML = leavingLine(lv[m.id]); });
 
   // Watchlist
   const save = document.getElementById("save");
@@ -1570,7 +1608,7 @@ async function resolveDeckId(id) {
 // "2019–2023", "2021–" (still running) or "2024" for series; just the year for films.
 const yearsOf = (f) => (f.k === "tv" && f.y ? (f.end ? (f.ye ? `${f.y}–${f.ye}` : `${f.y}`) : `${f.y}–`) : f.y ? `${f.y}` : "");
 
-function filmCard(f, rank) {
+function filmCard(f, rank, note) {
   const m = f.mine;
   return `
     <a class="fcard" href="${filmHref(f)}">
@@ -1584,6 +1622,7 @@ function filmCard(f, rank) {
         <strong>${esc(f.t)}</strong>
         <span class="muted small">${esc(langLabel(CAT_LANGS[f.l] || ""))}${f.k === "tv" ? " · Series" : ""}${yearsOf(f) ? ` · ${yearsOf(f)}` : ""}</span>
         ${f.w && f.w.length ? `<span class="fapps">${f.w.slice(0, 2).map((a) => `<span class="ott ott-${slug(a)}">${esc(a)}</span>`).join("")}${f.w.length > 2 ? `<span class="ott more">+${f.w.length - 2}</span>` : ""}</span>` : ""}
+        ${note ? `<span class="leave-chip">${esc(note)}</span>` : ""}
       </div>
     </a>`;
 }
@@ -1780,6 +1819,7 @@ async function initFilm() {
       <article>
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
+        ${leavingLine(f.lv)}
         ${cinemas ? `<div class="stream-line"><span class="muted small">🎬 ${out ? "In cinemas · book on" : `In cinemas ${fmtDate(f.rd)} · book on`}</span>${ticketLinks()}</div>` : ""}
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
         ${castRow({ ...f, kind: f.k })}
@@ -1967,10 +2007,20 @@ function addFilmControls(el, items, render) {
 async function initOtt() {
   const root = document.getElementById("ott");
   const appSlug = new URLSearchParams(location.search).get("app") || "";
-  const [lists, index] = await Promise.all([loadCatalog("lists/ott"), loadCatalog("lists/index")]);
+  const [lists, index, leaving] = await Promise.all([loadCatalog("lists/ott"), loadCatalog("lists/index"), loadCatalog("leaving")]);
   if (!lists || !index) return notReadyYet(root);
   const byTmdb = reviewedByTmdb();
   const withMine = (f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] });
+  // ⏳ Leaving soon: well-known titles first within the next few weeks (soonest first), on one app or all.
+  const leavingSection = (app) => {
+    const items = (leaving ? leaving.items : []).filter((f) => !app || f.lv[app]);
+    const known = items.filter((f) => f.n >= 50);
+    const pick = (known.length >= 6 ? known : items).slice(0, 12);
+    if (!pick.length) return "";
+    return `<section id="leaving"><div class="section-head"><h2>⏳ Leaving ${app ? esc(app) : "OTT"} soon</h2></div>
+      <p class="muted small" style="margin-top:-6px">Watch these before they go. Dates from JustWatch, checked weekly; apps sometimes extend them.</p>
+      <div class="fgrid">${pick.map((f) => filmCard(withMine(f), 0, `⏳ Leaves ${leavingText(f.lv, app)}`)).join("")}</div></section>`;
+  };
   const tabs = `<nav class="chips app-tabs" aria-label="Streaming apps">${index.ott.map(([s, name]) =>
     `<a class="chip" href="ott.html?app=${s}" aria-pressed="${s === appSlug}">${esc(name)}</a>`).join("")}</nav>`;
   const L = lists[appSlug];
@@ -1985,7 +2035,10 @@ async function initOtt() {
           <span class="ott ott-${slug(name)}">${esc(name)}</span>
           <span class="app-posters">${(lists[s]?.items || []).slice(0, 4).map((f) => f.p ? `<img src="${tmdb(f.p, "w154")}" alt="" loading="lazy">` : "").join("")}</span>
           <strong>New on ${esc(name)}</strong><span class="muted small">${count.toLocaleString("en-IN")} titles</span>
-        </a>`).join("")}</div>`;
+        </a>`).join("")}</div>
+      ${leavingSection("")}`;
+    // From the home page's "Leaving OTT soon" tile; the list is drawn after the page loads.
+    if (location.hash === "#leaving") document.getElementById("leaving")?.scrollIntoView();
     return;
   }
   document.title = `New on ${L.name} India: latest movies & series · Masala Mischief`;
@@ -2001,6 +2054,7 @@ async function initOtt() {
       <p class="lead">The newest movies and series you can stream on ${esc(L.name)} in India, latest releases first. ${L.count.toLocaleString("en-IN")} titles on ${esc(L.name)} in all.</p></div>
     ${tabs}
     ${justAdded.length ? `<section><div class="section-head"><h2>🆕 Just added this week</h2></div><div class="new-ott">${justAdded.map(newOttItem).join("")}</div></section>` : ""}
+    ${leavingSection(L.name)}
     <section>
       <div class="section-head"><h2>Latest releases on ${esc(L.name)}</h2></div>
       <div class="chips list-filter" id="ott-filter"></div>
