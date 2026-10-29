@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=46">
+  <link rel="stylesheet" href="assets/style.css?v=47">
 </head>
 <body data-page="suggest">
   <main class="wrap">
@@ -48,9 +48,15 @@
           <option value="140">Under 2h 20m</option>
           <option value="160">Under 2h 40m</option>
         </select>
-        <button class="btn primary" id="surprise" type="button">🎲 Surprise me</button>
+        <button class="btn primary" id="surprise" type="button">🎲 Surprise me (5 picks)</button>
       </div>
     </div>
+
+    <section id="surprise-section" hidden>
+      <div class="section-head"><h2>🎲 5 picks for you</h2></div>
+      <p class="muted small" style="margin-top:-6px">Picked at random from what fits your choices. Not feeling these? Tap Shuffle again.</p>
+      <div class="fgrid" id="surprise-results"></div>
+    </section>
 
     <section>
       <div class="section-head"><h2 id="results-head"></h2></div>
@@ -63,7 +69,7 @@
       <div class="fgrid" id="cat-results"></div>
     </section>
   </main>
-  <script src="assets/data.js?v=46"></script>
-  <script src="assets/app.js?v=46"></script>
+  <script src="assets/data.js?v=47"></script>
+  <script src="assets/app.js?v=47"></script>
 </body>
 </html>

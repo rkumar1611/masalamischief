@@ -615,6 +615,8 @@ function renderTonight(featured) {
   if (!el || !pool.length) { document.getElementById("tonight-section").hidden = true; return; }
   const day = Math.floor((Date.now() + 5.5 * 36e5) / 864e5);
   const m = pool[(day * 37) % pool.length];
+  // Four more for the same day, spread through the list so they're not alike.
+  const more = [...new Set([1, 2, 3, 4, 5, 6].map((k) => pool[(day * 37 + k * 13) % pool.length]))].filter((x) => x !== m).slice(0, 4);
   const mood = moodById(m.moods[0]);
   el.innerHTML = `
     <div class="tonight">
@@ -631,7 +633,8 @@ function renderTonight(featured) {
           ${mood ? `<a class="btn" href="suggest.html?mood=${mood.id}">Not feeling it? More ${esc(mood.label.toLowerCase())} picks</a>` : ""}
         </div>
       </div>
-    </div>`;
+    </div>
+    ${more.length ? `<h3 class="tonight-more-h">Or choose one of these</h3><div class="fgrid tonight-more">${more.map((x) => filmCard(reviewAsFilm(x))).join("")}</div>` : ""}`;
 }
 
 // Trending this week: popular new releases per language, from the weekly catalogue build (trending.json).
@@ -934,9 +937,21 @@ function initSuggest() {
   document.getElementById("dubs").addEventListener("change", (e) => { state.dubs = e.target.checked; draw(); });
   document.getElementById("family").addEventListener("change", (e) => { state.family = e.target.checked; draw(); });
   document.getElementById("time").addEventListener("change", (e) => { state.maxTime = +e.target.value; draw(); });
+  // Surprise me: five random picks that fit the choices, from our reviews (up to two) and the catalogue's
+  // best matches, so there's something to choose between. Tapping again shuffles.
+  let drawSeq = 0;
+  let catPicks = [];
   document.getElementById("surprise").addEventListener("click", () => {
-    const pool = matches();
-    if (pool.length) location.href = `review.html?id=${pool[Math.floor(Math.random() * pool.length)].m.id}`;
+    const shuffle = (arr) => arr.map((x) => [x, Math.random()]).sort((a, b) => a[1] - b[1]).map(([x]) => x);
+    const ours = shuffle(matches().slice(0, 12)).slice(0, catPicks.length >= 3 ? 2 : 5).map(({ m }) => reviewAsFilm(m));
+    const picks = shuffle([...ours, ...shuffle(catPicks).slice(0, 5 - ours.length)]);
+    const box = document.getElementById("surprise-section");
+    box.hidden = false;
+    document.getElementById("surprise-results").innerHTML = picks.length
+      ? picks.map((f) => filmCard(f)).join("")
+      : `<div class="empty">Nothing fits all of that yet. Try fewer choices.</div>`;
+    document.getElementById("surprise").textContent = "🎲 Shuffle again";
+    box.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   // Which language the viewer would watch it in: original first, otherwise a dub.
@@ -964,6 +979,9 @@ function initSuggest() {
 
   function draw() {
     paintMoods();
+    // New choices: the old five picks no longer fit.
+    document.getElementById("surprise-section").hidden = true;
+    document.getElementById("surprise").textContent = "🎲 Surprise me (5 picks)";
     const mood = moodById(state.mood);
     const list = matches();
     heading.textContent = mood ? `${mood.emoji} ${mood.label}: ${mood.blurb}` : "Our top picks right now";
@@ -987,20 +1005,29 @@ function initSuggest() {
   // Beyond our reviews: catalogue movies and series that fit the same choices. The catalogue has no
   // dub info, so languages match the original language only, and runtime limits apply to movies.
   async function drawCatalogue() {
+    const seq = ++drawSeq;
     const cat = await loadIndex([...state.langs].map((l) => LANG_CODE[l]));
+    if (seq !== drawSeq) return; // the choices changed while this was loading
     const section = document.getElementById("cat-section");
     if (!cat) { section.hidden = true; return; }
     const byTmdb = reviewedByTmdb();
     const codes = new Set([...state.langs].map((l) => LANG_CODE[l]));
-    const picks = weightedRank(cat.films.filter((f) =>
+    const picks = rankWithFallback(cat.films.filter((f) =>
       !byTmdb[f.id] &&
       fitsMood(f, state.mood) &&
       (!codes.size || codes.has(f.l)) &&
       (!state.apps.size || f.w.some((a) => state.apps.has(a))) &&
       (!state.family || kidSafe(f)) &&
       (!state.maxTime || f.k === "tv" || (f.r && f.r <= state.maxTime))
-    ), 20).slice(0, 24);
+    ), 24).slice(0, 24);
+    catPicks = picks;
     section.hidden = !picks.length;
+    // None of our reviews fit: say so briefly and point at the catalogue picks instead.
+    if (!matches().length) {
+      out.innerHTML = picks.length
+        ? `<p class="muted">None of our reviews fit all of that yet, so here are ${picks.length} picks from the full catalogue 👇</p>`
+        : `<div class="empty">Nothing fits all of that yet. Try turning on dubbed films, adding an app, or picking another language.</div>`;
+    }
     const mood = moodById(state.mood);
     document.getElementById("cat-head").textContent = mood ? `More ${mood.label.toLowerCase()} picks` : "More to watch";
     const p = new URLSearchParams();
@@ -1130,10 +1157,14 @@ function groupCreate($) {
       if (cat) {
         const byTmdb = reviewedByTmdb();
         const codes = new Set([...langs].map((l) => LANG_CODE[l]));
-        const fits = (f, useMood) => f.k !== "tv" && !byTmdb[f.id] && f.n >= (f.l === "en" ? 2000 : 100) &&
+        // Well-known films first; regional languages have few TMDB votes, so the bar drops if needed.
+        const fits = (f, useMood, bar) => f.k !== "tv" && !byTmdb[f.id] && f.n >= (f.l === "en" ? bar * 20 : bar) &&
           (!codes.size || codes.has(f.l)) && (!kids || kidSafe(f)) && (!useMood || fitsMood(f, mood));
-        let catPool = cat.films.filter((f) => fits(f, true));
-        if (catPool.length < 10) catPool = cat.films.filter((f) => fits(f, false));
+        let catPool = [];
+        for (const [useMood, bar] of [[true, 100], [true, 20], [true, 5], [false, 20], [false, 1]]) {
+          catPool = cat.films.filter((f) => fits(f, useMood, bar));
+          if (catPool.length >= 10) break;
+        }
         theirs = shuffled(catPool, (f) => f.v).slice(0, 10).map((f) => `_${f.l}-${f.id}`);
       }
     }
@@ -1498,6 +1529,23 @@ function weightedRank(arr, minVotes = 3) {
   const score = (f) => (f.n / (f.n + m)) * f.v + (m / (f.n + m)) * C;
   return voted.filter((f) => f.n >= minVotes).sort((a, b) => score(b) - score(a));
 }
+// Same ranking, but when fewer than `want` titles have minVotes votes (most Marathi, Punjabi or Kannada
+// films have only a handful on TMDB), tops up with less-voted ones so a mood + language isn't empty.
+function rankWithFallback(arr, want, minVotes = 20) {
+  const out = [];
+  const seen = new Set();
+  for (const n of [minVotes, 5, 1]) {
+    for (const f of weightedRank(arr, n)) {
+      const k = `${f.l}-${f.id}`;
+      if (!seen.has(k)) { seen.add(k); out.push(f); }
+    }
+    if (out.length >= want) break;
+  }
+  return out;
+}
+// One of our reviews shaped like a catalogue entry, for filmCard (it links to the review).
+const reviewAsFilm = (m) => ({ t: m.title, l: LANG_CODE[m.lang] || "en", id: (IMAGES[m.id] || {}).tmdb, y: m.year,
+  p: (IMAGES[m.id] || {}).poster, v: m.quality, w: streamsOn(m), mine: m });
 
 // A catalogue entry shaped like one of our MOVIES, so cards, posters and Group Pick can show it.
 // `full` is the entry from assets/catalog/<lang>.json, which adds the still and summary.
