@@ -148,6 +148,15 @@ main { padding-bottom: 64px; }
 .footer-brand .install-btn { margin-left: 6px; }
 .install-help { margin-top: 8px; }
 .nav .install-help { grid-column: 1 / -1; margin: 0; padding: 2px 8px 6px; text-align: center; }
+/* "A new version is ready" bar (initUpdates in app.js) */
+.update-bar {
+  position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 50;
+  width: min(520px, calc(100% - 32px)); display: flex; align-items: center; gap: 10px;
+  padding: 10px 10px 10px 16px; border-radius: 16px; background: var(--surface); color: var(--ink);
+  border: 1.5px solid var(--chilli); box-shadow: var(--shadow-lg); font-weight: 600; font-size: 0.92rem;
+}
+.update-bar span { flex: 1; }
+.update-x { border: 0; background: none; color: var(--ink-soft); font-size: 1rem; cursor: pointer; padding: 6px; }
 
 /* Hero */
 .hero-band {

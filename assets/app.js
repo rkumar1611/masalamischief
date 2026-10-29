@@ -128,6 +128,41 @@ function renderChrome() {
   initMenu();
   initInstall();
   initAlerts();
+  initUpdates();
+}
+
+// New version available: the installed app (or a tab left open) keeps running the version it loaded.
+// When the site has a newer ?v= than this page was built with, show an Update bar that reloads it.
+// Checked on start and whenever the app comes back to the screen, at most every 10 minutes.
+function initUpdates() {
+  const mine = +((document.querySelector('script[src*="app.js?v="]') || {}).src || "").replace(/.*\?v=/, "");
+  if (!mine || location.protocol === "file:") return;
+  let last = 0;
+  const check = async () => {
+    if (document.hidden || Date.now() - last < 10 * 60e3 || document.getElementById("update-bar")) return;
+    last = Date.now();
+    try {
+      const html = await fetch(`/?update-check=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.text() : ""));
+      const live = +((html.match(/app\.js\?v=(\d+)/) || [])[1] || 0);
+      if (live > mine) showUpdate();
+    } catch {}
+  };
+  const showUpdate = () => {
+    document.body.insertAdjacentHTML("beforeend", `
+      <div class="update-bar" id="update-bar" role="status">
+        <span>✨ A new version of Masala Mischief is ready.</span>
+        <button class="btn small primary" type="button" id="update-now">Update</button>
+        <button class="update-x" type="button" aria-label="Later">✕</button>
+      </div>`);
+    document.getElementById("update-now").addEventListener("click", async () => {
+      const reg = "serviceWorker" in navigator && (await navigator.serviceWorker.getRegistration().catch(() => null));
+      if (reg) await reg.update().catch(() => {});
+      location.reload();
+    });
+    document.querySelector("#update-bar .update-x").addEventListener("click", () => document.getElementById("update-bar").remove());
+  };
+  check();
+  document.addEventListener("visibilitychange", check);
 }
 
 // Weekly "New on OTT" alerts: sw.js shows them, functions/api/push/ keeps the list and sends them on
@@ -175,7 +210,7 @@ function initAlerts() {
 // installed) it shows the steps for that browser.
 let installPrompt = null;
 function installSteps(ua, installed) {
-  if (installed) return "The app is already on this device. Look for <b>Masala Mischief</b> on your home screen or in your apps.";
+  if (installed) return "The app is already on this device, and it updates by itself: open <b>Masala Mischief</b> from your home screen and you get the latest version. If it was open in the background, it shows an <b>Update</b> button.";
   if (/iphone|ipad|ipod/i.test(ua)) return "On iPhone: tap the Share button <b>⎋</b> (in Chrome it's at the top right), then <b>Add to Home Screen</b>.";
   if (/samsungbrowser/i.test(ua)) return "Tap the <b>☰</b> menu at the bottom, then <b>Add page to</b> → <b>Home screen</b>.";
   if (/android/i.test(ua) && /firefox/i.test(ua)) return "Tap the <b>⋮</b> menu, then <b>Install</b> (or <b>Add to Home screen</b>).";
