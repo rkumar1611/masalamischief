@@ -708,16 +708,18 @@ async function renderSavedHome() {
 async function renderListTiles() {
   const box = document.querySelector(".popular-lists");
   if (!box) return;
-  const [previews, upcoming, leaving] = await Promise.all([loadCatalog("lists/previews"), loadCatalog("upcoming"), loadCatalog("leaving")]);
+  const [previews, upcoming, leaving, top] = await Promise.all([loadCatalog("lists/previews"), loadCatalog("upcoming"), loadCatalog("leaving"), loadCatalog("top10")]);
   if (!previews) return;
   const posters = (list) => (list || []).filter((f) => f.p).slice(0, 4).map((f) => f.p);
   const soon = upcoming ? posters(upcoming.items) : [];
   const showing = upcoming ? posters(upcoming.now) : [];
   const going = leaving ? posters(leaving.items.filter((f) => f.n >= 50 && stillLeaving(f.lv))) : [];
+  const trending = top ? posters(top.apps.flatMap((r) => r.movies.slice(0, 1))) : [];
   box.querySelectorAll("a").forEach((a) => {
     const key = a.getAttribute("href");
-    const pics = key === "ott.html#leaving" ? going : key === "upcoming.html?show=now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
-    if (!pics || !pics.length) { if (key === "ott.html#leaving") a.remove(); return; }
+    const pics = key === "ott.html#top10" ? trending : key === "ott.html#leaving" ? going : key === "upcoming.html?show=now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
+    // Lists that aren't built yet (or are empty this week) leave the page instead of showing a bare link.
+    if (!pics || !pics.length) { if (key.startsWith("ott.html#")) a.remove(); return; }
     const label = a.textContent.trim();
     a.classList.add("ptile");
     a.innerHTML = `<span class="ptile-posters">${pics.map((p) => `<img src="${tmdb(p, "w154")}" alt="" loading="lazy" decoding="async">`).join("")}</span>
@@ -2204,10 +2206,41 @@ function addFilmControls(el, items, render) {
 async function initOtt() {
   const root = document.getElementById("ott");
   const appSlug = new URLSearchParams(location.search).get("app") || "";
-  const [lists, index, leaving] = await Promise.all([loadCatalog("lists/ott"), loadCatalog("lists/index"), loadCatalog("leaving")]);
+  const [lists, index, leaving, top] = await Promise.all([loadCatalog("lists/ott"), loadCatalog("lists/index"), loadCatalog("leaving"), loadCatalog("top10")]);
   if (!lists || !index) return notReadyYet(root);
   const byTmdb = reviewedByTmdb();
   const withMine = (f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] });
+  // 🔥 Top 10 this week (top10.json, weekly from JustWatch India's popularity): movies or series, on one
+  // app, or on the overview page any app picked from chips. Drawn into #top10 after the page is.
+  const topSection = (app) => {
+    const rows = (top ? top.apps : []).filter((r) => !app || r.app === app);
+    if (!rows.length) return "";
+    return `<section id="top10"><div class="section-head"><h2>🔥 Top 10 ${app ? `on ${esc(app)} ` : "on OTT "}this week</h2></div>
+      ${app ? "" : `<div class="chips" data-top="app">${rows.map((r, i) => `<button class="chip" type="button" data-v="${esc(r.app)}" aria-pressed="${i === 0}">${esc(r.app)}</button>`).join("")}</div>`}
+      <div class="chips" data-top="kind"><button class="chip" type="button" data-v="movies" aria-pressed="true">Movies</button><button class="chip" type="button" data-v="series" aria-pressed="false">Series</button></div>
+      <div class="fgrid" id="top10-grid"></div>
+      <p class="fine">Most watched and searched in India this week, from JustWatch. Updated ${fmtDate(top.built)}.</p></section>`;
+  };
+  const mountTop = (app) => {
+    const box = document.getElementById("top10");
+    if (!box) return;
+    const state = { app: app || top.apps[0].app, kind: "movies" };
+    const draw = () => {
+      const row = top.apps.find((r) => r.app === state.app) || {};
+      if (!(row[state.kind] || []).length && (row.movies || []).length + (row.series || []).length) state.kind = state.kind === "movies" ? "series" : "movies";
+      box.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.v === state[c.parentElement.dataset.top])));
+      document.getElementById("top10-grid").innerHTML = (row[state.kind] || []).map((f, i) => filmCard(withMine(f), i + 1)).join("")
+        || `<div class="empty">No ${state.kind} in the chart this week.</div>`;
+    };
+    box.addEventListener("click", (e) => {
+      const c = e.target.closest(".chip");
+      if (!c) return;
+      state[c.parentElement.dataset.top] = c.dataset.v;
+      draw();
+    });
+    draw();
+  };
+
   // ⏳ Leaving soon: well-known titles first within the next few weeks (soonest first), on one app or all.
   const leavingSection = (app) => {
     const items = (leaving ? leaving.items : []).filter((f) => (!app || f.lv[app]) && leavingText(f.lv, app));
@@ -2233,9 +2266,11 @@ async function initOtt() {
           <span class="app-posters">${(lists[s]?.items || []).slice(0, 4).map((f) => f.p ? `<img src="${tmdb(f.p, "w154")}" alt="" loading="lazy">` : "").join("")}</span>
           <strong>New on ${esc(name)}</strong><span class="muted small">${count.toLocaleString("en-IN")} titles</span>
         </a>`).join("")}</div>
+      ${topSection("")}
       ${leavingSection("")}`;
-    // From the home page's "Leaving OTT soon" tile; the list is drawn after the page loads.
-    if (location.hash === "#leaving") document.getElementById("leaving")?.scrollIntoView();
+    if (top) mountTop("");
+    // From the home page's tiles; the lists are drawn after the page loads.
+    if (location.hash.length > 1) document.getElementById(location.hash.slice(1))?.scrollIntoView();
     return;
   }
   document.title = `New on ${L.name} India: latest movies & series · Masala Mischief`;
@@ -2250,6 +2285,7 @@ async function initOtt() {
     <div class="page-head"><p class="eyebrow">📺 Streaming in India</p><h1>New on ${esc(L.name)}</h1>
       <p class="lead">The newest movies and series you can stream on ${esc(L.name)} in India, latest releases first. ${L.count.toLocaleString("en-IN")} titles on ${esc(L.name)} in all.</p></div>
     ${tabs}
+    ${topSection(L.name)}
     ${justAdded.length ? `<section><div class="section-head"><h2>🆕 Just added this week</h2></div><div class="new-ott">${justAdded.map(newOttItem).join("")}</div></section>` : ""}
     ${leavingSection(L.name)}
     <section>
@@ -2264,6 +2300,7 @@ async function initOtt() {
     ${bestOnApp.length ? `<section class="more-lists"><h2>Best on ${esc(L.name)}</h2><p class="hub-links">${bestOnApp.join("")}</p></section>` : ""}`;
   addFilmControls(document.getElementById("ott-filter"), L.items.map(withMine),
     (items) => { document.getElementById("ott-grid").innerHTML = items.map((f) => filmCard(f)).join("") || `<div class="empty">Nothing here.</div>`; });
+  if (top) mountTop(L.name);
 }
 
 async function initBest() {
