@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Our reviews · Masala Mischief</title>
   <meta name="description" content="All Masala Mischief film reviews, searchable by title, language, platform and Masala Meter.">
+  <!-- functions/reviews.js fills these in for a shared watchlist (?list=…). -->
+  <meta property="og:title" content="Our reviews · Masala Mischief">
+  <meta property="og:description" content="All Masala Mischief film reviews, searchable by title, language, platform and Masala Meter.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Masala Mischief">
   <meta property="og:image" content="https://masalamischief.in/assets/og.png?v=2">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -17,7 +22,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=43">
+  <link rel="stylesheet" href="assets/style.css?v=44">
 </head>
 <body data-page="reviews">
   <main class="wrap">
@@ -25,6 +30,7 @@
       <h1>Our reviews</h1>
       <p class="lead">Every film gets a Masala Meter for fun and a score for craft.</p>
     </div>
+    <div class="list-bar" id="list-bar" hidden></div>
     <div class="filters">
       <div class="toolbar">
         <input id="q" type="search" placeholder="Search title, language or genre" aria-label="Search reviews">
@@ -48,7 +54,7 @@
     <p class="count muted" id="count"></p>
     <div class="grid" id="list"></div>
   </main>
-  <script src="assets/data.js?v=43"></script>
-  <script src="assets/app.js?v=43"></script>
+  <script src="assets/data.js?v=44"></script>
+  <script src="assets/app.js?v=44"></script>
 </body>
 </html>

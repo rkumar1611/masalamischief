@@ -149,6 +149,13 @@ main { padding-bottom: 64px; }
 .install-help { margin-top: 8px; }
 .nav .install-help { grid-column: 1 / -1; margin: 0; padding: 2px 8px 6px; text-align: center; }
 .alert-help { margin: 8px 0 12px; }
+/* Watchlist share bar / a friend's list (initReviews in app.js) */
+.list-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 18px;
+  padding: 12px 14px; border-radius: var(--radius); background: var(--surface-2); border: 1.5px dashed var(--chilli);
+  font-weight: 600;
+}
+.list-bar > span { flex: 1 1 220px; }
 /* "A new version is ready" bar (initUpdates in app.js) */
 .update-bar {
   position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 50;

@@ -690,6 +690,46 @@ function initReviews() {
   const params = new URLSearchParams(location.search);
   if (params.get("lang")) lang.value = params.get("lang");
   if (params.get("saved")) savedOnly.checked = true;
+  // A friend's shared watchlist: reviews?list=<id>,<id>,… (only films we've reviewed).
+  const shared = params.has("list") ? [...new Set((params.get("list") || "").split(","))].filter(movieById).slice(0, 100) : null;
+  const bar = document.getElementById("list-bar");
+  if (shared) {
+    document.querySelector(".page-head h1").textContent = "🍿 A friend's watchlist";
+    document.querySelector(".page-head .lead").textContent = shared.length
+      ? `${shared.length} film${shared.length === 1 ? "" : "s"} they want to watch. Save the ones you like to your own watchlist.`
+      : "This list is empty, or the films in it aren't on the site any more.";
+    document.title = "A friend's watchlist · Masala Mischief";
+    savedOnly.closest("label").hidden = true;
+  }
+
+  // The bar above the list: "Save all" on a friend's list, "Share my watchlist" on your own.
+  function paintBar(saved) {
+    if (shared) {
+      const missing = shared.filter((id) => !saved.includes(id));
+      bar.hidden = !shared.length;
+      bar.innerHTML = missing.length
+        ? `<button class="btn primary small" type="button" id="save-all">♡ Save all ${missing.length === shared.length ? "" : `${missing.length} new `}to my watchlist</button>
+           <a class="btn small" href="reviews.html">See all our reviews</a>`
+        : `<span>✓ All of these are in <a href="reviews.html?saved=1">your watchlist</a>.</span><a class="btn small" href="reviews.html">See all our reviews</a>`;
+      const btn = document.getElementById("save-all");
+      if (btn) btn.addEventListener("click", () => { store.set("watchlist", [...saved, ...missing]); draw(); });
+      return;
+    }
+    bar.hidden = !(savedOnly.checked && saved.length);
+    if (bar.hidden) return;
+    const link = `${location.origin}/reviews?list=${saved.map(encodeURIComponent).join(",")}`;
+    const names = saved.map(movieById).filter(Boolean).map((m) => m.title);
+    const text = `Here's what I want to watch 🍿 ${names.slice(0, 5).join(", ")}${names.length > 5 ? ` and ${names.length - 5} more` : ""}. Reviews and where to stream them:`;
+    bar.innerHTML = `<span>📤 Share your watchlist with friends</span>
+      <a class="btn primary small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`${text} ${link}`)}">WhatsApp</a>
+      ${navigator.share ? `<button class="btn small" type="button" id="share-list">More…</button>` : ""}
+      <button class="btn small" type="button" id="copy-list">Copy link</button>`;
+    document.getElementById("copy-list").addEventListener("click", async (e) => {
+      try { await navigator.clipboard.writeText(link); e.target.textContent = "✓ Copied"; } catch { prompt("Copy this link:", link); }
+    });
+    const more = document.getElementById("share-list");
+    if (more) more.addEventListener("click", () => navigator.share({ title: "My watchlist · Masala Mischief", text, url: link }).catch(() => {}));
+  }
 
   let minMasala = 0;
   chips(document.getElementById("masala-chips"), [["0", "Any"], ["3", "🌶️ 3+"], ["4", "🌶️ 4+"], ["5", "🌶️ 5 only"]],
@@ -702,7 +742,7 @@ function initReviews() {
       (!lang.value || m.lang === lang.value) &&
       (!ott.value || streamsOn(m).includes(ott.value)) &&
       m.masala >= minMasala &&
-      (!savedOnly.checked || saved.includes(m.id)) &&
+      (shared ? shared.includes(m.id) : !savedOnly.checked || saved.includes(m.id)) &&
       (!familyOnly.checked || PARENT_NOTES[m.id]) &&
       (!term || [m.title, m.lang, langLabel(m.lang), ...m.genres].join(" ").toLowerCase().includes(term))
     );
@@ -714,6 +754,7 @@ function initReviews() {
       short: (a, b) => a.runtime - b.runtime,
     };
     list.sort(sorters[sort.value]);
+    paintBar(saved);
     count.textContent = `${list.length} film${list.length === 1 ? "" : "s"}`;
     out.innerHTML = list.length
       ? list.map((m) => card(m)).join("")
