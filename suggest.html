@@ -17,13 +17,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/style.css?v=49">
+  <link rel="stylesheet" href="assets/style.css?v=50">
 </head>
 <body data-page="suggest">
   <main class="wrap">
     <div class="page-head">
       <h1>What should I watch?</h1>
       <p class="lead">Tell us the mood, the languages you're comfortable with and the apps you pay for. We'll do the scrolling.</p>
+    </div>
+
+    <div class="liked-box">
+      <label class="title" for="liked">💡 I liked… <span class="muted" style="font-weight:400">(type a film or series, get 6 like it)</span></label>
+      <input id="liked" type="search" placeholder="e.g. Drishyam, Kantara, Breaking Bad" autocomplete="off" aria-label="A film or series you liked">
+      <div class="chips" id="liked-sugg"></div>
+      <div id="liked-results"></div>
     </div>
 
     <div class="filters">
@@ -69,7 +76,7 @@
       <div class="fgrid" id="cat-results"></div>
     </section>
   </main>
-  <script src="assets/data.js?v=49"></script>
-  <script src="assets/app.js?v=49"></script>
+  <script src="assets/data.js?v=50"></script>
+  <script src="assets/app.js?v=50"></script>
 </body>
 </html>

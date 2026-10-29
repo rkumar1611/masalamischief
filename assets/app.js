@@ -873,6 +873,7 @@ function initReview() {
           <button class="btn" id="save" type="button"></button>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
+        <div id="similar-slot"></div>
         <div id="ext-slot">${extLinks({ im: IMAGES[m.id] && IMAGES[m.id].imdb, tmdbUrl: IMAGES[m.id] && IMAGES[m.id].tmdb ? `https://www.themoviedb.org/movie/${IMAGES[m.id].tmdb}` : "" })}</div>
       </article>
       <aside>
@@ -939,6 +940,11 @@ function initReview() {
   });
 
   reviewsLeaving().then((lv) => { if (lv[m.id]) document.getElementById("leave-slot").innerHTML = leavingLine(lv[m.id]); });
+  // More like this: from the film's catalogue entry (TMDB recommendations) when we have it.
+  const code = LANG_CODE[m.lang] || "en";
+  const tmdbId = IMAGES[m.id] && IMAGES[m.id].tmdb;
+  (tmdbId ? loadTitle(code, String(tmdbId)) : Promise.resolve(null)).then((f) =>
+    renderMoreLike(document.getElementById("similar-slot"), f || { l: code, id: tmdbId || m.id, g: m.genres, y: m.year }, `🍿 Liked ${m.title}? Try these`));
 
   // Watchlist
   const save = document.getElementById("save");
@@ -975,6 +981,34 @@ function initSuggest() {
   document.getElementById("dubs").addEventListener("change", (e) => { state.dubs = e.target.checked; draw(); });
   document.getElementById("family").addEventListener("change", (e) => { state.family = e.target.checked; draw(); });
   document.getElementById("time").addEventListener("change", (e) => { state.maxTime = +e.target.value; draw(); });
+  // I liked…: search the catalogue as you type, then show "More like this" for the title picked.
+  const liked = document.getElementById("liked");
+  const sugg = document.getElementById("liked-sugg");
+  const likedOut = document.getElementById("liked-results");
+  let likedTimer = 0;
+  liked.addEventListener("input", () => {
+    clearTimeout(likedTimer);
+    likedTimer = setTimeout(async () => {
+      const term = liked.value.trim();
+      const found = term.length < 2 ? [] : (await searchCatalog(term)).sort((a, b) => b.n - a.n).slice(0, 6);
+      if (liked.value.trim() !== term) return;
+      sugg.innerHTML = found.map((f) => `<button class="chip" type="button" data-l="${f.l}" data-id="${esc(String(f.id))}">${esc(f.t)}${f.y ? ` (${f.y})` : ""}${f.k === "tv" ? " · series" : ""}</button>`).join("")
+        || (term.length >= 2 ? `<span class="muted small">No match yet. Try another spelling.</span>` : "");
+    }, 250);
+  });
+  sugg.addEventListener("click", async (e) => {
+    const b = e.target.closest("button[data-id]");
+    if (!b) return;
+    sugg.innerHTML = "";
+    likedOut.innerHTML = `<p class="muted">Finding films like ${esc(b.textContent)}…</p>`;
+    const f = await loadTitle(b.dataset.l, b.dataset.id);
+    if (!f) { likedOut.innerHTML = `<p class="muted">Couldn't load that one. Try another.</p>`; return; }
+    liked.value = f.t;
+    likedOut.innerHTML = "";
+    await renderMoreLike(likedOut, f, `🍿 Because you liked ${f.t}`);
+    if (!likedOut.innerHTML) likedOut.innerHTML = `<p class="muted">We couldn't find similar titles for that one yet.</p>`;
+  });
+
   // Surprise me: five random picks that fit the choices, from our reviews (up to two) and the catalogue's
   // best matches, so there's something to choose between. Tapping again shuffles.
   let drawSeq = 0;
@@ -1581,6 +1615,37 @@ function rankWithFallback(arr, want, minVotes = 20) {
   }
   return out;
 }
+// More like this: TMDB's recommendations (f.rc, from the weekly build) that we have pages for, then titles
+// in the same language and kind with the most genres in common, well-rated and close in year first.
+async function moreLikeThis(f, n = 6) {
+  const [cat, pop] = await Promise.all([loadIndex([f.l]), loadCatalog("popular")]);
+  if (!cat) return [];
+  const byKey = new Map([...(pop ? pop.films : []), ...cat.films].map((x) => [`${x.l}-${x.id}`, x]));
+  const seen = new Set([`${f.l}-${f.id}`]);
+  const out = [];
+  const add = (x) => { const k = `${x.l}-${x.id}`; if (x && !seen.has(k)) { seen.add(k); out.push(x); } };
+  (f.rc || []).map((k) => byKey.get(k)).filter(Boolean).forEach(add);
+  if (out.length < n) {
+    const g = new Set(f.g || []);
+    const tv = f.k === "tv";
+    const overlap = (x) => { const shared = (x.g || []).filter((y) => g.has(y)).length; return shared / (g.size + (x.g || []).length - shared || 1); };
+    const ranked = rankWithFallback(cat.films.filter((x) => (x.k === "tv") === tv && !seen.has(`${x.l}-${x.id}`) && (x.g || []).some((y) => g.has(y))), 80);
+    ranked.slice(0, 300)
+      .map((x, i) => [x, overlap(x) * 2 - i / 300 - (f.y && x.y ? Math.min(Math.abs(f.y - x.y), 30) / 60 : 0)])
+      .sort((a, b) => b[1] - a[1]).slice(0, n).forEach(([x]) => add(x));
+  }
+  return out.slice(0, n);
+}
+// Fills a slot with "More like this" for title f (a catalogue entry, or a stand-in for one of our reviews).
+async function renderMoreLike(slot, f, heading) {
+  if (!slot) return;
+  const list = await moreLikeThis(f);
+  if (!list.length) return;
+  const byTmdb = reviewedByTmdb();
+  slot.innerHTML = `<section class="more-like"><div class="section-head"><h2>${esc(heading)}</h2></div>
+    <div class="fgrid">${list.map((x) => filmCard({ ...x, mine: x.k !== "tv" && byTmdb[x.id] })).join("")}</div></section>`;
+}
+
 // One of our reviews shaped like a catalogue entry, for filmCard (it links to the review).
 const reviewAsFilm = (m) => ({ t: m.title, l: LANG_CODE[m.lang] || "en", id: (IMAGES[m.id] || {}).tmdb, y: m.year,
   p: (IMAGES[m.id] || {}).poster, v: m.quality, w: streamsOn(m), mine: m });
@@ -1832,6 +1897,7 @@ async function initFilm() {
           <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
+        <div id="similar-slot"></div>
         ${extLinks({ im: f.im, wd: f.wd, tmdbUrl: `https://www.themoviedb.org/${tv ? `tv/${String(f.id).slice(2)}` : `movie/${f.id}`}` })}
       </article>
       <aside>
@@ -1868,6 +1934,7 @@ async function initFilm() {
   document.getElementById("copy").onclick = async (e) => {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
   };
+  renderMoreLike(document.getElementById("similar-slot"), f, `🍿 Liked ${f.t}? Try these`);
 
   root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
   initCommunity(`c:${code}-${rawId}`, document.getElementById("community"), f.t);
