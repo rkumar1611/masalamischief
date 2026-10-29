@@ -88,7 +88,7 @@ function renderChrome() {
           <a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("Film reviews, what to watch tonight and where to stream it: https://masalamischief.in")}">Share Masala Mischief on WhatsApp</a>
           <button class="btn small install-btn" type="button" hidden>📲 Install the app</button>
           <button class="btn small alert-btn" type="button" hidden>🔔 Weekly OTT alerts</button>
-          <p class="install-help small muted" id="install-help" hidden>On iPhone: tap the Share button <b>⎋</b> in Safari, then <b>Add to Home Screen</b>.</p>
+          <p class="install-help small muted" id="install-help" hidden></p>
         </div>
         <nav class="footer-col" aria-label="Explore">
           <h4>Explore</h4>
@@ -169,31 +169,48 @@ function initAlerts() {
 }
 
 // Install as an app (manifest.webmanifest + sw.js). The service worker saves pages as you visit them so
-// the site, your watchlist included, opens offline. The Install buttons (footer, phone menu) show when
-// the browser offers installing (Android, desktop Chrome/Edge), or with how-to steps on iPhone Safari.
+// the site, your watchlist included, opens offline. The Install buttons (footer, phone menu) show
+// everywhere except inside the installed app. Where the browser offers installing (Android, desktop
+// Chrome/Edge) the button opens that; otherwise (iPhone, an offer dismissed earlier, already
+// installed) it shows the steps for that browser.
 let installPrompt = null;
+function installSteps(ua, installed) {
+  if (installed) return "The app is already on this device. Look for <b>Masala Mischief</b> on your home screen or in your apps.";
+  if (/iphone|ipad|ipod/i.test(ua)) return "On iPhone: tap the Share button <b>⎋</b> (in Chrome it's at the top right), then <b>Add to Home Screen</b>.";
+  if (/samsungbrowser/i.test(ua)) return "Tap the <b>☰</b> menu at the bottom, then <b>Add page to</b> → <b>Home screen</b>.";
+  if (/android/i.test(ua) && /firefox/i.test(ua)) return "Tap the <b>⋮</b> menu, then <b>Install</b> (or <b>Add to Home screen</b>).";
+  if (/android/i.test(ua)) return "Tap the <b>⋮</b> menu at the top right, then <b>Install app</b> or <b>Add to Home screen</b>. Already added? Look for <b>Masala Mischief</b> on your home screen.";
+  if (/firefox/i.test(ua)) return "Firefox on computers can't install sites. Open masalamischief.in in Chrome or Edge to install it.";
+  if (/macintosh/i.test(ua) && !/chrome|edg/i.test(ua)) return "In Safari on a Mac: <b>File</b> → <b>Add to Dock</b>.";
+  return "Click the install icon at the right end of the address bar, or open the browser menu → <b>Install Masala Mischief</b>. Already installed? It's in your apps.";
+}
 function initInstall() {
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   }
   const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
   const btns = [...document.querySelectorAll(".install-btn")];
-  const show = (on) => btns.forEach((b) => (b.hidden = !on));
   if (standalone) return;
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent);
-  if (installPrompt || ios) show(true);
-  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; show(true); });
-  window.addEventListener("appinstalled", () => { installPrompt = null; show(false); });
+  btns.forEach((b) => (b.hidden = false));
+  let installed = false;
+  // Android Chrome can tell us the app is already installed (related_applications in the manifest).
+  if (navigator.getInstalledRelatedApps) {
+    navigator.getInstalledRelatedApps().then((apps) => { installed = apps.length > 0; }).catch(() => {});
+  }
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
+  window.addEventListener("appinstalled", () => { installPrompt = null; installed = true; });
   btns.forEach((b) => b.addEventListener("click", async () => {
     if (installPrompt) {
       installPrompt.prompt();
       const { outcome } = await installPrompt.userChoice.catch(() => ({}));
-      if (outcome === "accepted") { installPrompt = null; show(false); }
-    } else if (ios) {
-      const help = document.getElementById("install-help");
-      help.hidden = false;
-      help.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (outcome === "accepted") { installPrompt = null; installed = true; }
+      return;
     }
+    const help = document.getElementById("install-help");
+    help.innerHTML = installSteps(navigator.userAgent, installed);
+    help.hidden = false;
+    b.after(help); // right under the button that was tapped (footer or phone menu)
+    help.scrollIntoView({ behavior: "smooth", block: "center" });
   }));
 }
 // The browser can offer installing before the page has drawn its buttons.

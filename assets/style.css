@@ -147,6 +147,7 @@ main { padding-bottom: 64px; }
 .install-btn[hidden], .install-help[hidden] { display: none; }
 .footer-brand .install-btn { margin-left: 6px; }
 .install-help { margin-top: 8px; }
+.nav .install-help { grid-column: 1 / -1; margin: 0; padding: 2px 8px 6px; text-align: center; }
 
 /* Hero */
 .hero-band {
