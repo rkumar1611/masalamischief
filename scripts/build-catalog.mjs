@@ -499,7 +499,55 @@ async function daily() {
   await writeUpcoming(new Set(have.keys()));
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, ...rest }) => rest;
+
+// More like this (ml): six titles for each title page, worked out here so the page doesn't have to
+// download a whole language list: TMDB's recommendations (rc) first, then titles in the same language
+// and kind with the most genres in common, well rated and close in year (as moreLikeThis() in app.js
+// does when ml is missing). Each is [lang, id, title, year, poster, rating, series?, apps].
+const ML_COUNT = 6;
+const ML_POOL = 600; // best-rated titles per language and kind to choose from
+function addMoreLike(all) {
+  const byKey = new Map(all.map((f) => [keyOf(f), f]));
+  const poolKey = (f) => `${f.l}-${f.k === "tv" ? "tv" : "m"}`;
+  const pools = {};
+  for (const f of all) (pools[poolKey(f)] ||= []).push(f);
+  for (const [k, list] of Object.entries(pools)) {
+    // Same weighted rating as weightedRank() in app.js, so a few perfect votes don't win. 20+ votes
+    // where there are enough such titles (most languages), 5+ for the smaller ones.
+    const well = list.filter((f) => f.n >= 20);
+    const voted = well.length >= 200 ? well : list.filter((f) => f.n >= 5);
+    const C = voted.reduce((s, f) => s + f.v, 0) / (voted.length || 1);
+    const ns = voted.map((f) => f.n).sort((a, b) => a - b);
+    const m = Math.max(20, ns[Math.floor(ns.length / 2)] || 0);
+    const score = (f) => (f.n / (f.n + m)) * f.v + (m / (f.n + m)) * C;
+    pools[k] = voted.sort((a, b) => score(b) - score(a)).slice(0, ML_POOL);
+  }
+  const tuple = (x) => [x.l, x.id, x.t, x.y || 0, x.p || "", x.v, x.k === "tv" ? 1 : 0, (x.w || []).slice(0, 2)];
+  for (const f of all) {
+    const out = [];
+    const seen = new Set([keyOf(f)]);
+    for (const k of f.rc || []) {
+      const x = byKey.get(k);
+      if (x && !seen.has(k)) { seen.add(k); out.push(x); }
+      if (out.length >= ML_COUNT) break;
+    }
+    const g = new Set(f.g || []);
+    if (out.length < ML_COUNT && g.size) {
+      const scored = [];
+      (pools[poolKey(f)] || []).forEach((x, i) => {
+        if (seen.has(keyOf(x))) return;
+        const shared = (x.g || []).filter((y) => g.has(y)).length;
+        if (!shared) return;
+        const overlap = shared / (g.size + x.g.length - shared);
+        scored.push([x, overlap * 2 - i / ML_POOL - (f.y && x.y ? Math.min(Math.abs(f.y - x.y), 30) / 60 : 0)]);
+      });
+      scored.sort((a, b) => b[1] - a[1]);
+      for (const [x] of scored.slice(0, ML_COUNT - out.length)) out.push(x);
+    }
+    if (out.length) f.ml = out.map(tuple); else delete f.ml;
+  }
+}
 // Same as searchNorm() in assets/app.js: "K.G.F: Chapter 1" → "kgf chapter 1".
 const norm = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ");
 const STOPWORDS = new Set(["the", "a", "an", "of", "and"]);
@@ -517,6 +565,7 @@ function writeCatalogue(titles, trendIds) {
     f.rc = f.rc.filter((k) => keys.has(k) && k !== keyOf(f)).slice(0, 10);
     if (!f.rc.length) delete f.rc;
   }
+  addMoreLike(all);
 
   for (const lang of OUT_LANGS) {
     const mine = all.filter((f) => f.l === lang);
