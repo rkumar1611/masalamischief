@@ -17,15 +17,18 @@ export async function onRequestGet(context) {
     if (!m) return page;
 
     // Trailer/cast/Wikidata for our films (assets/catalog/reviewed.json, refreshed daily) and visitors' rating.
-    const [extras, audience] = await Promise.all([
-      context.env.ASSETS.fetch(new URL("/assets/catalog/reviewed.json", context.request.url))
-        .then((r) => (r.ok ? r.json() : {})).then((all) => all[m.id] || {}).catch(() => ({})),
+    // Where it streams now comes from reviewed-watch.json (re-checked daily); data.js is the fallback.
+    const json = (path) => context.env.ASSETS.fetch(new URL(path, context.request.url)).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const [extras, audience, fresh] = await Promise.all([
+      json("/assets/catalog/reviewed.json").then((all) => (all && all[m.id]) || {}),
       audienceRating(context.env, `r:${m.id}`),
+      json("/assets/catalog/reviewed-watch.json").then((all) => all && all.films && all.films[m.id]),
     ]);
 
     const img = (IMAGES && IMAGES[m.id]) || {};
     const lang = LANG_LABELS[m.lang] || m.lang;
-    const stream = (WATCH[m.id] && WATCH[m.id].stream) || [];
+    const stream = fresh ? fresh.w || [] : (WATCH[m.id] && WATCH[m.id].stream) || [];
+    const links = { ...((WATCH_LINKS && WATCH_LINKS[m.id]) || {}), ...((fresh && fresh.u) || {}) };
     const notes = PARENT_NOTES[m.id];
     const url = `${SITE}/review?id=${encodeURIComponent(m.id)}`;
     const title = `${m.title} (${m.year}) review · Masala Mischief`;
@@ -62,8 +65,8 @@ export async function onRequestGet(context) {
       actor: people(extras.cast),
       sameAs: sameAs(img.imdb, extras.wd),
       aggregateRating: aggregate(audience),
-      // Only the apps it's streaming on now (WATCH), with their direct links.
-      potentialAction: watchActions(Object.fromEntries(Object.entries((WATCH_LINKS && WATCH_LINKS[m.id]) || {}).filter(([app]) => stream.includes(app)))),
+      // Only the apps it's streaming on now, with their direct links.
+      potentialAction: watchActions(Object.fromEntries(Object.entries(links).filter(([app]) => stream.includes(app)))),
     };
     const jsonLd = {
       "@context": "https://schema.org",

@@ -148,7 +148,7 @@ function renderChrome() {
         </nav>
       </div>
       <div class="footer-bottom">
-        <p>📺 Where-to-watch info from <a href="https://www.justwatch.com/in" target="_blank" rel="noopener">JustWatch</a> and TMDB, last checked ${fmtDate(WATCH_CHECKED)}. Apps add and remove films often, so check the app before you subscribe.</p>
+        <p>📺 Where-to-watch info from <a href="https://www.justwatch.com/in" target="_blank" rel="noopener">JustWatch</a> and TMDB, updated <span data-watch-date>${fmtDate(WATCH_CHECKED)}</span>. Apps add and remove films often, so check the app before you subscribe.</p>
         <p class="credits"><a class="tmdb-badge" href="https://www.themoviedb.org/" target="_blank" rel="noopener" aria-label="TMDB">TMDB</a>
           Film details, images, cast and trailers from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB. Trailers play from YouTube.</p>
         <p>© ${new Date().getFullYear()} Masala Mischief · Made in India 🇮🇳</p>
@@ -997,6 +997,25 @@ function initReviews() {
   draw();
 }
 
+/* ---------- Where our reviewed films stream now ----------
+   WATCH and WATCH_LINKS in data.js were checked by hand (WATCH_CHECKED). The weekly JustWatch check in
+   the catalogue build writes assets/catalog/reviewed-watch.json; this folds that in before pages draw.
+   Rent/buy options only exist in the hand-made list, so they're kept. */
+let watchUpdated = WATCH_CHECKED;
+async function freshenWatch() {
+  const data = await Promise.race([loadCatalog("reviewed-watch"), new Promise((resolve) => setTimeout(() => resolve(null), 1500))]);
+  if (!data || !data.films) return;
+  for (const [id, x] of Object.entries(data.films)) {
+    const before = WATCH[id] || { stream: [], rent: [] };
+    WATCH[id] = { stream: x.w || [], rent: (before.rent || []).filter((a) => !(x.w || []).includes(a)) };
+    // Direct links: the fresh ones, plus the old ones for apps it's still on (or to rent from).
+    const keep = new Set([...WATCH[id].stream, ...WATCH[id].rent]);
+    WATCH_LINKS[id] = { ...Object.fromEntries(Object.entries(WATCH_LINKS[id] || {}).filter(([a]) => keep.has(a))), ...(x.u || {}) };
+  }
+  if (data.checked > watchUpdated) watchUpdated = data.checked;
+  document.querySelectorAll("[data-watch-date]").forEach((el) => (el.textContent = fmtDate(watchUpdated)));
+}
+
 /* ---------- Share a review as an image ----------
    A 1080 × 1920 card (Instagram / WhatsApp Status size), drawn on the phone: poster, Masala Meter, score,
    tagline and the site's logo. TMDB serves posters to any site (CORS), so the canvas can be saved. */
@@ -1187,7 +1206,7 @@ function initReview() {
             ? `<p class="muted small">Included with subscription · tap to open</p>${platformLinks(m, watch.stream)}`
             : `<p class="muted small">Not on a subscription service in India right now.</p>`}
           ${watch.rent.length ? `<p class="muted small" style="margin-top:12px">Rent or buy</p>${platformLinks(m, watch.rent)}` : ""}
-          <p class="fine">Checked ${fmtDate(WATCH_CHECKED)}. Availability changes, so confirm in the app.</p>
+          <p class="fine">Updated ${fmtDate(watchUpdated)}. Availability changes, so confirm in the app.</p>
         </div>
         <div class="side">
           <dl>
@@ -2838,4 +2857,6 @@ async function initUpcoming() {
 }
 
 renderChrome();
-({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming }[document.body.dataset.page] || (() => {}))();
+// Fresh where-to-watch for our reviews first (a small file, waited for at most 1.5 s), then the page.
+freshenWatch().catch(() => {}).finally(() =>
+  ({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming }[document.body.dataset.page] || (() => {}))());
