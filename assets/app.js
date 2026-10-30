@@ -438,14 +438,16 @@ function initSiteSearch() {
       if (searchNorm(q.value) !== term) return; // a newer search is on its way
       const mineIds = new Set();
       const theirs = found.filter((f) => !(f.k !== "tv" && byTmdb[f.id] && mineIds.add(byTmdb[f.id].id)));
-      // Best match first (our reviews win a tie), then the better-known title.
-      const hits = [...ours.map((f) => ({ ...f, score: mineIds.has(f.mine.id) ? 4 : titleMatch(term, f.t) })).filter((f) => f.score),
-        ...theirs.map((f) => ({ ...f, score: titleMatch(term, f.t) }))]
+      // Best match first (our reviews win a tie), then the better-known title. Short forms ("ddlj")
+      // are scored as the full title.
+      const tq = nickname("titles", term) || term;
+      const hits = [...ours.map((f) => ({ ...f, score: mineIds.has(f.mine.id) ? 4 : titleMatch(tq, f.t) })).filter((f) => f.score),
+        ...theirs.map((f) => ({ ...f, score: titleMatch(tq, f.t) }))]
         .sort((a, b) => matchStep(b.score) - matchStep(a.score) || (b.mine ? 1 : 0) - (a.mine ? 1 : 0) || b.n - a.n)
         .slice(0, 8);
       // Actors and directors first when the search is clearly a name: their match beats the titles', or
       // it's a close match for someone well known ("mohanlal" → the actor before the 2018 film Mohanlal).
-      const pScore = people.length ? titleMatch(term, people[0].name) : 0;
+      const pScore = !people.length ? 0 : nickname("people", term) ? 3 : titleMatch(term, people[0].name);
       const peopleFirst = people.length && (!hits.length || pScore > hits[0].score || (pScore >= 2.5 && people[0].titles >= 10));
       const peopleHtml = people.map((p) => `
             <a class="sr" href="person.html?id=${p.id}">
@@ -588,7 +590,7 @@ function poster(m, big = false) {
   const icon = GENRE_ICONS[m.genres[0]] || "🎬";
   const still = m.still || (IMAGES[m.id] && IMAGES[m.id].backdrop);
   return `<div class="poster lang-${m.lang}${big ? " big" : ""}${still ? " has-img" : ""}">
-      ${still ? `<img class="poster-img" src="${tmdb(still, big ? "w1280" : "w780")}" alt="" loading="${big ? "eager" : "lazy"}" decoding="async">` : ""}
+      ${still ? `<img class="poster-img" src="${tmdb(still, big ? "w1280" : "w780")}" ${big ? `srcset="${tmdb(still, "w780")} 780w, ${tmdb(still, "w1280")} 1280w" sizes="(max-width: 700px) 100vw, 1100px"` : ""} alt="" loading="${big ? "eager" : "lazy"}" decoding="async">` : ""}
       <span class="lang-pill">${langLabel(m.lang)} · ${m.year}</span>
       ${PARENT_NOTES[m.id] ? `<span class="age-pill" title="Family Pick">👪 ${PARENT_NOTES[m.id].age}+</span>` : m.cert ? `<span class="age-pill" title="Indian certificate">${esc(m.cert)}</span>` : ""}
       <span class="poster-icon" aria-hidden="true">${icon}</span>
@@ -995,6 +997,128 @@ function initReviews() {
   draw();
 }
 
+/* ---------- Share a review as an image ----------
+   A 1080 × 1920 card (Instagram / WhatsApp Status size), drawn on the phone: poster, Masala Meter, score,
+   tagline and the site's logo. TMDB serves posters to any site (CORS), so the canvas can be saved. */
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+// Lines of `text` that fit `width` in the context's current font, at most `max` (the last one ends "…").
+function wrapLines(g, text, width, max) {
+  const words = String(text).split(/\s+/);
+  const lines = [];
+  let line = "";
+  for (const w of words) {
+    const next = line ? `${line} ${w}` : w;
+    if (g.measureText(next).width <= width || !line) line = next;
+    else { lines.push(line); line = w; }
+  }
+  if (line) lines.push(line);
+  if (lines.length > max) {
+    lines.length = max;
+    while (g.measureText(`${lines[max - 1]}…`).width > width && lines[max - 1].includes(" ")) lines[max - 1] = lines[max - 1].replace(/\s+\S+$/, "");
+    lines[max - 1] += "…";
+  }
+  return lines;
+}
+async function reviewCard(m) {
+  const W = 1080, H = 1920;
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const g = c.getContext("2d");
+  await Promise.all(["800 80px 'Baloo 2'", "600 36px Inter", "italic 400 40px Inter"].map((f) => document.fonts.load(f).catch(() => {})));
+  // Background: dark, with a warm chilli glow behind the poster.
+  g.fillStyle = "#1c1416"; g.fillRect(0, 0, W, H);
+  const glow = g.createRadialGradient(W / 2, 700, 80, W / 2, 700, 900);
+  glow.addColorStop(0, "rgba(215,38,61,0.45)"); glow.addColorStop(1, "rgba(215,38,61,0)");
+  g.fillStyle = glow; g.fillRect(0, 0, W, H);
+  // Logo badge.
+  g.fillStyle = "#fff3dc";
+  g.beginPath(); g.roundRect(W / 2 - 250, 70, 500, 120, 60); g.fill();
+  const logo = await loadImage("assets/logo.svg").catch(() => null);
+  if (logo) g.drawImage(logo, W / 2 - 230, 88, 150, 84);
+  g.fillStyle = "#26121a"; g.font = "800 46px 'Baloo 2', sans-serif"; g.textBaseline = "middle"; g.textAlign = "left";
+  g.fillText("Masala", W / 2 - 60, 112);
+  g.fillStyle = "#d7263d"; g.fillText("Mischief", W / 2 - 60, 156);
+  // Poster.
+  const img = IMAGES[m.id] || {};
+  const pw = 600, ph = 900, px = (W - pw) / 2, py = 250;
+  const poster = img.poster ? await loadImage(tmdb(img.poster, "w780")).catch(() => null) : null;
+  g.save();
+  g.shadowColor = "rgba(0,0,0,0.6)"; g.shadowBlur = 50; g.shadowOffsetY = 20;
+  g.beginPath(); g.roundRect(px, py, pw, ph, 32); g.fillStyle = "#3a2a2e"; g.fill();
+  g.restore();
+  if (poster) { g.save(); g.beginPath(); g.roundRect(px, py, pw, ph, 32); g.clip(); g.drawImage(poster, px, py, pw, ph); g.restore(); }
+  // Title, language · year.
+  g.textAlign = "center"; g.textBaseline = "alphabetic";
+  g.fillStyle = "#fff3dc"; g.font = "800 80px 'Baloo 2', sans-serif";
+  const titleLines = wrapLines(g, m.title, W - 140, 2);
+  let y = py + ph + 110;
+  titleLines.forEach((l) => { g.fillText(l, W / 2, y); y += 78; });
+  g.fillStyle = "#c9b8ad"; g.font = "600 36px Inter, sans-serif";
+  g.fillText(`${langLabel(m.lang)} · ${m.year}${m.runtime ? ` · ${fmtRuntime(m.runtime)}` : ""}`, W / 2, y + 2);
+  // Masala Meter and score, side by side.
+  y += 100;
+  g.font = "64px sans-serif";
+  for (let i = 0; i < 5; i++) { g.globalAlpha = i < m.masala ? 1 : 0.22; g.fillText("🌶️", W / 2 - 330 + i * 72, y); }
+  g.globalAlpha = 1;
+  g.fillStyle = "#f6b73c"; g.font = "800 84px 'Baloo 2', sans-serif"; g.textAlign = "right";
+  g.fillText(`${m.quality}`, W / 2 + 290, y + 4);
+  g.fillStyle = "#c9b8ad"; g.font = "600 36px Inter, sans-serif"; g.textAlign = "left";
+  g.fillText("/10", W / 2 + 296, y);
+  g.textAlign = "center"; g.font = "600 28px Inter, sans-serif"; g.fillStyle = "#c9b8ad";
+  g.fillText("MASALA METER", W / 2 - 186, y + 52);
+  g.fillText("QUALITY", W / 2 + 270, y + 52);
+  // Tagline.
+  y += 150;
+  g.fillStyle = "#fff3dc"; g.font = "italic 400 40px Inter, sans-serif";
+  // Two lines at most under a two-line title, so it never runs into the footer.
+  wrapLines(g, `“${m.tagline}”`, W - 180, titleLines.length > 1 ? 2 : 3).forEach((l) => { g.fillText(l, W / 2, y); y += 56; });
+  // Footer.
+  g.fillStyle = "#f6b73c"; g.font = "700 36px Inter, sans-serif";
+  g.fillText("Full review & where to stream", W / 2, H - 130);
+  g.fillStyle = "#fff3dc"; g.font = "800 46px 'Baloo 2', sans-serif";
+  g.fillText("masalamischief.in", W / 2, H - 70);
+  return new Promise((resolve) => c.toBlob(resolve, "image/jpeg", 0.9)); // a few hundred KB (PNG: ~2 MB)
+}
+// Phones: the share sheet with the image (Instagram, WhatsApp Status…). Elsewhere: a preview to save.
+async function shareReviewCard(m, btn, text) {
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ Making the image…";
+  try {
+    const blob = await reviewCard(m);
+    const file = new File([blob], `${m.id}-masala-mischief.jpg`, { type: "image/jpeg" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], text }).catch(() => {});
+    } else {
+      const url = URL.createObjectURL(blob);
+      const box = document.createElement("div");
+      box.className = "card-preview";
+      box.innerHTML = `<div class="card-preview-inner">
+          <img src="${url}" alt="Share card for ${esc(m.title)}">
+          <div class="cta-row"><a class="btn primary" href="${url}" download="${file.name}">⬇️ Save image</a><button class="btn" type="button" data-close>Close</button></div>
+          <p class="muted small">Then post it to your Instagram or WhatsApp Status. On iPhone, press and hold the image to save it.</p>
+        </div>`;
+      const close = () => { box.remove(); URL.revokeObjectURL(url); };
+      box.addEventListener("click", (e) => { if (e.target === box || e.target.closest("[data-close]")) close(); });
+      document.body.append(box);
+    }
+  } catch {
+    btn.textContent = "Couldn't make the image. Try again";
+    btn.disabled = false;
+    return;
+  }
+  btn.textContent = label;
+  btn.disabled = false;
+}
+
 /* ---------- Single review ---------- */
 function initReview() {
   const id = new URLSearchParams(location.search).get("id");
@@ -1050,6 +1174,7 @@ function initReview() {
           <span id="trailer-slot">${trailerBtn("", m.title, `${m.title} ${m.year} official trailer`)}</span>
           <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="save" type="button"></button>
+          <button class="btn" id="share-card" type="button">📸 Share as image</button>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
         <div id="ext-slot">${extLinks({ im: IMAGES[m.id] && IMAGES[m.id].imdb, tmdbUrl: IMAGES[m.id] && IMAGES[m.id].tmdb ? `https://www.themoviedb.org/movie/${IMAGES[m.id].tmdb}` : "" })}</div>
@@ -1124,6 +1249,9 @@ function initReview() {
   const tmdbId = IMAGES[m.id] && IMAGES[m.id].tmdb;
   (tmdbId ? loadTitle(code, String(tmdbId)) : Promise.resolve(null)).then((f) =>
     renderMoreLike(document.getElementById("similar-slot"), f || { l: code, id: tmdbId || m.id, g: m.genres, y: m.year }, `🍿 Liked ${m.title}? Try these`));
+
+  // Share as image: a Story-sized card for Instagram or WhatsApp Status.
+  document.getElementById("share-card").addEventListener("click", (e) => shareReviewCard(m, e.currentTarget, `${shareText} ${pageUrl}`));
 
   // Watchlist
   const save = document.getElementById("save");
@@ -1818,6 +1946,47 @@ function titleMatch(query, title) {
 const matchStep = (s) => Math.round(s);
 const byMatch = (score, votes) => (a, b) => matchStep(score(b)) - matchStep(score(a)) || votes(b) - votes(a);
 
+// Nicknames and short forms people actually search with, mapped to the real name or title.
+const NICKNAMES = {
+  people: {
+    "srk": "Shah Rukh Khan", "king khan": "Shah Rukh Khan", "shahrukh khan": "Shah Rukh Khan",
+    "bhai": "Salman Khan", "sallu": "Salman Khan", "big b": "Amitabh Bachchan", "bachchan": "Amitabh Bachchan",
+    "thalaivar": "Rajinikanth", "superstar rajini": "Rajinikanth", "rajini": "Rajinikanth",
+    "thala": "Ajith Kumar", "ajith": "Ajith Kumar", "thalapathy": "Vijay", "thalapathy vijay": "Vijay",
+    "jr ntr": "N.T. Rama Rao Jr.", "ntr": "N.T. Rama Rao Jr.", "ntr jr": "N.T. Rama Rao Jr.", "junior ntr": "N.T. Rama Rao Jr.", "tarak": "N.T. Rama Rao Jr.",
+    "mahesh": "Mahesh Babu", "megastar": "Chiranjeevi", "chiru": "Chiranjeevi", "power star": "Pawan Kalyan", "pspk": "Pawan Kalyan",
+    "darling": "Prabhas", "rebel star": "Prabhas", "bunny": "Allu Arjun", "icon star": "Allu Arjun", "stylish star": "Allu Arjun",
+    "rocking star": "Yash", "rocky bhai": "Yash", "lalettan": "Mohanlal", "mammukka": "Mammootty", "ikka": "Mammootty",
+    "ulaganayagan": "Kamal Haasan", "ulaganayakan": "Kamal Haasan", "mr perfectionist": "Aamir Khan",
+    "khiladi": "Akshay Kumar", "akki": "Akshay Kumar", "bebo": "Kareena Kapoor Khan", "kareena": "Kareena Kapoor Khan",
+    "greek god": "Hrithik Roshan", "duggu": "Hrithik Roshan", "nawaz": "Nawazuddin Siddiqui", "rk": "Ranbir Kapoor",
+    "ssr": "Sushant Singh Rajput", "dq": "Dulquer Salmaan", "fafa": "Fahadh Faasil", "vjs": "Vijay Sethupathi",
+    "makkal selvan": "Vijay Sethupathi", "charan": "Ram Charan", "cherry": "Ram Charan", "prithvi": "Prithviraj Sukumaran",
+    "prithviraj": "Prithviraj Sukumaran", "sk": "Sivakarthikeyan", "natural star": "Nani", "appu": "Puneeth Rajkumar",
+    "power star puneeth": "Puneeth Rajkumar", "lady superstar": "Nayanthara", "pc": "Priyanka Chopra Jonas",
+    "priyanka chopra": "Priyanka Chopra Jonas", "ssr rajamouli": "S. S. Rajamouli", "jakkanna": "S. S. Rajamouli",
+    "slb": "Sanjay Leela Bhansali", "kjo": "Karan Johar", "lokesh": "Lokesh Kanagaraj", "loki": "Lokesh Kanagaraj",
+  },
+  titles: {
+    "ddlj": "Dilwale Dulhania Le Jayenge", "k3g": "Kabhi Khushi Kabhie Gham", "kkhh": "Kuch Kuch Hota Hai",
+    "znmd": "Zindagi Na Milegi Dobara", "yjhd": "Yeh Jawaani Hai Deewani", "khnh": "Kal Ho Naa Ho", "jwm": "Jab We Met",
+    "dch": "Dil Chahta Hai", "rnbdj": "Rab Ne Bana Di Jodi", "gow": "Gangs of Wasseypur", "mnik": "My Name Is Khan",
+    "ps1": "Ponniyin Selvan: Part I", "ps 1": "Ponniyin Selvan: Part I", "ps2": "Ponniyin Selvan: Part II", "ps 2": "Ponniyin Selvan: Part II",
+    "lotr": "The Lord of the Rings", "got": "Game of Thrones", "hotd": "House of the Dragon", "tbbt": "The Big Bang Theory",
+    "b99": "Brooklyn Nine-Nine", "himym": "How I Met Your Mother", "mi": "Mission: Impossible", "hp": "Harry Potter",
+  },
+};
+// The real name for a nickname, or "" (also when it would only point back to itself). Keys are compared
+// in the same split-up form as searches ("k3g" → "k 3 g").
+let nicknameKeys = null;
+const nickname = (kind, q) => {
+  nicknameKeys ||= Object.fromEntries(Object.entries(NICKNAMES).map(([k, map]) =>
+    [k, Object.fromEntries(Object.entries(map).map(([nick, real]) => [searchWords(nick).join(" "), real]))]));
+  const key = searchWords(q).join(" ");
+  const real = nicknameKeys[kind][key] || "";
+  return real && searchWords(real).join(" ") !== key ? real : "";
+};
+
 // The search index files go by a word's first two letters; a misspelling can start differently
 // ("bahubali", "doom" for "Dhoom"), so look in the files for the sound-alike start too, for the first
 // two words. Same for titles (s/) and people (ps/).
@@ -1837,6 +2006,9 @@ function searchFiles(q) {
 // Actors and directors matching a search (ps/<ab>.json, built with the catalogue): { id, name, photo,
 // titles }, best match first, then whoever has more titles. Empty until the index exists.
 async function searchPeople(term, limit = 6) {
+  // A nickname ("srk", "thalaivar", "jr ntr") stands for the person's real name.
+  const real = nickname("people", term);
+  if (real) return (await searchPeople(real, 1)).slice(0, 1); // just that person
   const q = searchNorm(term);
   if (q.length < 3) return [];
   const parts = await Promise.all(searchFiles(q).map((f) => loadCatalog(`ps/${f}`)));
@@ -1858,6 +2030,9 @@ async function searchPeople(term, limit = 6) {
 }
 
 async function searchCatalog(term) {
+  // A short form ("ddlj", "k3g", "got") stands for the full title.
+  const real = nickname("titles", term);
+  if (real) return searchCatalog(real);
   const q = searchNorm(term);
   if (!q) return [];
   if ((await catLayout()) < 2) {
@@ -2012,7 +2187,7 @@ function filmCard(f, rank, note) {
   return `
     <a class="fcard" href="${filmHref(f)}">
       <div class="fposter">
-        ${f.p ? `<img src="${tmdb(f.p, "w342")}" alt="" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
+        ${f.p ? `<img src="${tmdb(f.p, "w342")}" srcset="${tmdb(f.p, "w185")} 185w, ${tmdb(f.p, "w342")} 342w" sizes="(max-width: 700px) 46vw, 180px" alt="" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
         ${rank ? `<span class="fbadge rank">#${rank}</span>` : ""}
         ${m ? `<span class="fbadge mine" title="Reviewed by Masala Mischief">🌶️ ${m.masala}/5</span>` : ""}
         <span class="fbadge score" title="${m ? "Our score" : "TMDB rating"}">★ ${m ? m.quality : f.v}</span>
@@ -2158,8 +2333,9 @@ async function initFilms() {
       fillOptions(list);
     }
     const fit = new Map();
+    const qTitle = nickname("titles", q) || q; // "ddlj" → Dilwale Dulhania Le Jayenge
     const matches = (f) => {
-      const s = Math.max(titleMatch(q, f.t), f.o ? titleMatch(q, f.o) : 0);
+      const s = Math.max(titleMatch(qTitle, f.t), f.o ? titleMatch(qTitle, f.o) : 0);
       fit.set(f, s);
       return s;
     };
