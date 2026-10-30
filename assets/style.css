@@ -102,7 +102,9 @@ main { padding-bottom: 64px; }
   font-family: var(--font-display); font-weight: 800; font-size: 1.45rem; text-decoration: none;
   letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: 8px;
 }
-.logo span:not(.logo-mark) { color: var(--chilli); }
+/* "Masala" over "Mischief", next to the projector */
+.logo-words { display: flex; flex-direction: column; line-height: 0.95; }
+.logo-words span { color: var(--chilli); }
 /* The projector logo is wide (448 × 252): 40 px tall in the header. Its dark parts use the text colour,
    so they show on the dark theme too. */
 .logo-mark { display: block; height: 40px; width: 71px; flex: none; transition: transform 0.2s; }
@@ -138,7 +140,7 @@ main { padding-bottom: 64px; }
   .site-header .wrap .search-btn { order: 2; margin-left: 0; }
   .site-header .wrap #theme-btn { order: 3; margin-left: 0; }
   .site-header .wrap { gap: 6px; }
-  .site-header .logo { font-size: 1.22rem; gap: 6px; }
+  .site-header .logo { font-size: 1.15rem; gap: 6px; }
   .site-header .logo-mark { width: 60px; height: 34px; }
   .site-header .theme-btn { width: 36px; height: 36px; }
   .nav { display: none; }
