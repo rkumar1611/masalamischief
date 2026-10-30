@@ -80,6 +80,18 @@ const APP_RULES = [
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const day = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const keyOf = (f) => `${f.l}-${f.id}`;
+// Our reviewed films (assets/data.js): TMDB id → our review id. Their "where to watch" comes from the
+// weekly JustWatch check (ja), into reviewed-watch.json.
+let reviewedCache = null;
+function reviewedFilms() {
+  if (reviewedCache) return reviewedCache;
+  reviewedCache = new Map();
+  try {
+    const { IMAGES } = new Function(`${readFileSync(DATA, "utf8")}; return { IMAGES };`)();
+    for (const [rid, i] of Object.entries(IMAGES)) if (i.tmdb) reviewedCache.set(i.tmdb, rid);
+  } catch {}
+  return reviewedCache;
+}
 const numId = (id) => +String(id).replace(/^tv/, "");
 
 async function tmdb(path, params = {}) {
@@ -197,6 +209,10 @@ const jwLeaving = new Map(); // same keys as the links → { app: date }
 // Dubbed versions: the audio languages of subscription offers (Prime Video, JioHotstar and ZEE5 list
 // them; Netflix doesn't), kept as f.au = other languages it can be watched in, and dubs-<code>.json.
 const jwAudio = new Map(); // same keys → Set of language codes
+// The apps JustWatch lists a title on, with a subscription or free with ads (f.ja). TMDB's own app list
+// misses many JioHotstar, ZEE5 and MX Player listings, so review pages use this one.
+const jwApps = new Map(); // same keys → Set of app names
+const JW_WATCH_TYPES = ["FLATRATE", "ADS", "FREE"];
 const DUB_LIST = 1500;     // best-known titles per dubs-<code>.json
 
 // Map of TMDB id ("123", "tv123") and IMDb id ("tt…") → { app: url }, or null if JustWatch failed.
@@ -244,8 +260,10 @@ async function appLinks() {
               addLeaving(ids.imdbId, JW_APPS[pkg], ends);
               const audio = (node.offers || []).filter((o) => o.monetizationType === "FLATRATE").flatMap((o) => o.audioLanguages || [])
                 .filter((c) => OUT_LANGS.includes(c));
+              const watchable = (node.offers || []).some((o) => JW_WATCH_TYPES.includes(o.monetizationType));
               for (const key of [tmdbKey, ids.imdbId].filter(Boolean)) {
                 if (audio.length) audio.forEach((c) => (jwAudio.get(key) || jwAudio.set(key, new Set()).get(key)).add(c));
+                if (watchable) (jwApps.get(key) || jwApps.set(key, new Set()).get(key)).add(JW_APPS[pkg]);
               }
             }
             if (!p.pageInfo.hasNextPage) break;
@@ -265,19 +283,25 @@ async function appLinks() {
   return null;
 }
 
-// f.u = { app: direct link } for the apps in f.w that JustWatch has a page for (title pages only).
-// Without fresh links (JustWatch down), each title keeps the links it had.
+// f.u = { app: direct link } for the apps the title is on (TMDB's f.w and JustWatch's f.ja) that
+// JustWatch has a page for. Without fresh links (JustWatch down), each title keeps what it had.
 function attachLinks(titles, links, have) {
+  linksFresh = Boolean(links);
   let n = 0;
   for (const f of titles) {
-    const old = { ...have.get(keyOf(f))?.u, ...f.u };
+    const was = have.get(keyOf(f));
+    // JustWatch's own app list (empty = on no app now), or last week's when this sweep didn't run.
+    const ja = links ? [...new Set([...((f.im && jwApps.get(f.im)) || []), ...(jwApps.get(String(f.id)) || [])])].sort() : was?.ja || f.ja;
+    if (ja) f.ja = ja; else delete f.ja;
+    const apps = [...new Set([...f.w, ...(f.ja || [])])];
+    const old = { ...was?.u, ...f.u };
     const found = links ? { ...(f.im && links.get(f.im)), ...links.get(String(f.id)) } : old;
-    const u = Object.fromEntries(f.w.filter((a) => found[a]).map((a) => [a, found[a]]));
+    const u = Object.fromEntries(apps.filter((a) => found[a]).map((a) => [a, found[a]]));
     if (Object.keys(u).length) { f.u = u; n++; } else delete f.u;
     // Leaving dates: fresh from this sweep, or last week's ones that haven't passed yet.
-    const oldLv = { ...have.get(keyOf(f))?.lv, ...f.lv };
+    const oldLv = { ...was?.lv, ...f.lv };
     const ends = links ? { ...(f.im && jwLeaving.get(f.im)), ...jwLeaving.get(String(f.id)) } : oldLv;
-    const lv = Object.fromEntries(f.w.filter((a) => ends[a] && ends[a] >= day(0)).map((a) => [a, ends[a]]));
+    const lv = Object.fromEntries(apps.filter((a) => ends[a] && ends[a] >= day(0)).map((a) => [a, ends[a]]));
     if (Object.keys(lv).length) f.lv = lv; else delete f.lv;
     // Dubbed in: fresh from this sweep, or last week's; only languages other than its own.
     const fresh = links && new Set([...(f.im && jwAudio.get(f.im) || []), ...(jwAudio.get(String(f.id)) || [])]);
@@ -288,6 +312,7 @@ function attachLinks(titles, links, have) {
   console.log(`Direct app links on ${n} titles.`);
 }
 let linkCount = 0;
+let linksFresh = false; // JustWatch was checked on this run (Sundays), not just last week's links kept
 
 function toFilm(d, lang) {
   const apps = appsOf(d);
@@ -526,7 +551,7 @@ async function daily() {
   await writeTop10([...have.values()]);
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, ...rest }) => rest;
 
 // More like this (ml): six titles for each title page, worked out here so the page doesn't have to
 // download a whole language list: TMDB's recommendations (rc) first, then titles in the same language
@@ -668,6 +693,21 @@ function writeCatalogue(titles, trendIds) {
     .sort((a, b) => a.d.localeCompare(b.d) || b.n - a.n).slice(0, 1500);
   writeIfChanged(new URL("leaving.json", OUT), JSON.stringify({ items: leaving }));
   console.log(`Leaving soon: ${leaving.length} titles.`);
+
+  // reviewed-watch.json: where our reviewed films stream now, from JustWatch's own app list (f.ja, the
+  // weekly check), with direct links, leaving dates and dubs, by our review id, for review pages and the
+  // picks. `checked` is the date of the JustWatch check, shown as "updated"; films it hasn't covered yet
+  // keep the hand-made list in data.js.
+  const reviewedWatch = {};
+  for (const f of all) {
+    const rid = f.k !== "tv" && reviewedFilms().get(f.id);
+    if (rid && f.ja && !reviewedWatch[rid]) reviewedWatch[rid] = { w: f.ja, ...(f.u ? { u: f.u } : {}), ...(f.lv ? { lv: f.lv } : {}), ...(f.au ? { au: f.au } : {}) };
+  }
+  const watchFile = new URL("reviewed-watch.json", OUT);
+  const lastWatch = existsSync(watchFile) ? JSON.parse(readFileSync(watchFile, "utf8")) : {};
+  const watchChecked = linksFresh ? built : lastWatch.checked || built;
+  if (Object.keys(reviewedWatch).length) writeIfChanged(watchFile, JSON.stringify({ checked: watchChecked, films: reviewedWatch }));
+  console.log(`Reviewed films' where-to-watch: ${Object.keys(reviewedWatch).length}.`);
 
   // dubs-<code>.json: titles from other languages you can watch dubbed in <code> (best-known first),
   // so "What should I watch" can include them without loading every language's list.
@@ -819,11 +859,7 @@ function writeSitemaps(all, people) {
   const dir = new URL("sitemaps/", OUT);
   mkdirSync(dir, { recursive: true });
   // Our reviewed films have review pages (in main.xml), not film pages.
-  let reviewed = new Set();
-  try {
-    const { IMAGES } = new Function(`${readFileSync(DATA, "utf8")}; return { IMAGES };`)();
-    reviewed = new Set(Object.values(IMAGES).map((i) => i.tmdb));
-  } catch {}
+  const reviewed = new Set(reviewedFilms().keys());
   for (const lang of OUT_LANGS) {
     const paths = all.filter((f) => f.l === lang && !(f.k !== "tv" && reviewed.has(f.id))).map((f) => `/film?id=${keyOf(f)}`);
     if (paths.length) writeIfChanged(new URL(`${lang}.xml`, dir), xml(paths.slice(0, 50000)));
