@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /write
 Disallow: /api/
 
 Sitemap: https://masalamischief.in/sitemap.xml

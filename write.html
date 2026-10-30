@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Write a review · Masala Mischief</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="assets/style.css?v=88">
+  <style>
+    .wr { max-width: 860px; }
+    .wr-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin: 14px 0; box-shadow: var(--shadow); display: grid; gap: 12px; }
+    .wr-box h2 { margin: 0; font-size: 1.2rem; }
+    .wr label { font-weight: 700; display: grid; gap: 6px; }
+    .wr label small { font-weight: 500; color: var(--ink-soft); }
+    .wr input[type=text], .wr input[type=number], .wr input[type=password], .wr input[type=search], .wr textarea, .wr select {
+      font: inherit; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box;
+    }
+    .wr textarea { min-height: 90px; resize: vertical; }
+    .wr textarea.long { min-height: 200px; }
+    .wr-row { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .wr-film { display: flex; gap: 12px; align-items: center; }
+    .wr-film img { width: 60px; border-radius: 8px; }
+    .wr-msg { font-weight: 700; }
+    .wr-msg.bad { color: var(--chilli); }
+    .wr-msg.good { color: var(--leaf, #2e7d32); }
+    .wr-preview { display: grid; gap: 14px; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); align-items: start; }
+    @media (max-width: 700px) { .wr-preview { grid-template-columns: minmax(0, 1fr); } }
+    .wr-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  </style>
+</head>
+<body data-page="write">
+  <main class="wrap wr">
+    <div class="page-head">
+      <h1>✍️ Write a review</h1>
+      <p class="lead">Pick the film, add your verdict, preview it, publish. It's live on the site about a minute later.</p>
+    </div>
+
+    <form class="wr-box" id="login">
+      <label>Admin password <input type="password" id="pw" autocomplete="current-password"></label>
+      <div class="wr-actions"><button class="btn primary" type="submit">Open</button><span class="wr-msg bad" id="login-msg"></span></div>
+    </form>
+
+    <div id="form" hidden>
+      <section class="wr-box">
+        <h2>1. The film</h2>
+        <label>Search for a new film <small>Title, year, language, runtime, genres, posters and where to watch fill in by themselves.</small>
+          <input type="search" id="find" placeholder="e.g. Manjummel Boys" autocomplete="off"></label>
+        <div class="chips" id="found"></div>
+        <label>…or edit one of our reviews <select id="existing"><option value="">Choose a review to edit</option></select></label>
+        <div class="wr-film" id="picked"></div>
+      </section>
+
+      <section class="wr-box">
+        <h2>2. The details</h2>
+        <div class="wr-row">
+          <label>Title <input type="text" id="title"></label>
+          <label>Page name <small>in the link: /review?id=…</small><input type="text" id="id"></label>
+        </div>
+        <div class="wr-row">
+          <label>Year <input type="number" id="year" min="1900" max="2100"></label>
+          <label>Runtime <small>minutes</small><input type="number" id="runtime" min="0" max="400"></label>
+          <label>Language <select id="lang"></select></label>
+        </div>
+        <label>Genres <small>comma-separated</small><input type="text" id="genres"></label>
+        <div><strong>Also dubbed in</strong><div class="chips" id="audio"></div></div>
+        <div><strong>Streaming on</strong> <small class="muted">(with a subscription)</small><div class="chips" id="stream"></div></div>
+        <div><strong>Rent or buy on</strong><div class="chips" id="rent"></div></div>
+      </section>
+
+      <section class="wr-box">
+        <h2>3. Your verdict</h2>
+        <div><strong>🌶️ Masala Meter</strong> <small class="muted">how much fun</small><div class="chips" id="masala"></div></div>
+        <label>Quality <small>out of 10, halves allowed</small><input type="number" id="quality" min="0" max="10" step="0.5"></label>
+        <div><strong>Moods</strong> <small class="muted">1 to 4; the first is the strongest fit</small><div class="chips" id="moods"></div></div>
+        <label>Tagline <small>one line that sells it</small><input type="text" id="tagline" maxlength="200"></label>
+        <label>Review <small>leave an empty line between paragraphs</small><textarea class="long" id="review"></textarea></label>
+        <div class="wr-row">
+          <label>Full masala 👍 <small>one per line</small><textarea id="hits"></textarea></label>
+          <label>Needs more salt 👎 <small>one per line</small><textarea id="misses"></textarea></label>
+        </div>
+        <label class="toggle"><input type="checkbox" id="has-parent"> 👪 Add parent notes (it becomes a Family Pick)</label>
+        <div id="parent" hidden class="wr-row">
+          <label>Youngest age <input type="number" id="p-age" min="0" max="18"></label>
+          <label>Violence <select id="p-violence"></select></label>
+          <label>Romance <select id="p-romance"></select></label>
+          <label>Language <select id="p-language"></select></label>
+          <label>Scary <select id="p-scary"></select></label>
+          <label style="grid-column: 1 / -1">Note for parents <input type="text" id="p-note" maxlength="400"></label>
+        </div>
+        <label class="toggle"><input type="checkbox" id="featured"> ⭐ Make it Pick of the week (big on the home page)</label>
+      </section>
+
+      <section class="wr-box">
+        <h2>4. Preview and publish</h2>
+        <div id="preview"></div>
+        <div class="wr-actions">
+          <button class="btn" type="button" id="check">👀 Update preview</button>
+          <button class="btn primary" type="button" id="publish">🚀 Publish</button>
+          <span class="wr-msg" id="msg"></span>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="assets/data.js?v=88"></script>
+  <script src="assets/app.js?v=88"></script>
+  <script>
+    // The page uses the site's own helpers (app.js): search, title files, cards. The password stays in
+    // this tab (sessionStorage) and is only sent to our /api/publish-review. Wrapped so its names
+    // can't clash with app.js's.
+    (() => {
+    const $ = (id) => document.getElementById(id);
+    let pw = "";
+    try { pw = sessionStorage.getItem("mm-admin") || ""; } catch {}
+    const LANG_CHOICES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "English", "Marathi", "Bengali", "Punjabi", "Korean"];
+    const APP_CHOICES = [...PLATFORMS, "MX Player", "Lionsgate Play", "Apple TV", "Amazon", "YouTube"];
+    const LEVELS = ["violence", "romance", "language", "scary"];
+    const state = { edit: false, tmdb: 0, poster: "", backdrop: "", imdb: "", links: {}, masala: 0, moods: [], audio: [], stream: [], rent: [] };
+
+    // Chip groups: one choice (masala) or several (moods, apps, dubs).
+    function chipGroup(el, values, key, { single = false, label = (v) => v, max = 99 } = {}) {
+      const paint = () => el.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", single ? String(+c.dataset.v === state[key]) : String(state[key].includes(c.dataset.v))));
+      el.innerHTML = values.map((v) => `<button class="chip" type="button" data-v="${esc(String(v))}">${esc(label(v))}</button>`).join("");
+      el.addEventListener("click", (e) => {
+        const c = e.target.closest(".chip");
+        if (!c) return;
+        if (single) state[key] = +c.dataset.v;
+        else state[key] = state[key].includes(c.dataset.v) ? state[key].filter((x) => x !== c.dataset.v) : state[key].length < max ? [...state[key], c.dataset.v] : state[key];
+        paint();
+      });
+      return paint;
+    }
+    const paintMasala = chipGroup($("masala"), [1, 2, 3, 4, 5], "masala", { single: true, label: (n) => "🌶️".repeat(n) });
+    const paintMoods = chipGroup($("moods"), MOODS.map((m) => m.id), "moods", { label: (id) => { const m = moodById(id); return `${m.emoji} ${m.label}`; }, max: 4 });
+    const paintAudio = chipGroup($("audio"), LANG_CHOICES, "audio", { label: langLabel });
+    const paintStream = chipGroup($("stream"), APP_CHOICES, "stream");
+    const paintRent = chipGroup($("rent"), APP_CHOICES, "rent");
+    $("lang").innerHTML = LANG_CHOICES.map((l) => `<option value="${l}">${esc(langLabel(l))}</option>`).join("");
+    LEVELS.forEach((k) => ($(`p-${k}`).innerHTML = ["0 · none", "1 · mild", "2 · some", "3 · strong"].map((t, i) => `<option value="${i}">${t}</option>`).join("")));
+    $("existing").innerHTML += MOVIES.slice().sort((a, b) => a.title.localeCompare(b.title)).map((m) => `<option value="${esc(m.id)}">${esc(m.title)} (${m.year})</option>`).join("");
+    $("has-parent").addEventListener("change", () => ($("parent").hidden = !$("has-parent").checked));
+    const slugify = (s) => searchNorm(s).replace(/\s+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+    $("title").addEventListener("input", () => { if (!state.edit && !state.idTouched) $("id").value = slugify($("title").value); });
+    $("id").addEventListener("input", () => (state.idTouched = true));
+
+    const paintAll = () => { paintMasala(); paintMoods(); paintAudio(); paintStream(); paintRent(); };
+    const showPicked = () => {
+      $("picked").innerHTML = state.poster ? `<img src="${tmdb(state.poster, "w92")}" alt=""><span><strong>${esc($("title").value)}</strong><br><span class="muted small">${state.edit ? "Editing our review" : "New review"} · TMDB ${state.tmdb || "–"}</span></span>` : "";
+    };
+
+    // A new film from the catalogue: everything we know fills in.
+    let findTimer = 0;
+    $("find").addEventListener("input", () => {
+      clearTimeout(findTimer);
+      findTimer = setTimeout(async () => {
+        const term = $("find").value.trim();
+        const hits = term.length < 2 ? [] : (await searchCatalog(term)).filter((f) => f.k !== "tv").slice(0, 6);
+        $("found").innerHTML = hits.map((f) => `<button class="chip" type="button" data-l="${f.l}" data-id="${f.id}">${esc(f.t)}${f.y ? ` (${f.y})` : ""} · ${esc(langLabel(CAT_LANGS[f.l] || ""))}</button>`).join("");
+      }, 250);
+    });
+    $("found").addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-id]");
+      if (!b) return;
+      const f = await loadTitle(b.dataset.l, b.dataset.id);
+      if (!f) return;
+      const mine = reviewedByTmdb()[f.id];
+      if (mine) { $("existing").value = mine.id; return loadExisting(mine.id); }
+      Object.assign(state, { edit: false, idTouched: false, tmdb: f.id, poster: f.p || "", backdrop: f.b || "", imdb: f.im || "", links: f.u || {},
+        audio: (f.au || []).map((c) => CAT_LANGS[c]).filter((l) => LANG_CHOICES.includes(l)), stream: (f.ja || f.w || []).filter((a) => APP_CHOICES.includes(a)), rent: [] });
+      $("title").value = f.t; $("id").value = slugify(f.t); $("year").value = f.y || ""; $("runtime").value = f.r || "";
+      $("lang").value = LANG_CHOICES.includes(CAT_LANGS[f.l]) ? CAT_LANGS[f.l] : "Hindi"; $("genres").value = (f.g || []).join(", ");
+      $("existing").value = ""; $("found").innerHTML = ""; $("id").disabled = false;
+      paintAll(); showPicked(); preview();
+    });
+    // One of ours: the whole review loads for editing.
+    function loadExisting(id) {
+      const m = movieById(id);
+      if (!m) return;
+      const img = IMAGES[m.id] || {}, w = WATCH[m.id] || { stream: [], rent: [] }, p = PARENT_NOTES[m.id];
+      Object.assign(state, { edit: true, tmdb: img.tmdb || 0, poster: img.poster || "", backdrop: img.backdrop || "", imdb: img.imdb || "", links: { ...(WATCH_LINKS[m.id] || {}) },
+        masala: m.masala, moods: [...m.moods], audio: m.audio.filter((l) => l !== m.lang), stream: [...w.stream], rent: [...w.rent] });
+      $("title").value = m.title; $("id").value = m.id; $("id").disabled = true; $("year").value = m.year; $("runtime").value = m.runtime;
+      $("lang").value = m.lang; $("genres").value = m.genres.join(", "); $("quality").value = m.quality; $("tagline").value = m.tagline;
+      $("review").value = m.review.join("\n\n"); $("hits").value = m.hits.join("\n"); $("misses").value = m.misses.join("\n");
+      $("has-parent").checked = Boolean(p); $("parent").hidden = !p;
+      if (p) { $("p-age").value = p.age; LEVELS.forEach((k) => ($(`p-${k}`).value = p[k] || 0)); $("p-note").value = p.note; }
+      $("featured").checked = FEATURED_ID === m.id;
+      paintAll(); showPicked(); preview();
+    }
+    $("existing").addEventListener("change", () => $("existing").value && loadExisting($("existing").value));
+
+    // What gets sent, built from the form.
+    function collect() {
+      const lines = (s) => s.split("\n").map((x) => x.trim()).filter(Boolean);
+      return {
+        edit: state.edit, id: $("id").value.trim(), title: $("title").value.trim(), year: +$("year").value, runtime: +$("runtime").value,
+        lang: $("lang").value, audio: [$("lang").value, ...state.audio], genres: $("genres").value.split(",").map((g) => g.trim()).filter(Boolean),
+        moods: state.moods, masala: state.masala, quality: +$("quality").value, tagline: $("tagline").value.trim(),
+        review: $("review").value.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean), hits: lines($("hits").value), misses: lines($("misses").value),
+        stream: state.stream, rent: state.rent, links: state.links, tmdb: state.tmdb, poster: state.poster, backdrop: state.backdrop, imdb: state.imdb,
+        parent: $("has-parent").checked ? { age: +$("p-age").value, ...Object.fromEntries(LEVELS.map((k) => [k, +$(`p-${k}`).value])), note: $("p-note").value.trim() } : null,
+        featured: $("featured").checked, reviewed: state.edit ? (movieById($("id").value) || {}).reviewed : undefined,
+      };
+    }
+    // Preview: the card as it appears in lists, and the review text.
+    function preview() {
+      const r = collect();
+      const m = { id: "__preview", title: r.title || "Title", year: r.year, lang: r.lang, audio: r.audio, genres: r.genres.length ? r.genres : ["Drama"], runtime: r.runtime,
+        moods: r.moods, masala: r.masala || 1, quality: r.quality || 0, tagline: r.tagline || "Your tagline", still: state.backdrop, apps: r.stream };
+      IMAGES.__preview = { poster: state.poster, backdrop: state.backdrop };
+      $("preview").innerHTML = `<div class="wr-preview"><div>${card(m)}</div><div>
+          <p class="tagline">${esc(m.tagline)}</p>
+          <div class="card-meta">${meter(m.masala)}${score(m.quality)}</div>
+          ${r.review.map((p) => `<p>${esc(p)}</p>`).join("") || `<p class="muted">Your review text shows here.</p>`}
+          <div class="hm"><div class="hits"><h3>Full masala</h3><ul>${r.hits.map((h) => `<li>${esc(h)}</li>`).join("")}</ul></div>
+            <div class="misses"><h3>Needs more salt</h3><ul>${r.misses.map((h) => `<li>${esc(h)}</li>`).join("")}</ul></div></div>
+        </div></div>`;
+    }
+    $("check").addEventListener("click", preview);
+
+    async function send(body) {
+      const res = await fetch("/api/publish-review", { method: "POST", headers: { authorization: `Bearer ${pw}`, "content-type": "application/json" }, body: JSON.stringify(body) });
+      return { status: res.status, data: await res.json().catch(() => ({ error: "Unexpected answer from the server." })) };
+    }
+    $("publish").addEventListener("click", async () => {
+      const r = collect();
+      const msg = $("msg");
+      msg.className = "wr-msg"; msg.textContent = "Checking…";
+      preview();
+      const check = await send({ ...r, dryRun: true });
+      if (check.status !== 200) { msg.className = "wr-msg bad"; msg.textContent = check.data.error || "Something went wrong."; return; }
+      if (!confirm(`${r.edit ? "Update" : "Publish"} "${r.title}" on the site now?`)) { msg.textContent = ""; return; }
+      msg.textContent = "Publishing…";
+      $("publish").disabled = true;
+      const done = await send(r);
+      $("publish").disabled = false;
+      if (done.status !== 200) { msg.className = "wr-msg bad"; msg.textContent = done.data.error || "Couldn't publish."; return; }
+      msg.className = "wr-msg good";
+      msg.innerHTML = `✅ Saved. It's live in about a minute: <a href="${done.data.url}" target="_blank">open the review</a>.`;
+    });
+
+    // Login: the dry-run check doubles as the password check.
+    async function open() {
+      const { status } = await send({ dryRun: true });
+      if (status === 401) { $("login-msg").textContent = "Wrong password."; return; }
+      try { sessionStorage.setItem("mm-admin", pw); } catch {}
+      $("login").hidden = true; $("form").hidden = false;
+      paintAll(); preview();
+    }
+    $("login").addEventListener("submit", (e) => { e.preventDefault(); pw = $("pw").value; open(); });
+    if (pw) open();
+    })();
+  </script>
+</body>
+</html>
