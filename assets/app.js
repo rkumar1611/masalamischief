@@ -114,6 +114,7 @@ function renderChrome() {
         <div class="site-results" id="site-results"></div>
       </div>
     </div></header>`);
+  document.body.classList.add("has-chrome"); // the header now holds its own space (see style.css)
   document.body.insertAdjacentHTML("beforeend", `
     <footer class="site-footer"><div class="wrap">
       <div class="footer-top">
@@ -1002,9 +1003,12 @@ function initReviews() {
    the catalogue build writes assets/catalog/reviewed-watch.json; this folds that in before pages draw.
    Rent/buy options only exist in the hand-made list, so they're kept. */
 let watchUpdated = WATCH_CHECKED;
-async function freshenWatch() {
-  const data = await Promise.race([loadCatalog("reviewed-watch"), new Promise((resolve) => setTimeout(() => resolve(null), 1500))]);
-  if (!data || !data.films) return;
+let onFreshWatch = null; // the review page redraws its where-to-watch with this
+// Pages draw straight away with the copy saved on this device from the last visit (so nothing jumps
+// while they load); the latest file then loads in the background, is saved for next time, and the
+// review page updates its where-to-watch in place if it changed.
+function applyWatch(data) {
+  if (!data || !data.films) return false;
   for (const [id, x] of Object.entries(data.films)) {
     const before = WATCH[id] || { stream: [], rent: [] };
     WATCH[id] = { stream: x.w || [], rent: (before.rent || []).filter((a) => !(x.w || []).includes(a)) };
@@ -1014,6 +1018,16 @@ async function freshenWatch() {
   }
   if (data.checked > watchUpdated) watchUpdated = data.checked;
   document.querySelectorAll("[data-watch-date]").forEach((el) => (el.textContent = fmtDate(watchUpdated)));
+  return true;
+}
+function freshenWatch() {
+  const saved = store.get("watchFresh", null);
+  applyWatch(saved);
+  loadCatalog("reviewed-watch").then((data) => {
+    if (!data || !data.films || (saved && saved.checked === data.checked && JSON.stringify(saved.films) === JSON.stringify(data.films))) return;
+    store.set("watchFresh", data);
+    if (applyWatch(data) && onFreshWatch) onFreshWatch();
+  }).catch(() => {});
 }
 
 /* ---------- Share a review as an image ----------
@@ -1151,7 +1165,23 @@ function initReview() {
   const dubs = m.audio.filter((a) => a !== m.lang);
   const shareText = `${m.title}: ${m.masala}/5 on the Masala Meter, ${m.quality}/10 overall. ${m.tagline}`;
   const pageUrl = location.href;
-  const watch = WATCH[m.id] || { stream: [], rent: [] };
+  // Where to watch: drawn by these two, and drawn again in place if fresher data arrives (freshenWatch).
+  const watchNow = () => WATCH[m.id] || { stream: [], rent: [] };
+  const watchLine = () => { const w = watchNow(); return w.stream.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${platformLinks(m, w.stream)}</div>` : ""; };
+  const watchPanel = () => {
+    const w = watchNow();
+    return `<h3>📺 Where to watch</h3>
+      ${w.stream.length
+        ? `<p class="muted small">Included with subscription · tap to open</p>${platformLinks(m, w.stream)}`
+        : `<p class="muted small">Not on a subscription service in India right now.</p>`}
+      ${w.rent.length ? `<p class="muted small" style="margin-top:12px">Rent or buy</p>${platformLinks(m, w.rent)}` : ""}
+      <p class="fine">Updated ${fmtDate(watchUpdated)}. Availability changes, so confirm in the app.</p>`;
+  };
+  onFreshWatch = () => {
+    const line = document.getElementById("watch-line"), panel = document.getElementById("watch-panel");
+    if (line) line.innerHTML = watchLine();
+    if (panel) panel.innerHTML = watchPanel();
+  };
   const notes = PARENT_NOTES[m.id];
 
   root.innerHTML = `
@@ -1163,7 +1193,7 @@ function initReview() {
           <div><div class="label">Masala Meter</div>${meter(m.masala)}</div>
           <div><div class="label">Quality</div><span class="num">${m.quality}</span><span class="muted">/10</span></div>
         </div>
-        ${watch.stream.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${platformLinks(m, watch.stream)}</div>` : ""}
+        <div id="watch-line">${watchLine()}</div>
         <div id="leave-slot"></div>
         ${m.review.map((p) => `<p>${esc(p)}</p>`).join("")}
         <div class="hm">
@@ -1200,14 +1230,7 @@ function initReview() {
       </article>
       <aside>
         ${IMAGES[m.id] && IMAGES[m.id].poster ? `<img class="side-poster" src="${tmdb(IMAGES[m.id].poster, "w342")}" alt="${esc(m.title)} poster" loading="lazy" decoding="async">` : ""}
-        <div class="side panel-watch">
-          <h3>📺 Where to watch</h3>
-          ${watch.stream.length
-            ? `<p class="muted small">Included with subscription · tap to open</p>${platformLinks(m, watch.stream)}`
-            : `<p class="muted small">Not on a subscription service in India right now.</p>`}
-          ${watch.rent.length ? `<p class="muted small" style="margin-top:12px">Rent or buy</p>${platformLinks(m, watch.rent)}` : ""}
-          <p class="fine">Updated ${fmtDate(watchUpdated)}. Availability changes, so confirm in the app.</p>
-        </div>
+        <div class="side panel-watch" id="watch-panel">${watchPanel()}</div>
         <div class="side">
           <dl>
             <dt>Language</dt><dd>${m.lang}${LANG_LABELS[m.lang] ? ` (${LANG_LABELS[m.lang]})` : ""}</dd>
@@ -2857,6 +2880,5 @@ async function initUpcoming() {
 }
 
 renderChrome();
-// Fresh where-to-watch for our reviews first (a small file, waited for at most 1.5 s), then the page.
-freshenWatch().catch(() => {}).finally(() =>
-  ({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming }[document.body.dataset.page] || (() => {}))());
+freshenWatch(); // the saved where-to-watch now; the latest one in the background
+({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming }[document.body.dataset.page] || (() => {}))();
