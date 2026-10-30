@@ -1264,8 +1264,13 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-10-29",
+  checked: "2026-10-30",
   items: [
+    { title: "Demon Slayer: Kimetsu no Yaiba Infinity Castle", year: 2025, app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/demon-slayer-kimetsu-no-yaiba-infinity-castle-i-1090537771", note: "Directed by Haruo Sotozaki · IMDb 8.3" },
+    { title: "The Pursuit of Happyness", year: 2006, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/the-pursuit-of-happyness-1000007713", note: "Directed by Gabriele Muccino · IMDb 8" },
+    { title: "Resident Evil", year: 2002, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/resident-evil-2002-1090541183", note: "Directed by Paul W. S. Anderson · IMDb 6.6" },
+    { title: "The Social Network", year: 2010, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/the-social-network-1000042081", note: "Directed by David Fincher · IMDb 7.8" },
+    { title: "Spider-Man: Homecoming", year: 2017, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/spider-man-homecoming-1000042078", note: "Directed by Jon Watts · IMDb 7.4" },
     { title: "Nowhere to Run", year: 1993, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/814862", note: "Directed by Robert Harmon · IMDb 5.7" },
     { title: "Baththa", year: 2026, lang: "Tamil", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/83064751", note: "Directed by Balaji Tharaneetharan · IMDb 9", kids: true },
     { title: "10 Cloverfield Lane", year: 2016, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/80082850", note: "Directed by Dan Trachtenberg · IMDb 7.2" },
@@ -1275,11 +1280,6 @@ const NEW_ON_OTT = {
     { title: "Raja Natwarlal", year: 2014, lang: "Hindi", app: "JioHotstar", added: "2026-10-29", url: "https://www.hotstar.com/in/movies/raja-natwarlal/1271719024", note: "Directed by Kunal Deshmukh · IMDb 6.2" },
     { title: "The Conjuring", year: 2013, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/70251894", note: "Directed by James Wan · IMDb 7.5" },
     { title: "Annabelle: Creation", year: 2017, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/80158661", note: "Directed by David F. Sandberg · IMDb 6.5" },
-    { title: "Annabelle Comes Home", year: 2019, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/81095126", note: "Directed by Gary Dauberman · IMDb 5.9" },
-    { title: "Annabelle", year: 2014, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/80013775", note: "Directed by John R. Leonetti · IMDb 5.5" },
-    { title: "The Conjuring: The Devil Made Me Do It", year: 2021, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/81238605", note: "Directed by Michael Chaves · IMDb 6.2" },
-    { title: "The Conjuring 2", year: 2016, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/80091246", note: "Directed by James Wan · IMDb 7.3" },
-    { title: "The Aviator", year: 2004, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/70011213", note: "Directed by Martin Scorsese · IMDb 7.5" },
   ],
 };
 
