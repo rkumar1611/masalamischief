@@ -477,7 +477,7 @@ const MOVIES = [
   {
     id: "12th-fail", title: "12th Fail", year: 2023, lang: "Hindi", audio: ["Hindi"],
     genres: ["Drama", "Biography"], runtime: 147,
-    moods: ["feel-good", "rainy-sunday", "family-time"], masala: 2, quality: 9,
+    moods: ["feel-good", "rainy-sunday", "family-time"], masala: 4, quality: 9,
     tagline: "The UPSC film that will make you call your old tuition teacher.",
     review: [
       "Vikrant Massey plays Manoj, a boy from Chambal who fails his board exams and then sets his sights on the toughest exam in the country. Based on a true story, it follows him through Delhi's coaching lanes, flour mills and rented rooms where a dozen aspirants share one dream.",
