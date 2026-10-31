@@ -341,6 +341,18 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 .ott-mx-player { background: #1565c0; color: #fff; }
 .ott-apple-tv, .ott-amazon { background: var(--ink); color: var(--bg); }
 .ott-tickets { background: var(--chilli); color: #fff; }
+/* Follow our WhatsApp Channel (home page, under reviews, footer) in WhatsApp's own green */
+.wa-follow {
+  display: flex; align-items: center; gap: 12px; margin: 20px 0 4px; padding: 14px 16px; text-decoration: none; color: var(--ink);
+  background: color-mix(in srgb, #25d366 12%, var(--surface)); border: 1.5px solid color-mix(in srgb, #25d366 45%, var(--line)); border-radius: var(--radius);
+}
+.wa-follow .wa-icon { font-size: 1.6rem; flex: none; }
+.wa-follow > span:nth-child(2) { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.wa-follow > span:nth-child(2) span { font-size: 0.9rem; color: var(--ink-soft); }
+.wa-follow .wa-go { flex: none; background: #25d366; color: #0b2e17; font-weight: 800; padding: 8px 16px; border-radius: 999px; }
+.wa-follow:hover .wa-go { background: #1fbf5b; }
+.wa-follow.compact { margin: 16px 0 0; padding: 10px 14px; }
+.wa-btn { background: #25d366; color: #0b2e17; border-color: #25d366; }
 /* Share as image: the preview when the phone's share sheet isn't available */
 .card-preview { position: fixed; inset: 0; z-index: 60; background: rgba(15, 8, 10, 0.82); display: grid; place-items: center; padding: 16px; overflow: auto; }
 .card-preview-inner { display: grid; gap: 12px; justify-items: center; max-width: 380px; text-align: center; }

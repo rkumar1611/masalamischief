@@ -40,6 +40,8 @@ const store = {
 // The watchlist holds our review ids ("rrr") and catalogue titles as "_<lang>-<id>" ("_hi-864692",
 // "_en-tv1396", the same ids Group Pick uses). For catalogue titles, a small copy of the card details is
 // kept in "watchlistInfo" so the list can be drawn without loading each title's file.
+// Our WhatsApp Channel: new reviews and the week's picks (footer, home page, under every review).
+const WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029VbA1FqA5a248kESjLD0Z";
 const watchlist = () => store.get("watchlist", []);
 const inWatchlist = (id) => watchlist().includes(id);
 const CAT_ID = /^_([a-z]{2})-((?:tv)?\d+)$/;
@@ -125,6 +127,7 @@ function renderChrome() {
             <span><b>🌶️ Masala Meter</b> how much fun, 1 to 5</span>
             <span><b>★ Score</b> how well it's made, out of 10</span>
           </div>
+          <a class="btn small wa-btn" target="_blank" rel="noopener" href="${WHATSAPP_CHANNEL}">💬 Follow on WhatsApp</a>
           <a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("Film reviews, what to watch tonight and where to stream it: https://masalamischief.in")}">Share Masala Mischief on WhatsApp</a>
           <button class="btn small install-btn" type="button" hidden>📲 Install the app</button>
           <button class="btn small alert-btn" type="button" hidden>🔔 Weekly OTT alerts</button>
@@ -1226,6 +1229,11 @@ function initReview() {
           <button class="btn" id="share-card" type="button">📸 Share as image</button>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
+        <a class="wa-follow compact" href="${WHATSAPP_CHANNEL}" target="_blank" rel="noopener">
+          <span class="wa-icon" aria-hidden="true">💬</span>
+          <span><strong>Liked this review?</strong><span>Follow us on WhatsApp for every new one.</span></span>
+          <span class="wa-go">Follow</span>
+        </a>
         <div id="ext-slot">${extLinks({ im: IMAGES[m.id] && IMAGES[m.id].imdb, tmdbUrl: IMAGES[m.id] && IMAGES[m.id].tmdb ? `https://www.themoviedb.org/movie/${IMAGES[m.id].tmdb}` : "" })}</div>
       </article>
       <aside>
@@ -2679,12 +2687,42 @@ async function initOtt() {
   const tabs = `<nav class="chips app-tabs" aria-label="Streaming apps">${index.ott.map(([s, name]) =>
     `<a class="chip" href="ott.html?app=${s}" aria-pressed="${s === appSlug}">${esc(name)}</a>`).join("")}</nav>`;
   const L = lists[appSlug];
+  // By language (/ott?l=ml): every app's newest titles in that language, as lib/lists.js ottInLanguage().
+  const langCode = new URLSearchParams(location.search).get("l") || "";
+  const langWord = (c) => (c === "en" ? "Hollywood" : c === "ja" ? "Anime" : CAT_LANGS[c]);
+  const langCodes = [...new Set(Object.values(lists).flatMap((x) => x.items.map((f) => f.l)))].filter((c) => CAT_LANGS[c]);
+  const langChips = (on) => `<nav class="chips app-tabs" aria-label="Languages">${langCodes.map((c) =>
+    `<a class="chip" href="ott.html?l=${c}" aria-pressed="${c === on}">${esc(langWord(c))}</a>`).join("")}</nav>`;
+
+  if (!L && CAT_LANGS[langCode]) {
+    const byKey = new Map();
+    for (const x of Object.values(lists)) for (const f of x.items) {
+      if (f.l !== langCode) continue;
+      const k = `${f.l}-${f.id}`, had = byKey.get(k);
+      byKey.set(k, had ? { ...had, w: [...new Set([...(had.w || []), ...(f.w || [])])] } : f);
+    }
+    const items = [...byKey.values()].sort((a, b) => (b.rd || "").localeCompare(a.rd || "") || (b.n || 0) - (a.n || 0)).slice(0, 60);
+    const Lang = langWord(langCode);
+    document.title = `New ${Lang} OTT Releases This Week: Movies & Web Series · Masala Mischief`;
+    const grid = (list) => list.map((f) => filmCard(withMine(f), 0, f.rd ? `Released ${new Date(f.rd + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : "")).join("");
+    const movies = items.filter((f) => f.k !== "tv"), series = items.filter((f) => f.k === "tv");
+    root.innerHTML = `
+      <div class="page-head"><p class="eyebrow">📺 Streaming in India · updated daily</p><h1>New ${esc(Lang)} OTT releases</h1>
+        <p class="lead">The newest ${esc(Lang)} movies and web series you can stream in India, latest first, on every app.</p></div>
+      ${langChips(langCode)}
+      ${movies.length ? `<section><div class="section-head"><h2>🎬 Movies</h2></div><div class="fgrid">${grid(movies)}</div></section>` : ""}
+      ${series.length ? `<section><div class="section-head"><h2>📺 Web series</h2></div><div class="fgrid">${grid(series)}</div></section>` : ""}
+      ${items.length ? "" : `<div class="empty">Nothing new in ${esc(Lang)} on OTT right now.</div>`}
+      <p><a href="ott.html">All apps →</a></p>`;
+    return;
+  }
 
   if (!L) {
     document.title = "What's new on OTT in India: Netflix, Prime Video, JioHotstar and more · Masala Mischief";
     root.innerHTML = `
       <div class="page-head"><p class="eyebrow">📺 Streaming in India</p><h1>What's new on OTT</h1>
-        <p class="lead">The newest movies and series on every big streaming app in India. Pick an app.</p></div>
+        <p class="lead">The newest movies and series on every big streaming app in India. Pick an app, or a language.</p></div>
+      ${langChips("")}
       <div class="app-grid">${index.ott.map(([s, name, count]) => `
         <a class="app-tile" href="ott.html?app=${s}">
           <span class="ott ott-${slug(name)}">${esc(name)}</span>

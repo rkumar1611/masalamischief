@@ -11,11 +11,19 @@ import { json, isAdmin } from "../../lib/community.js";
 import { checkReview, applyReview, bumpVersions } from "../../lib/review-publish.js";
 
 const BRANCH = "main";
+// IndexNow (Bing, Yandex and others; not Google): tells them a page changed. The key is public by
+// design: /<key>.txt at the site root proves the pings come from this site.
+const INDEXNOW_KEY = "fe6da0cc1ee80192b4f62861236212b1";
+const pingIndexNow = (urls) => fetch("https://api.indexnow.org/indexnow", {
+  method: "POST",
+  headers: { "content-type": "application/json; charset=utf-8" },
+  body: JSON.stringify({ host: "masalamischief.in", key: INDEXNOW_KEY, keyLocation: `https://masalamischief.in/${INDEXNOW_KEY}.txt`, urlList: urls }),
+}).then((r) => r.status).catch(() => 0);
 
 // UTF-8 text ↔ base64 (GitHub's contents API speaks base64; atob/btoa alone break on "₹" or "é").
 const fromB64 = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, "")), (c) => c.charCodeAt(0)));
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   if (!isAdmin(request, env)) return json({ error: "Wrong password." }, 401);
   let input;
   try { input = await request.json(); } catch { return json({ error: "Bad request." }, 400); }
@@ -67,6 +75,8 @@ export async function onRequestPost({ request, env }) {
     });
     // Not forced: if main moved on meanwhile (the daily bot), GitHub refuses and nothing is lost.
     await gh(`/git/refs/heads/${BRANCH}`, { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) });
+    // Tell Bing and friends straight away (after answering, so the page doesn't wait).
+    waitUntil(pingIndexNow([`https://masalamischief.in/review?id=${encodeURIComponent(review.id)}`, "https://masalamischief.in/reviews", "https://masalamischief.in/"]));
     return json({ ok: true, id: review.id, url: `/review?id=${encodeURIComponent(review.id)}`, commit: commit.sha.slice(0, 7) });
   } catch (e) {
     return json({ error: `Couldn't publish: ${e.message}. Nothing was changed; try again in a minute.` }, 502);
