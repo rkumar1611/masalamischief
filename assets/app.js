@@ -138,7 +138,7 @@ function renderChrome() {
           <a href="reviews.html">Our reviews</a><a href="films.html">Movies & series</a>
           <a href="films.html?view=top-movie">Top 50 movies</a><a href="films.html?view=top-tv">Top 50 series</a>
           <a href="films.html?view=top-anime">Anime</a>
-          <a href="ott.html">New on OTT</a><a href="upcoming.html?show=now">In theatres</a><a href="upcoming.html">Upcoming movies</a><a href="best.html">Best-of lists</a>
+          <a href="ott-this-week.html">OTT releases this week</a><a href="ott.html">New on OTT</a><a href="upcoming.html?show=now">In theatres</a><a href="upcoming.html">Upcoming movies</a><a href="best.html">Best-of lists</a>
         </nav>
         <nav class="footer-col" aria-label="Pick something">
           <h4>Pick something</h4>
@@ -1113,18 +1113,17 @@ function wrapLines(g, text, width, max) {
   }
   return lines;
 }
-async function reviewCard(m) {
+// A blank Story card: dark background with a chilli glow around `glowY`, and the logo badge at the top.
+async function storyCanvas(glowY = 700) {
   const W = 1080, H = 1920;
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
   const g = c.getContext("2d");
-  await Promise.all(["800 80px 'Baloo 2'", "600 36px Inter", "italic 400 40px Inter"].map((f) => document.fonts.load(f).catch(() => {})));
-  // Background: dark, with a warm chilli glow behind the poster.
+  await Promise.all(["800 80px 'Baloo 2'", "600 36px Inter", "700 36px Inter", "italic 400 40px Inter"].map((f) => document.fonts.load(f).catch(() => {})));
   g.fillStyle = "#1c1416"; g.fillRect(0, 0, W, H);
-  const glow = g.createRadialGradient(W / 2, 700, 80, W / 2, 700, 900);
+  const glow = g.createRadialGradient(W / 2, glowY, 80, W / 2, glowY, 900);
   glow.addColorStop(0, "rgba(215,38,61,0.45)"); glow.addColorStop(1, "rgba(215,38,61,0)");
   g.fillStyle = glow; g.fillRect(0, 0, W, H);
-  // Logo badge.
   g.fillStyle = "#fff3dc";
   g.beginPath(); g.roundRect(W / 2 - 250, 70, 500, 120, 60); g.fill();
   const logo = await loadImage("assets/logo.svg").catch(() => null);
@@ -1132,6 +1131,42 @@ async function reviewCard(m) {
   g.fillStyle = "#26121a"; g.font = "800 46px 'Baloo 2', sans-serif"; g.textBaseline = "middle"; g.textAlign = "left";
   g.fillText("Masala", W / 2 - 60, 112);
   g.fillStyle = "#d7263d"; g.fillText("Mischief", W / 2 - 60, 156);
+  return { c, g, W, H };
+}
+// Phones: the share sheet with the image (WhatsApp, Instagram…). Elsewhere: a preview to save.
+async function shareImage(makeBlob, name, btn, text, alt) {
+  const label = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "⏳ Making the image…";
+  try {
+    const blob = await makeBlob();
+    const file = new File([blob], name, { type: "image/jpeg" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], text }).catch(() => {});
+    } else {
+      const url = URL.createObjectURL(blob);
+      const box = document.createElement("div");
+      box.className = "card-preview";
+      box.innerHTML = `<div class="card-preview-inner">
+          <img src="${url}" alt="${esc(alt)}">
+          <div class="cta-row"><a class="btn primary" href="${url}" download="${file.name}">⬇️ Save image</a><button class="btn" type="button" data-close>Close</button></div>
+          <p class="muted small">Then post it to your WhatsApp channel, Status or Instagram. On iPhone, press and hold the image to save it.</p>
+        </div>`;
+      const close = () => { box.remove(); URL.revokeObjectURL(url); };
+      box.addEventListener("click", (e) => { if (e.target === box || e.target.closest("[data-close]")) close(); });
+      document.body.append(box);
+    }
+  } catch {
+    btn.textContent = "Couldn't make the image. Try again";
+    btn.disabled = false;
+    return;
+  }
+  btn.textContent = label;
+  btn.disabled = false;
+}
+
+async function reviewCard(m) {
+  const { c, g, W, H } = await storyCanvas(700);
   // Poster.
   const img = IMAGES[m.id] || {};
   const pw = 600, ph = 900, px = (W - pw) / 2, py = 250;
@@ -1173,37 +1208,7 @@ async function reviewCard(m) {
   g.fillText("masalamischief.in", W / 2, H - 70);
   return new Promise((resolve) => c.toBlob(resolve, "image/jpeg", 0.9)); // a few hundred KB (PNG: ~2 MB)
 }
-// Phones: the share sheet with the image (Instagram, WhatsApp Status…). Elsewhere: a preview to save.
-async function shareReviewCard(m, btn, text) {
-  const label = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = "⏳ Making the image…";
-  try {
-    const blob = await reviewCard(m);
-    const file = new File([blob], `${m.id}-masala-mischief.jpg`, { type: "image/jpeg" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      await navigator.share({ files: [file], text }).catch(() => {});
-    } else {
-      const url = URL.createObjectURL(blob);
-      const box = document.createElement("div");
-      box.className = "card-preview";
-      box.innerHTML = `<div class="card-preview-inner">
-          <img src="${url}" alt="Share card for ${esc(m.title)}">
-          <div class="cta-row"><a class="btn primary" href="${url}" download="${file.name}">⬇️ Save image</a><button class="btn" type="button" data-close>Close</button></div>
-          <p class="muted small">Then post it to your Instagram or WhatsApp Status. On iPhone, press and hold the image to save it.</p>
-        </div>`;
-      const close = () => { box.remove(); URL.revokeObjectURL(url); };
-      box.addEventListener("click", (e) => { if (e.target === box || e.target.closest("[data-close]")) close(); });
-      document.body.append(box);
-    }
-  } catch {
-    btn.textContent = "Couldn't make the image. Try again";
-    btn.disabled = false;
-    return;
-  }
-  btn.textContent = label;
-  btn.disabled = false;
-}
+const shareReviewCard = (m, btn, text) => shareImage(() => reviewCard(m), `${m.id}-masala-mischief.jpg`, btn, text, `Share card for ${m.title}`);
 
 /* ---------- Single review ---------- */
 function initReview() {
@@ -3080,6 +3085,184 @@ async function initUpcoming() {
   if (location.hash.length > 4) document.getElementById(location.hash.slice(1))?.scrollIntoView();
 }
 
+/* ---------- OTT releases this week (ott-this-week.html) ----------
+   New on OTT: the daily JustWatch strip (NEW_ON_OTT, films added in the last 7 days), matched to the
+   catalogue's search index for posters and film pages. Coming to OTT: announced dates (upcoming.json
+   `soon`, and films in cinemas with od), then estimates for films in cinemas. Plus a ready-made
+   WhatsApp post (text and Story image) of the top 5 of each, for the channel or any group. */
+// A film in the catalogue by title and year ([lang, id, title, year, series?, poster, votes, rating]), or null.
+async function catalogueMatch(title, year, code) {
+  const t = searchNorm(title);
+  const word = t.split(" ").find((w) => w.length >= 2 && !SEARCH_STOP.has(w));
+  const rows = word ? await loadCatalog(`s/${word.slice(0, 2)}`) : null;
+  const hits = (rows || []).filter((r) => !r[4] && searchNorm(r[2]) === t && (!year || !r[3] || Math.abs(r[3] - year) <= 1));
+  return hits.sort((a, b) => (b[0] === code) - (a[0] === code) || b[6] - a[6])[0] || null;
+}
+
+const shortDay = (d) => new Date(`${d}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+
+async function weekData() {
+  const today = new Date().toISOString().slice(0, 10);
+  const thisYear = new Date().getFullYear();
+  const byTmdb = reviewedByTmdb();
+  const fresh = await Promise.all(NEW_ON_OTT.items.map(async (n) => {
+    const code = LANG_CODE[n.lang] || "";
+    const m = await catalogueMatch(n.title, n.year, code);
+    const l = code || (m && m[0]) || "";
+    return {
+      t: n.title, y: n.year, l, app: n.app, date: n.added, url: n.url, note: n.note || "",
+      p: m && m[5], votes: (m && m[6]) || 0, recent: n.year >= thisYear - 1,
+      href: m ? filmHref({ l: m[0], id: m[1], mine: !m[4] && byTmdb[m[1]] }) : "",
+    };
+  }));
+  // Newest films first (a 2026 release beats a 1990s classic), then Indian films, then the best-known.
+  const indian = (l) => l && !["en", "ko", "ja"].includes(l);
+  const top = [...fresh].sort((a, b) => b.recent - a.recent || indian(b.l) - indian(a.l) || b.votes - a.votes);
+
+  const up = (await loadCatalog("upcoming")) || {};
+  // How well-known (TMDB votes; older files only have a rating for the better-known ones).
+  const known = (f) => f.n || (f.v ? 10 : 0);
+  const soon = (up.soon || []).map((f) => ({ t: f.t, l: f.l, date: f.d, app: f.a || "", p: f.p, href: `film.html?id=${f.l}-${f.id}`, sure: true, n: known(f) }));
+  const have = new Set(soon.map((f) => f.href));
+  for (const f of up.now || []) {
+    const href = f.pg ? `film.html?id=${f.l}-${f.id}` : "";
+    if (href && have.has(href)) continue;
+    const due = ottDue({ l: f.l, rd: f.d, od: f.od, oa: f.oa }, today);
+    // Estimates in the next 6 weeks; ones overdue by 2+ weeks probably have no OTT deal yet.
+    if (!due || (!due.sure && (due.date > addDays(today, 42) || due.date < addDays(today, -14)))) continue;
+    soon.push({ t: f.t, l: f.l, date: due.date, app: due.app, p: f.p, href, sure: due.sure, est: !due.sure, cinema: f.d, n: known(f) });
+  }
+  // Announced dates first, by date; then estimates, by date.
+  soon.sort((a, b) => (a.est ? 1 : 0) - (b.est ? 1 : 0) || a.date.localeCompare(b.date));
+  // For sharing: announced dates, then the best-known of the estimates.
+  const share = [...soon.filter((f) => !f.est), ...soon.filter((f) => f.est).sort((a, b) => b.n - a.n || a.date.localeCompare(b.date))];
+  return { fresh: top, soon, share, checked: NEW_ON_OTT.checked };
+}
+
+const WEEK_URL = "https://masalamischief.in/ott-this-week";
+const soonWhen = (f) => f.est
+  ? (f.date > new Date().toISOString().slice(0, 10) ? `expected ${roughly(f.date).replace(/ \d{4}$/, "")}` : "due any day")
+  : `${shortDay(f.date)}${f.app ? ` on ${f.app}` : ""}`;
+function weekMessage(kind, list, langName, l) {
+  const five = list.slice(0, 5);
+  const lines = kind === "new"
+    ? [`📺 *Top ${five.length} new on OTT this week*${langName ? ` (${langName})` : ""}`, "", ...five.map((f, i) => `${i + 1}. *${f.t}*${f.y ? ` (${f.y})` : ""} – ${f.app}`)]
+    : [`🍿 *${five.length} films coming to OTT soon*${langName ? ` (${langName})` : ""}`, "", ...five.map((f, i) => `${i + 1}. *${f.t}* – ${soonWhen(f)}${f.est ? " (in cinemas now)" : ""}`)];
+  return [...lines, "", `Full list with direct links 👉 ${WEEK_URL}${l ? `?l=${l}` : ""}`].join("\n");
+}
+async function weekCard(kind, list, langName) {
+  const { c, g, W, H } = await storyCanvas(900);
+  const five = list.slice(0, 5);
+  g.textAlign = "center"; g.textBaseline = "alphabetic";
+  g.fillStyle = "#fff3dc"; g.font = "800 76px 'Baloo 2', sans-serif";
+  g.fillText(kind === "new" ? "New on OTT this week" : "Coming to OTT soon", W / 2, 300);
+  g.fillStyle = "#f6b73c"; g.font = "700 36px Inter, sans-serif";
+  g.fillText(`${langName ? `${langName} · ` : ""}${new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}`, W / 2, 360);
+  const posters = await Promise.all(five.map((f) => (f.p ? loadImage(tmdb(f.p, "w185")).catch(() => null) : null)));
+  const rowH = 250, x0 = 80, pw = 140, ph = 210;
+  let y = 430;
+  five.forEach((f, i) => {
+    g.fillStyle = "rgba(255,243,220,0.07)";
+    g.beginPath(); g.roundRect(x0 - 20, y - 20, W - 2 * (x0 - 20), rowH - 10, 28); g.fill();
+    g.fillStyle = "#3a2a2e"; g.beginPath(); g.roundRect(x0, y, pw, ph, 16); g.fill();
+    if (posters[i]) { g.save(); g.beginPath(); g.roundRect(x0, y, pw, ph, 16); g.clip(); g.drawImage(posters[i], x0, y, pw, ph); g.restore(); }
+    const tx = x0 + pw + 40, tw = W - tx - 80;
+    g.textAlign = "left";
+    g.fillStyle = "#d7263d"; g.font = "800 44px 'Baloo 2', sans-serif"; g.fillText(`${i + 1}`, tx, y + 50);
+    g.fillStyle = "#fff3dc"; g.font = "800 50px 'Baloo 2', sans-serif";
+    const tl = wrapLines(g, f.t, tw - 50, 2);
+    tl.forEach((l, j) => g.fillText(l, tx + 50, y + 52 + j * 52));
+    const meta = kind === "new" ? `on ${f.app}${f.y ? ` · ${f.y}` : ""}` : soonWhen(f);
+    g.fillStyle = "#f6b73c"; g.font = "700 36px Inter, sans-serif"; g.fillText(meta, tx + 50, y + 70 + tl.length * 52);
+    const sub = kind === "new" ? (f.l ? langLabel(CAT_LANGS[f.l] || "") : "") : f.est ? "In cinemas now · date not announced" : `${f.l ? langLabel(CAT_LANGS[f.l] || "") : ""}`;
+    if (sub) { g.fillStyle = "#c9b8ad"; g.font = "600 32px Inter, sans-serif"; g.fillText(sub, tx + 50, y + 116 + tl.length * 52); }
+    y += rowH;
+  });
+  g.textAlign = "center";
+  g.fillStyle = "#f6b73c"; g.font = "700 36px Inter, sans-serif";
+  g.fillText("Full list & direct links", W / 2, H - 130);
+  g.fillStyle = "#fff3dc"; g.font = "800 46px 'Baloo 2', sans-serif";
+  g.fillText("masalamischief.in/ott-this-week", W / 2, H - 70);
+  return new Promise((resolve) => c.toBlob(resolve, "image/jpeg", 0.9));
+}
+
+async function initWeek() {
+  const root = document.getElementById("week");
+  const l = new URLSearchParams(location.search).get("l") || "";
+  const { fresh, soon, share, checked } = await weekData();
+  const langName = CAT_LANGS[l] ? langLabel(CAT_LANGS[l]) : "";
+  const pick = (list) => list.filter((f) => !l || f.l === l);
+  const newList = pick(fresh), soonList = pick(soon), shareSoon = pick(share);
+  const langs = [...new Set([...fresh, ...soon].map((f) => f.l).filter((c) => CAT_LANGS[c]))];
+  document.title = `${langName ? `${langName} ` : ""}OTT Releases This Week in India: New Movies on Netflix, Prime Video & More · Masala Mischief`;
+  const card = (f, kind) => `
+    <article class="ucard">
+      ${f.p ? `<img src="${tmdb(f.p, "w185")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
+      <div class="ucard-body">
+        <span class="udate">${kind === "new" ? `Added ${shortDay(f.date)}` : f.est ? `Expected ${esc(soonWhen(f).replace(/^expected /, ""))}` : `📅 ${shortDay(f.date)}`}</span>
+        <strong>${f.href ? `<a href="${f.href}">${esc(f.t)}</a>` : esc(f.t)}</strong>
+        <span class="muted small">${[f.l && langLabel(CAT_LANGS[f.l] || ""), kind === "new" ? f.y : "", kind === "new" && f.recent ? "🆕 New film" : "", f.est ? `in cinemas since ${shortDay(f.cinema)}` : ""].filter(Boolean).map(esc).join(" · ")}</span>
+        ${kind === "new" && f.note ? `<span class="small">${esc(f.note)}</span>` : ""}
+        ${kind === "new" ? `<div class="otts"><a class="ott ott-${slug(f.app)}" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.app)} ↗</a></div>`
+          : f.app ? `<div class="otts"><span class="ott ott-${slug(f.app)}">${esc(f.app)}</span></div>` : f.est ? `<span class="small muted">Date not announced yet</span>` : ""}
+      </div>
+    </article>`;
+  root.innerHTML = `
+    <div class="page-head"><h1>📺 ${langName ? `${esc(langName)} ` : ""}OTT releases this week</h1>
+      <p class="lead">What just arrived on Netflix, Prime Video, JioHotstar, ZEE5, SonyLIV and more in India, and the cinema films coming to OTT next. Updated daily · ${fmtDate(checked)}.</p>
+      <p><a class="btn small" href="#wa-post">📲 Share this list on WhatsApp</a></p></div>
+    <nav class="chips app-tabs" aria-label="Languages">
+      <a class="chip" href="ott-this-week.html" aria-pressed="${!l}">All</a>
+      ${langs.map((c) => `<a class="chip" href="ott-this-week.html?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
+    </nav>
+    <section><div class="section-head"><h2>🆕 New on OTT this week</h2></div>
+      ${newList.length ? `<div class="ulist">${newList.map((f) => card(f, "new")).join("")}</div>` : `<div class="empty">Nothing new ${langName ? `in ${esc(langName)} ` : ""}this week yet. <a href="ott-this-week.html">See all languages</a>.</div>`}
+    </section>
+    <section><div class="section-head"><h2>📅 Coming to OTT soon</h2></div>
+      <p class="muted small">Announced dates first; then our estimate for films still in cinemas (Hindi films usually stream about 8 weeks after release, South Indian films about 4).</p>
+      ${soonList.length ? `<div class="ulist">${soonList.map((f) => card(f, "soon")).join("")}</div>` : `<div class="empty">No OTT dates ${langName ? `for ${esc(langName)} films ` : ""}in the next few weeks yet. <a href="upcoming.html?show=now">See what's in cinemas</a>.</div>`}
+    </section>
+    <section class="wa-post panel" id="wa-post">
+      <h2>📲 Share this week's picks</h2>
+      <p class="muted small">A ready-made post for your WhatsApp channel, groups or Status: copy the message, or share it as an image.</p>
+      <div class="view-tabs" id="wa-kind">
+        <button type="button" data-k="new" aria-pressed="true">🆕 Top 5 new</button>
+        <button type="button" data-k="soon" aria-pressed="false">🍿 5 coming soon</button>
+      </div>
+      <textarea id="wa-text" rows="9" readonly aria-label="Message to share"></textarea>
+      <div class="cta-row">
+        <button class="btn primary" type="button" id="wa-copy">📋 Copy message</button>
+        <button class="btn" type="button" id="wa-image">📸 Share as image</button>
+        <a class="btn wa-btn" id="wa-send" target="_blank" rel="noopener">💬 Send on WhatsApp</a>
+      </div>
+    </section>
+    <a class="wa-follow" href="${WHATSAPP_CHANNEL}" target="_blank" rel="noopener">
+      <span class="wa-icon" aria-hidden="true">💬</span>
+      <span><strong>Get this every week</strong><span>Follow Masala Mischief on WhatsApp for new OTT releases.</span></span>
+      <span class="wa-go">Follow</span>
+    </a>`;
+
+  // The share box: message and image for the chosen list.
+  let kind = newList.length ? "new" : "soon";
+  const listFor = () => (kind === "new" ? newList : shareSoon);
+  const paint = () => {
+    document.querySelectorAll("#wa-kind [data-k]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.k === kind));
+    const text = listFor().length ? weekMessage(kind, listFor(), langName, l) : "";
+    document.getElementById("wa-text").value = text || "Nothing to share in this list yet.";
+    document.getElementById("wa-send").href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    ["wa-copy", "wa-image"].forEach((id) => (document.getElementById(id).disabled = !text));
+  };
+  document.getElementById("wa-kind").addEventListener("click", (e) => { const b = e.target.closest("[data-k]"); if (b) { kind = b.dataset.k; paint(); } });
+  document.getElementById("wa-copy").addEventListener("click", async (e) => {
+    const text = document.getElementById("wa-text").value;
+    try { await navigator.clipboard.writeText(text); e.target.textContent = "✓ Copied"; setTimeout(() => (e.target.textContent = "📋 Copy message"), 2000); }
+    catch { document.getElementById("wa-text").select(); }
+  });
+  document.getElementById("wa-image").addEventListener("click", (e) => shareImage(() => weekCard(kind, listFor(), langName),
+    `ott-${kind === "new" ? "this-week" : "coming-soon"}.jpg`, e.currentTarget, document.getElementById("wa-text").value, "OTT releases card"));
+  paint();
+}
+
 renderChrome();
 freshenWatch(); // the saved where-to-watch now; the latest one in the background
-({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming }[document.body.dataset.page] || (() => {}))();
+({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming, week: initWeek }[document.body.dataset.page] || (() => {}))();

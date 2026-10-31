@@ -355,6 +355,14 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 /* OTT release date for films in cinemas (film page, In theatres cards) */
 .ott-due { margin: 8px 0 0; padding: 8px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
 .ott-due-chip { font-weight: 600; }
+/* OTT releases this week: the ready-made WhatsApp post */
+.wa-post { margin: 28px 0 8px; scroll-margin-top: 80px; padding: 16px; background: var(--surface); border: 1.5px solid color-mix(in srgb, #25d366 45%, var(--line)); border-radius: var(--radius); }
+.wa-post h2 { font-size: 1.15rem; margin: 0 0 4px; }
+.wa-post .view-tabs { margin: 12px 0; }
+.view-tabs button { font: inherit; border: 0; background: none; cursor: pointer; text-align: center; padding: 11px 8px; border-radius: 999px; font-weight: 800; color: var(--ink-soft); white-space: nowrap; }
+.view-tabs button[aria-pressed="true"] { background: var(--chilli); color: #fff; box-shadow: var(--shadow); }
+.wa-post textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 0.92rem; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--ink); resize: vertical; }
+.wa-post .cta-row { margin: 10px 0 0; }
 /* Wrong app? Tell us (under where-to-watch on film and review pages) */
 .report-wrong { margin: 10px 0 0; font-size: 0.9rem; }
 .report-wrong summary { cursor: pointer; color: var(--ink-soft); font-weight: 600; padding: 6px 0; list-style-position: inside; }
