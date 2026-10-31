@@ -507,6 +507,7 @@ async function main() {
   writeCatalogue([...films, ...keptSeries], trendIds);
   await writeUpcoming(new Set(films.map(keyOf)));
   await writeTop10([...films, ...keptSeries]);
+  await writePeopleBios();
   console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series.`);
 }
 
@@ -549,6 +550,7 @@ async function daily() {
   writeCatalogue([...have.values()], trendIds);
   await writeUpcoming(new Set(have.keys()));
   await writeTop10([...have.values()]);
+  await writePeopleBios();
 }
 
 const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, ...rest }) => rest;
@@ -653,6 +655,8 @@ function writeCatalogue(titles, trendIds) {
   pShards.forEach((s, i) => writeIfChanged(new URL(`p/${i}.json`, OUT), JSON.stringify(s)));
   rmSync(new URL("people/", OUT), { recursive: true, force: true }); // older layout
   console.log(`People: ${Object.keys(people).length}.`);
+  // The people with pages (3+ titles), for writePeopleBios() after this.
+  peopleWithPages = Object.entries(people).filter(([, p]) => p[2].length >= 3).sort((a, b) => b[1][2].length - a[1][2].length).map(([id]) => +id);
 
   // People search: ps/<ab>.json holds everyone with 3+ titles (the ones with pages in the sitemap) who has
   // a name word starting with "ab": [person id, name, photo, titles], most titles first.
@@ -947,6 +951,44 @@ function writeNewSeasons(fresh, have) {
   const items = [...found, ...old.filter((x) => x.f >= day(-SEASON_DAYS) && !found.some((n) => n.k === x.k))];
   writeIfChanged(file, JSON.stringify({ items }));
   console.log(`New seasons: ${found.length} this week${found.length ? ` (${found.slice(0, 10).map((x) => `${x.t} S${x.s}`).join(", ")})` : ""}.`);
+}
+
+// Actor and director details for their pages (pb/<id % BIO_SHARDS>.json): { id: [bio, born, birthplace,
+// died, main job] }, from TMDB. Fetched once per person and kept (a person without a bio is kept as []
+// so they aren't asked again); up to BIO_BATCH new people per run, most titles first, so the first runs
+// fill in everyone and later ones only add newcomers.
+const BIO_SHARDS = 256;
+const BIO_BATCH = 5000;
+let peopleWithPages = [];
+async function writePeopleBios() {
+  const dir = new URL("pb/", OUT);
+  mkdirSync(dir, { recursive: true });
+  const shards = Array.from({ length: BIO_SHARDS }, (_, i) => {
+    const f = new URL(`${i}.json`, dir);
+    return existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : {};
+  });
+  const missing = peopleWithPages.filter((id) => !(id in shards[id % BIO_SHARDS])).slice(0, BIO_BATCH);
+  let next = 0;
+  let got = 0;
+  await Promise.all(Array.from({ length: WORKERS }, async () => {
+    while (next < missing.length) {
+      const id = missing[next++];
+      let d;
+      try { d = await tmdb(`/person/${id}`); } catch (e) {
+        if (/rejected the token/.test(e.message)) throw e;
+        continue; // TMDB having trouble: this person is tried again next run
+      }
+      if (d === null) { shards[id % BIO_SHARDS][id] = []; continue; } // gone from TMDB
+      const bio = shorten(d.biography || "", 700);
+      shards[id % BIO_SHARDS][id] = bio || d.birthday || d.place_of_birth
+        ? [bio, d.birthday || "", d.place_of_birth || "", d.deathday || "", d.known_for_department || ""] : [];
+      got++;
+      await sleep(25);
+    }
+  }));
+  shards.forEach((s, i) => writeIfChanged(new URL(`${i}.json`, dir), JSON.stringify(s)));
+  const total = shards.reduce((n, s) => n + Object.keys(s).length, 0);
+  console.log(`People details: ${got} fetched this run; ${total} of ${peopleWithPages.length} people with pages have them.`);
 }
 
 async function writeTop10(all) {
