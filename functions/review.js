@@ -7,6 +7,7 @@
 import "../assets/data.js";
 import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions } from "../lib/seo.js";
 import { audienceRating } from "../lib/community.js";
+import { overrideApps } from "../lib/fixes.js";
 
 export async function onRequestGet(context) {
   const page = await context.next();
@@ -19,15 +20,17 @@ export async function onRequestGet(context) {
     // Trailer/cast/Wikidata for our films (assets/catalog/reviewed.json, refreshed daily) and visitors' rating.
     // Where it streams now comes from reviewed-watch.json (re-checked daily); data.js is the fallback.
     const json = (path) => context.env.ASSETS.fetch(new URL(path, context.request.url)).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-    const [extras, audience, fresh] = await Promise.all([
+    // Corrections from readers' reports (overrides.json, see lib/fixes.js) go on top.
+    const [extras, audience, fresh, fix] = await Promise.all([
       json("/assets/catalog/reviewed.json").then((all) => (all && all[m.id]) || {}),
       audienceRating(context.env, `r:${m.id}`),
       json("/assets/catalog/reviewed-watch.json").then((all) => all && all.films && all.films[m.id]),
+      json("/assets/catalog/overrides.json").then((all) => all && all.titles && all.titles[`r:${m.id}`]),
     ]);
 
     const img = (IMAGES && IMAGES[m.id]) || {};
     const lang = LANG_LABELS[m.lang] || m.lang;
-    const stream = fresh ? fresh.w || [] : (WATCH[m.id] && WATCH[m.id].stream) || [];
+    const stream = overrideApps(fresh ? fresh.w || [] : (WATCH[m.id] && WATCH[m.id].stream) || [], fix);
     const links = { ...((WATCH_LINKS && WATCH_LINKS[m.id]) || {}), ...((fresh && fresh.u) || {}) };
     const notes = PARENT_NOTES[m.id];
     const url = `${SITE}/review?id=${encodeURIComponent(m.id)}`;

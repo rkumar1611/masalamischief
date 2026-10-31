@@ -352,6 +352,20 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 .quick-answers dl { margin: 0; display: grid; gap: 8px; }
 .quick-answers dt { font-weight: 700; }
 .quick-answers dd { margin: 0; color: var(--ink-soft); }
+/* Wrong app? Tell us (under where-to-watch on film and review pages) */
+.report-wrong { margin: 10px 0 0; font-size: 0.9rem; }
+.report-wrong summary { cursor: pointer; color: var(--ink-soft); font-weight: 600; padding: 6px 0; list-style-position: inside; }
+.report-wrong[open] { padding: 4px 14px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.report-wrong form { display: grid; gap: 10px; margin-top: 6px; }
+.report-wrong label { display: grid; gap: 4px; font-weight: 600; }
+.report-wrong label[hidden] { display: none; }
+.report-wrong select, .report-wrong textarea {
+  width: 100%; box-sizing: border-box; font: inherit; font-weight: 400; padding: 9px 12px;
+  border: 1.5px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink);
+}
+.report-wrong .btn { justify-self: start; }
+.report-wrong .rw-msg:empty { display: none; }
+.rw-thanks { margin: 4px 0 0; font-weight: 600; }
 /* Follow our WhatsApp Channel (home page, under reviews, footer) in WhatsApp's own green */
 .wa-follow {
   display: flex; align-items: center; gap: 12px; margin: 20px 0 4px; padding: 14px 16px; text-decoration: none; color: var(--ink);

@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Review admin · Masala Mischief</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/style.css?v=95">
+  <link rel="stylesheet" href="assets/style.css?v=96">
   <style>
     .adm { max-width: 900px; margin: 32px auto; padding: 0 16px; }
     .adm-login, .adm-row { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 10px 0; }
@@ -23,8 +23,8 @@
 <body class="has-chrome">
   <main class="adm">
     <p><a class="btn primary" href="/write">✍️ Write or edit one of our reviews</a></p>
-    <h1>🗣️ Audience review admin</h1>
-    <p class="muted">New reviews wait here until you approve them. Approve the good ones, delete spam or anything that breaks the community rules. Approved reviews with 3 reports are hidden again until you check them.</p>
+    <h1>🛡️ Site admin</h1>
+    <p class="muted">Readers' wrong-info reports, then audience reviews. New reviews wait here until you approve them. Approve the good ones, delete spam or anything that breaks the community rules. Approved reviews with 3 reports are hidden again until you check them.</p>
     <form class="adm-login" id="login">
       <label for="pw"><strong>Admin password</strong></label><br>
       <input type="password" id="pw" autocomplete="current-password">
@@ -32,6 +32,17 @@
       <span class="small" id="login-msg"></span>
     </form>
     <div id="panel" hidden>
+      <section class="adm-fixes">
+        <h2>🛠️ Wrong-info reports</h2>
+        <p class="muted small">From "Wrong app? Tell us" on film and review pages. <strong>Apply</strong> fixes the page's apps for 90 days (by then the weekly app check has usually caught up); check the app first. Details reports: fix by hand, then mark done.</p>
+        <div class="chips" id="fix-filters">
+          <button class="chip" type="button" data-ff="open">📬 Open</button>
+          <button class="chip" type="button" data-ff="done">✅ Done</button>
+          <button class="chip" type="button" data-ff="ignored">🙈 Ignored</button>
+        </div>
+        <div id="fix-rows"></div>
+      </section>
+      <h2>🗣️ Audience reviews</h2>
       <div class="chips" id="filters">
         <button class="chip" type="button" data-f="pending">⏳ Waiting for approval</button>
         <button class="chip" type="button" data-f="reported">🚩 Reported</button>
@@ -63,6 +74,7 @@
       if (status === 401) { $("panel").hidden = true; $("login").hidden = false; $("login-msg").textContent = "Wrong password."; return; }
       if (status !== 200) { $("login-msg").textContent = data.error || "Reviews aren't switched on yet."; return; }
       try { sessionStorage.setItem("mm-admin", pw); } catch {}
+      if ($("login").hidden === false) loadFixes();
       $("login").hidden = true; $("panel").hidden = false;
       document.querySelectorAll("#filters [data-f]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.f === filter));
       const t = data.totals || {};
@@ -79,6 +91,45 @@
           </div>
         </div>`).join("") || `<p class="muted">Nothing here. 🎉</p>`;
     }
+
+    // Wrong-info reports (/api/fixes).
+    let fixFilter = "open";
+    const KIND_LABEL = { gone: "Not on", also: "Also on", details: "Wrong details", other: "Other" };
+    async function loadFixes() {
+      const res = await fetch(`/api/fixes?filter=${fixFilter}`, { headers: { authorization: `Bearer ${pw}` } });
+      const data = await res.json().catch(() => ({}));
+      document.querySelectorAll("#fix-filters [data-ff]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ff === fixFilter));
+      document.querySelector('#fix-filters [data-ff="open"]').textContent = `📬 Open${data.open ? ` (${data.open})` : ""}`;
+      if (!res.ok) { $("fix-rows").innerHTML = `<p class="muted">${esc(data.error || "Couldn't load reports.")}</p>`; return; }
+      $("fix-rows").innerHTML = data.fixes.map((f) => {
+        const appFix = f.kind === "gone" || f.kind === "also";
+        return `
+        <div class="adm-row${f.status === "open" ? " pending" : ""}">
+          <div class="meta"><a href="${titleLink(f.target)}" target="_blank"><strong>${esc(f.name || f.target)}</strong></a> · ${new Date(f.updated).toLocaleString("en-IN")}
+            ${f.count > 1 ? ` · 👥 ${f.count} people` : ""}</div>
+          <p><strong>${KIND_LABEL[f.kind] || esc(f.kind)}${appFix ? ` ${esc(f.app)}` : ""}</strong>${f.note ? `: ${esc(f.note)}` : ""}</p>
+          <div class="adm-actions">
+            ${f.status === "open" ? `
+              ${appFix ? `<button data-fa="apply" data-id="${f.id}">✅ Apply: ${f.kind === "gone" ? "remove" : "add"} ${esc(f.app)}</button>` : `<button data-fa="done" data-id="${f.id}">✅ Mark done</button>`}
+              <button data-fa="ignore" data-id="${f.id}">Ignore</button>` : `<button data-fa="reopen" data-id="${f.id}">Reopen</button>`}
+          </div>
+          <p class="small" data-msg="${f.id}"></p>
+        </div>`;
+      }).join("") || `<p class="muted">Nothing here. 🎉</p>`;
+    }
+    $("fix-filters").addEventListener("click", (e) => { const b = e.target.closest("[data-ff]"); if (b) { fixFilter = b.dataset.ff; loadFixes(); } });
+    $("fix-rows").addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-fa]");
+      if (!b) return;
+      const msg = document.querySelector(`[data-msg="${b.dataset.id}"]`);
+      b.disabled = true; msg.textContent = b.dataset.fa === "apply" ? "Saving to the site…" : "";
+      const res = await fetch("/api/fixes", { method: "POST", headers: { authorization: `Bearer ${pw}`, "content-type": "application/json" },
+        body: JSON.stringify({ action: b.dataset.fa, id: +b.dataset.id }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { b.disabled = false; msg.textContent = data.error || "Something went wrong."; return; }
+      if (b.dataset.fa === "apply") alert("Saved. The page shows the fix in a minute or two.");
+      loadFixes();
+    });
 
     $("login").addEventListener("submit", (e) => { e.preventDefault(); pw = $("pw").value; load(); });
     $("filters").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { filter = b.dataset.f; load(); } });

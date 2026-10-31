@@ -1193,7 +1193,8 @@ function initReview() {
   const shareText = `${m.title}: ${m.masala}/5 on the Masala Meter, ${m.quality}/10 overall. ${m.tagline}`;
   const pageUrl = location.href;
   // Where to watch: drawn by these two, and drawn again in place if fresher data arrives (freshenWatch).
-  const watchNow = () => WATCH[m.id] || { stream: [], rent: [] };
+  let fix = null; // a reader's report we've checked and applied (overrides.json)
+  const watchNow = () => { const w = WATCH[m.id] || { stream: [], rent: [] }; return fix ? { ...w, stream: withCorrection(w.stream, fix) } : w; };
   const watchLine = () => { const w = watchNow(); return w.stream.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${platformLinks(m, w.stream)}</div>` : ""; };
   const watchPanel = () => {
     const w = watchNow();
@@ -1202,13 +1203,14 @@ function initReview() {
         ? `<p class="muted small">Included with subscription · tap to open</p>${platformLinks(m, w.stream)}`
         : `<p class="muted small">Not on a subscription service in India right now.</p>`}
       ${w.rent.length ? `<p class="muted small" style="margin-top:12px">Rent or buy</p>${platformLinks(m, w.rent)}` : ""}
-      <p class="fine">Updated ${fmtDate(watchUpdated)}. Availability changes, so confirm in the app.</p>`;
+      <p class="fine">Updated ${fmtDate(fix && fix.date > watchUpdated ? fix.date : watchUpdated)}${fix ? " (corrected from a reader's report)" : ""}. Availability changes, so confirm in the app.</p>`;
   };
-  onFreshWatch = () => {
+  const redrawWatch = () => {
     const line = document.getElementById("watch-line"), panel = document.getElementById("watch-panel");
     if (line) line.innerHTML = watchLine();
     if (panel) panel.innerHTML = watchPanel();
   };
+  onFreshWatch = redrawWatch;
   const notes = PARENT_NOTES[m.id];
 
   root.innerHTML = `
@@ -1303,6 +1305,9 @@ function initReview() {
     if (badges) badges.outerHTML = posterRating(m);
   }));
   paintRate(ratings[m.id] || 0);
+
+  document.getElementById("watch-panel").after(reportBox(`r:${m.id}`, m.title, () => watchNow().stream));
+  correctionFor(`r:${m.id}`).then((ov) => { if (ov) { fix = ov; redrawWatch(); } });
 
   root.insertAdjacentHTML("beforeend", `<section class="community" id="community"></section>`);
   initCommunity(`r:${m.id}`, document.getElementById("community"), m.title);
@@ -1905,6 +1910,78 @@ function loadCatalog(name) {
   return catCache[name];
 }
 
+/* ---------- Wrong-info reports and the corrections made from them ----------
+   "Wrong app? Tell us" on film and review pages posts to /api/report; once checked in /admin, the fix
+   lands in assets/catalog/overrides.json, laid over the catalogue here (and by the page functions). */
+const REPORT_KINDS = { gone: "Not on this app any more", also: "Also streaming on another app", details: "Wrong details (year, cast, language…)", other: "Something else" };
+// As lib/fixes.js APPS.
+const REPORT_APPS = ["Netflix", "Prime Video", "JioHotstar", "ZEE5", "SonyLIV", "Sun NXT", "aha", "ManoramaMAX",
+  "Lionsgate Play", "Crunchyroll", "Apple TV", "MX Player", "Hoichoi", "ETV Win", "Chaupal"];
+const OVERRIDE_DAYS = 90;
+// The correction for one title ("<lang>-<id>" or "r:<review id>"), if there's a current one.
+const correctionFor = async (key) => {
+  const ov = ((await loadCatalog("overrides")) || {}).titles?.[key];
+  return ov && ov.date && (Date.now() - Date.parse(ov.date)) / 864e5 <= OVERRIDE_DAYS ? ov : null;
+};
+// As lib/fixes.js overrideApps().
+const withCorrection = (apps, ov) => {
+  if (!ov) return apps || [];
+  const out = (apps || []).filter((a) => !(ov.remove || []).includes(a));
+  for (const a of ov.add || []) if (!out.includes(a)) out.push(a);
+  return out;
+};
+
+// The "Wrong app? Tell us" box: a closed <details> under where-to-watch. apps() gives the apps shown now.
+function reportBox(target, name, apps) {
+  const box = document.createElement("details");
+  box.className = "report-wrong";
+  box.innerHTML = `
+    <summary>⚠️ Wrong app? Tell us</summary>
+    <form novalidate>
+      <label>What's wrong?
+        <select name="kind">${Object.entries(REPORT_KINDS).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select>
+      </label>
+      <label class="rw-app">Which app?<select name="app"></select></label>
+      <label><span>Anything to add? <span class="muted small">(optional for apps)</span></span>
+        <textarea name="note" rows="2" maxlength="300" placeholder="e.g. it moved to ZEE5 last week"></textarea>
+      </label>
+      <button class="btn primary small" type="submit">Send</button>
+      <p class="fine rw-msg" role="status"></p>
+    </form>`;
+  const form = box.querySelector("form");
+  const msg = box.querySelector(".rw-msg");
+  const paintApps = () => {
+    const kind = form.kind.value;
+    const now = apps();
+    const list = kind === "gone" ? now : REPORT_APPS.filter((a) => !now.includes(a));
+    box.querySelector(".rw-app").hidden = !(kind === "gone" || kind === "also");
+    form.app.innerHTML = list.length ? list.map((a) => `<option>${esc(a)}</option>`).join("") : `<option value="">No apps listed</option>`;
+  };
+  // "Not on this app any more" only makes sense when it's listed on one.
+  box.addEventListener("toggle", () => {
+    if (!box.open) return;
+    if (!apps().length && form.kind.value === "gone") form.kind.value = "also";
+    paintApps();
+  });
+  form.kind.addEventListener("change", paintApps);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const kind = form.kind.value;
+    const needsApp = kind === "gone" || kind === "also";
+    if (needsApp && !form.app.value) { msg.textContent = "Please pick the app."; return; }
+    if (!needsApp && form.note.value.trim().length < 3) { msg.textContent = "Please tell us what's wrong."; form.note.focus(); return; }
+    const btn = form.querySelector("button");
+    btn.disabled = true; msg.textContent = "Sending…";
+    const res = await fetch("/api/report", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ target, name, kind, app: needsApp ? form.app.value : "", note: form.note.value }) })
+      .then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) })).catch(() => ({ ok: false, error: "Network problem. Please try again." }));
+    btn.disabled = false;
+    if (!res.ok) { msg.textContent = res.error || "Something went wrong."; return; }
+    form.innerHTML = `<p class="rw-thanks">🙏 Thanks! We'll check it and fix the page, usually within a day.</p>`;
+  });
+  return box;
+}
+
 // The catalogue's storage (see scripts/build-catalog.mjs). manifest.json says which layout is live:
 //   layout 2: list-<code>.json per language, popular.json for "all languages", t/<code>/<n>.json title
 //             details, p/<n>.json people, s/<letter>.json search
@@ -2461,11 +2538,13 @@ async function initFilm() {
   const id = /^\d+$/.test(rawId || "") ? +rawId : /^tv\d+$/.test(rawId || "") ? rawId : null;
   const mine = typeof id === "number" && reviewedByTmdb()[id];
   if (mine) { location.replace(`review.html?id=${encodeURIComponent(mine.id)}`); return; }
-  const [f, man] = await Promise.all([id ? loadTitle(code, String(id)) : null, loadCatalog("manifest")]);
+  const [f, man, fix] = await Promise.all([id ? loadTitle(code, String(id)) : null, loadCatalog("manifest"), correctionFor(`${code}-${rawId}`)]);
   if (!f) {
     root.innerHTML = `<div class="empty">We couldn't find that title. <a href="films.html">Browse movies & series</a>.</div>`;
     return;
   }
+  // A reader's report we've checked and applied (overrides.json).
+  if (fix) { f.w = withCorrection(f.w, fix); if (f.ja) f.ja = withCorrection(f.ja, fix); }
   const tv = f.k === "tv";
   const lang = langLabel(CAT_LANGS[f.l]);
   const years = yearsOf(f);
@@ -2519,7 +2598,7 @@ async function initFilm() {
             : cinemas
               ? `<p class="muted small">🎬 ${out ? "In cinemas now" : `In cinemas from ${fmtDate(f.rd)}`}, not streaming yet. Pick your city for showtimes and tickets:</p><div class="otts">${ticketLinks()}</div>`
               : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
-          <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}. Availability changes, so confirm in the app.</p>
+          <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}${fix ? `, corrected ${fmtDate(fix.date)} from a reader's report` : ""}. Availability changes, so confirm in the app.</p>
         </div>
         <div class="side">
           <dl>
@@ -2543,6 +2622,7 @@ async function initFilm() {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
   };
   renderMoreLike(document.getElementById("similar-slot"), f, `🍿 Liked ${f.t}? Try these`);
+  root.querySelector(".panel-watch").after(reportBox(`c:${code}-${rawId}`, f.t, () => f.w));
   // Save to the watchlist (kept on this device, like saved reviews).
   const saveId = catSaveId(f);
   const save = document.getElementById("save");

@@ -6,6 +6,7 @@
 // If anything goes wrong, the plain page is served as before.
 import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions, filmSearchTitle, filmSearchDesc, quickAnswers } from "../lib/seo.js";
 import { audienceRating } from "../lib/community.js";
+import { overrideApps } from "../lib/fixes.js";
 
 const LANGS = {
   hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", mr: "Marathi", bn: "Bengali", pa: "Punjabi",
@@ -21,13 +22,17 @@ export async function onRequestGet(context) {
     const manRes = await context.env.ASSETS.fetch(new URL("/assets/catalog/manifest.json", context.request.url));
     const man = manRes.ok ? await manRes.json() : {};
     const file = man.layout >= 2 ? `/assets/catalog/t/${code}/${+rawId.replace(/^tv/, "") % man.shards.t}.json` : `/assets/catalog/${code}.json`;
-    const [res, audience] = await Promise.all([
+    const [res, audience, fix] = await Promise.all([
       context.env.ASSETS.fetch(new URL(file, context.request.url)),
       audienceRating(context.env, `c:${code}-${rawId}`),
+      // Corrections from readers' reports (see lib/fixes.js).
+      context.env.ASSETS.fetch(new URL("/assets/catalog/overrides.json", context.request.url))
+        .then((r) => (r.ok ? r.json() : null)).then((all) => all && all.titles && all.titles[`${code}-${rawId}`]).catch(() => null),
     ]);
     if (!res.ok) return page;
     const f = (await res.json()).films[rawId];
     if (!f) return page;
+    if (fix) { f.w = overrideApps(f.w, fix); if (f.ja) f.ja = overrideApps(f.ja, fix); }
 
     const tv = f.k === "tv";
     const years = tv && f.y ? (f.end ? (f.ye ? `${f.y}–${f.ye}` : `${f.y}`) : `${f.y}–`) : f.y ? `${f.y}` : "";
