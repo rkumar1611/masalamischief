@@ -352,6 +352,9 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 .quick-answers dl { margin: 0; display: grid; gap: 8px; }
 .quick-answers dt { font-weight: 700; }
 .quick-answers dd { margin: 0; color: var(--ink-soft); }
+/* OTT release date for films in cinemas (film page, In theatres cards) */
+.ott-due { margin: 8px 0 0; padding: 8px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.ott-due-chip { font-weight: 600; }
 /* Wrong app? Tell us (under where-to-watch on film and review pages) */
 .report-wrong { margin: 10px 0 0; font-size: 0.9rem; }
 .report-wrong summary { cursor: pointer; color: var(--ink-soft); font-weight: 600; padding: 6px 0; list-style-position: inside; }

@@ -33,6 +33,7 @@ export async function onRequestGet(context) {
     const f = (await res.json()).films[rawId];
     if (!f) return page;
     if (fix) { f.w = overrideApps(f.w, fix); if (f.ja) f.ja = overrideApps(f.ja, fix); }
+    f.l = code;
 
     const tv = f.k === "tv";
     const years = tv && f.y ? (f.end ? (f.ye ? `${f.y}–${f.ye}` : `${f.y}`) : `${f.y}–`) : f.y ? `${f.y}` : "";

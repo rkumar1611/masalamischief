@@ -1,6 +1,6 @@
 // Cloudflare Pages Function for /upcoming and /upcoming?l=<lang>: puts the upcoming releases with their
 // dates into the HTML for search engines and link previews. See lib/lists.js.
-import { SITE } from "../lib/seo.js";
+import { SITE, ottDue, ottDueText } from "../lib/seo.js";
 import { asset, listPage, LANG_NAMES } from "../lib/lists.js";
 
 export async function onRequestGet(context) {
@@ -21,12 +21,17 @@ export async function onRequestGet(context) {
       const url = `${SITE}/upcoming?show=now${lang ? `&l=${l}` : ""}`;
       return listPage(page, {
         rootId: "upcoming",
-        title: `${h1}: book tickets · Masala Mischief`,
+        title: `${h1}: book tickets & OTT release dates · Masala Mischief`,
         h1,
-        desc: `${h1} in India, not streaming yet: ${now.slice(0, 4).map((f) => f.t).join(", ")} and more. Book tickets on BookMyShow or District.`,
+        desc: `${h1} in India, not streaming yet: ${now.slice(0, 4).map((f) => f.t).join(", ")} and more. Book tickets on BookMyShow or District, and see when each comes to OTT.`,
         url,
-        intro: "Films in Indian cinemas and not streaming yet. Book tickets to pick your city, cinema and showtime.",
-        items: now.map((f) => ({ name: f.t, href: f.pg ? `/film?id=${f.l}-${f.id}` : url, note: [`Out ${date(f.d)}`, LANG_NAMES[f.l], f.cast.map((c) => c[1]).join(", ")].filter(Boolean).join(" · ") })),
+        intro: "Films in Indian cinemas and not streaming yet. Book tickets to pick your city, cinema and showtime. OTT dates are the announced ones where known, otherwise our estimate.",
+        items: now.map((f) => {
+          const film = { l: f.l, rd: f.d, od: f.od, oa: f.oa };
+          const due = ottDue(film);
+          return { name: f.t, href: f.pg ? `/film?id=${f.l}-${f.id}` : url,
+            note: [`Out ${date(f.d)}`, LANG_NAMES[f.l], f.cast.map((c) => c[1]).join(", "), due && ottDueText(film, due)].filter(Boolean).join(" · ") };
+        }),
         crumbs: [["Home", `${SITE}/`], ["In theatres now", `${SITE}/upcoming?show=now`], ...(lang ? [[h1, url]] : [])],
       });
     }
