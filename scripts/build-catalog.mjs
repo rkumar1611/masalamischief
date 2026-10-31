@@ -520,7 +520,7 @@ async function main() {
 
   attachLinks([...films, ...keptSeries], await appLinks(), have);
   writeCatalogue([...films, ...keptSeries], trendIds);
-  await writeUpcoming(new Set(films.map(keyOf)));
+  await writeUpcoming(films);
   await writeTop10([...films, ...keptSeries]);
   await writePeopleBios();
   console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series.`);
@@ -563,7 +563,7 @@ async function daily() {
   for (const [k, f] of fresh) have.set(k, f);
   attachLinks([...have.values()], null, before);
   writeCatalogue([...have.values()], trendIds);
-  await writeUpcoming(new Set(have.keys()));
+  await writeUpcoming([...have.values()]);
   await writeTop10([...have.values()]);
   await writePeopleBios();
 }
@@ -891,7 +891,7 @@ function writeSitemaps(all, people) {
 // lists.xml: New on <app>, best-of lists and upcoming (after writeUpcoming, which knows the languages).
 function writeListsSitemap(upcoming) {
   const index = JSON.parse(readFileSync(new URL("lists/index.json", OUT), "utf8"));
-  const paths = ["/ott", "/best", ...index.ott.map(([s]) => `/ott?app=${s}`)];
+  const paths = ["/ott", "/ott-this-week", "/best", ...index.ott.map(([s]) => `/ott?app=${s}`)];
   // New OTT releases per language (/ott?l=ml), for every language in the apps' latest lists.
   try {
     const ott = JSON.parse(readFileSync(new URL("lists/ott.json", OUT), "utf8"));
@@ -919,9 +919,16 @@ function writeListsSitemap(upcoming) {
 
 // upcoming.json: the most-awaited films releasing in the next UPCOMING_DAYS days, per language, with
 // trailer and lead cast, for the Upcoming releases page, plus the films in cinemas now (`now`).
-// Rebuilt on every run (daily and Sunday). `known` is the catalogue's keys, so films with their own
-// page get pg: 1 and link to it.
-async function writeUpcoming(known) {
+// Rebuilt on every run (daily and Sunday). Films with their own page in the catalogue (`all`) get pg: 1
+// and link to it. `soon`: catalogue films not streaming yet with an OTT date (od) in the next
+// SOON_DAYS days, for the "OTT releases this week" page.
+const SOON_DAYS = 30;
+async function writeUpcoming(all) {
+  const known = new Set(all.map(keyOf));
+  const soon = all.filter((f) => f.k !== "tv" && f.od && f.od >= day(0) && f.od <= day(SOON_DAYS) && !(f.w || []).length)
+    .sort((a, b) => a.od.localeCompare(b.od) || b.n - a.n).slice(0, 60)
+    .map((f) => ({ l: f.l, id: f.id, t: f.t, d: f.od, ...(f.oa ? { a: f.oa } : {}), ...(f.rd ? { rd: f.rd } : {}), p: f.p, g: (f.g || []).slice(0, 2),
+      ...(f.n >= 10 ? { v: f.v } : {}), n: f.n, cast: (f.cast || []).slice(0, 2).map((c) => [c[0], c[1]]), pg: 1 }));
   const picks = [];
   const nowPicks = [];
   for (const lang of UPCOMING_LANGS) {
@@ -940,7 +947,7 @@ async function writeUpcoming(known) {
       .filter((x) => x >= day(-NOW_DAYS) && x <= day(0)).sort().pop();
     return { l: f.l, id: f.id, t: f.t, d: inCinemas || d.release_date, p: f.p, g: f.g, ...(f.n >= 10 ? { v: f.v } : {}),
       ...(f.c ? { c: f.c } : {}), ...(f.tr ? { tr: f.tr } : {}), cast: (f.cast || []).slice(0, 2).map((c) => [c[0], c[1]]),
-      ...(f.od ? { od: f.od } : {}), ...(f.oa ? { oa: f.oa } : {}),
+      ...(f.od ? { od: f.od } : {}), ...(f.oa ? { oa: f.oa } : {}), n: f.n,
       ...(known.has(keyOf(f)) ? { pg: 1 } : {}) };
   }, (d) => !appsOf(d).length);
   now.sort((a, b) => b.d.localeCompare(a.d) || a.t.localeCompare(b.t));
@@ -950,9 +957,9 @@ async function writeUpcoming(known) {
       ov: shorten(d.overview, 200), ...(f.tr ? { tr: f.tr } : {}), cast: (f.cast || []).slice(0, 3).map((c) => [c[0], c[1]]) };
   });
   films.sort((a, b) => a.d.localeCompare(b.d) || a.t.localeCompare(b.t));
-  writeIfChanged(new URL("upcoming.json", OUT), JSON.stringify({ items: films, now }));
+  writeIfChanged(new URL("upcoming.json", OUT), JSON.stringify({ items: films, now, soon }));
   writeListsSitemap(films);
-  console.log(`Upcoming: ${films.length} films; in theatres: ${now.length}.`);
+  console.log(`Upcoming: ${films.length} films; in theatres: ${now.length}; OTT dates in the next ${SOON_DAYS} days: ${soon.length}.`);
 }
 
 // new-seasons.json: series whose latest aired season went up since last week (from sa), kept for 21
