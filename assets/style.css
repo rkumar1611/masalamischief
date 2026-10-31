@@ -356,7 +356,7 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 .ott-due { margin: 8px 0 0; padding: 8px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
 .ott-due p { margin: 0; }
 .ott-due .btn { margin-top: 8px; }
-.ucard-body .land-help:empty { display: none; }
+.ucard-body .land-help:empty, #land-all-help:empty { display: none; }
 .ott-due #land-help:empty { display: none; }
 .ott-due #land-help { margin-top: 6px; }
 .ott-due-chip { font-weight: 600; }

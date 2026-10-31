@@ -231,50 +231,85 @@ const weeklyOn = () => store.get("weeklyOn", true);
 const alertPost = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" },
   body: JSON.stringify({ ...body, ...alertChoice(), series: savedSeries(), titles: landWatch().slice(-100) }) });
 const pushSupported = () => location.protocol !== "file:" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-// "Tell me when it's on OTT" on a film page: the button turns an alert for this film on or off, switching
-// on this browser's alerts (asking permission) the first time.
+// Adds films to (add = true) or removes them from the list this browser is told about when they reach an
+// app, switching on this browser's alerts (asking permission) the first time. Returns "" when done, or the
+// message to show (blocked, couldn't save). Every 🔔 on the page repaints through the "landwatch" event.
+async function setLandWatch(keys, add) {
+  const before = landWatch();
+  const next = add ? [...new Set([...before, ...keys])].slice(-100) : before.filter((x) => !keys.includes(x));
+  const undo = () => store.set("landWatch", before);
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if (!add) {
+    store.set("landWatch", next);
+    if (sub && !next.length && !weeklyOn()) { // nothing left to tell this browser about
+      await sub.unsubscribe();
+      alertPost({ endpoint: sub.endpoint, off: true }).catch(() => {});
+    } else if (sub) alertPost(sub.toJSON()).catch(() => {});
+    document.dispatchEvent(new Event("landwatch"));
+    return "";
+  }
+  if (!sub) {
+    const perm = Notification.permission === "denied" ? "denied" : await Notification.requestPermission();
+    if (perm === "denied") return blockedSteps(navigator.userAgent).replace(/(tap|click) 🔔 again/, "try again");
+    if (perm !== "granted") return "";
+    const { key: vapid } = await fetch("/api/push/key").then((r) => r.json());
+    const raw = Uint8Array.from(atob(vapid.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+    sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
+    store.set("weeklyOn", false); // a new browser from here gets film alerts only, not the Friday roundup
+    store.set("landWatch", next);
+    const r = await alertPost({ ...sub.toJSON(), weekly: false });
+    if (!r.ok) { undo(); await sub.unsubscribe().catch(() => {}); return "Couldn't turn on alerts. Please try again."; }
+  } else {
+    store.set("landWatch", next);
+    const r = await alertPost(sub.toJSON());
+    if (!r.ok) { undo(); return "Couldn't save. Please try again."; }
+  }
+  document.dispatchEvent(new Event("landwatch"));
+  return "";
+}
+// "Tell me when it's on OTT" on a film page or card: this film's alert on or off.
 function initLandBell(key, btn, help) {
   if (!pushSupported()) return;
   const on = () => landWatch().includes(key);
   const paint = (text) => { btn.hidden = false; btn.textContent = text || (on() ? "🔕 Stop telling me" : "🔔 Tell me when it's on OTT"); };
   paint();
+  document.addEventListener("landwatch", () => paint());
   btn.addEventListener("click", async () => {
     btn.disabled = true;
     help.innerHTML = "";
     try {
-      const reg = await navigator.serviceWorker.ready;
-      let sub = await reg.pushManager.getSubscription();
-      if (on()) {
-        store.set("landWatch", landWatch().filter((x) => x !== key));
-        if (sub && !landWatch().length && !weeklyOn()) { // nothing left to tell this browser about
-          await sub.unsubscribe();
-          alertPost({ endpoint: sub.endpoint, off: true }).catch(() => {});
-        } else if (sub) alertPost(sub.toJSON()).catch(() => {});
-        paint();
-        return;
-      }
-      if (!sub) {
-        const perm = Notification.permission === "denied" ? "denied" : await Notification.requestPermission();
-        if (perm === "denied") { help.innerHTML = blockedSteps(navigator.userAgent).replace(/(tap|click) 🔔 again/, "try again"); return; }
-        if (perm !== "granted") return;
-        paint("⏳ Turning on alerts…");
-        const { key: vapid } = await fetch("/api/push/key").then((r) => r.json());
-        const raw = Uint8Array.from(atob(vapid.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
-        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
-        store.set("weeklyOn", false); // a new browser from here gets film alerts only, not the Friday roundup
-        store.set("landWatch", [...landWatch(), key]);
-        const r = await alertPost({ ...sub.toJSON(), weekly: false });
-        if (!r.ok) { store.set("landWatch", landWatch().filter((x) => x !== key)); await sub.unsubscribe().catch(() => {}); paint("🔔 Couldn't turn on. Try again"); return; }
-      } else {
-        store.set("landWatch", [...landWatch(), key]);
-        const r = await alertPost(sub.toJSON());
-        if (!r.ok) { store.set("landWatch", landWatch().filter((x) => x !== key)); paint("🔔 Couldn't save. Try again"); return; }
-      }
-      paint();
-      help.innerHTML = "We'll send a message here the day it's out on an app in India.";
+      const was = on();
+      if (!was) paint("⏳ Turning on alerts…");
+      const problem = await setLandWatch([key], !was);
+      help.innerHTML = problem || (was ? "" : "We'll send a message here the day it's out on an app in India.");
     } catch {
-      paint("🔔 Couldn't turn on. Try again");
+      help.textContent = "Couldn't turn on alerts. Please try again.";
     } finally {
+      paint();
+      btn.disabled = false;
+    }
+  });
+}
+// "Alert me for all of these": every film in a list at once (OTT releases this week → coming soon).
+function initLandAll(keys, btn, help) {
+  if (!pushSupported() || !keys.length) return;
+  const all = () => keys.every((k) => landWatch().includes(k));
+  const paint = (text) => { btn.hidden = false; btn.textContent = text || (all() ? "🔕 Stop all these alerts" : `🔔 Alert me for all ${keys.length}`); };
+  paint();
+  document.addEventListener("landwatch", () => paint());
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    help.innerHTML = "";
+    try {
+      const was = all();
+      if (!was) paint("⏳ Turning on alerts…");
+      const problem = await setLandWatch(keys, !was);
+      help.innerHTML = problem || (was ? "" : `Done. We'll message you as each of these ${keys.length} films reaches an app. Turn any off with the 🔕 on its card.`);
+    } catch {
+      help.textContent = "Couldn't turn on alerts. Please try again.";
+    } finally {
+      paint();
       btn.disabled = false;
     }
   });
@@ -3197,7 +3232,7 @@ async function weekData() {
   const up = (await loadCatalog("upcoming")) || {};
   // How well-known (TMDB votes; older files only have a rating for the better-known ones).
   const known = (f) => f.n || (f.v ? 10 : 0);
-  const soon = (up.soon || []).map((f) => ({ t: f.t, l: f.l, date: f.d, app: f.a || "", p: f.p, href: `film.html?id=${f.l}-${f.id}`, sure: true, n: known(f) }));
+  const soon = (up.soon || []).map((f) => ({ t: f.t, l: f.l, date: f.d, app: f.a || "", p: f.p, href: `film.html?id=${f.l}-${f.id}`, key: `${f.l}-${f.id}`, sure: true, n: known(f) }));
   const have = new Set(soon.map((f) => f.href));
   for (const f of up.now || []) {
     const href = f.pg ? `film.html?id=${f.l}-${f.id}` : "";
@@ -3205,7 +3240,7 @@ async function weekData() {
     const due = ottDue({ l: f.l, rd: f.d, od: f.od, oa: f.oa }, today);
     // Estimates in the next 6 weeks; ones overdue by 2+ weeks probably have no OTT deal yet.
     if (!due || (!due.sure && (due.date > addDays(today, 42) || due.date < addDays(today, -14)))) continue;
-    soon.push({ t: f.t, l: f.l, date: due.date, app: due.app, p: f.p, href, sure: due.sure, est: !due.sure, cinema: f.d, n: known(f) });
+    soon.push({ t: f.t, l: f.l, date: due.date, app: due.app, p: f.p, href, key: href ? `${f.l}-${f.id}` : "", sure: due.sure, est: !due.sure, cinema: f.d, n: known(f) });
   }
   // Announced dates first, by date; then estimates, by date.
   soon.sort((a, b) => (a.est ? 1 : 0) - (b.est ? 1 : 0) || a.date.localeCompare(b.date));
@@ -3280,6 +3315,7 @@ async function initWeek() {
         ${kind === "new" && f.note ? `<span class="small">${esc(f.note)}</span>` : ""}
         ${kind === "new" ? `<div class="otts"><a class="ott ott-${slug(f.app)}" href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.app)} ↗</a></div>`
           : f.app ? `<div class="otts"><span class="ott ott-${slug(f.app)}">${esc(f.app)}</span></div>` : f.est ? `<span class="small muted">Date not announced yet</span>` : ""}
+        ${kind === "soon" && f.key ? `<button class="btn small land-bell" type="button" data-key="${f.key}" hidden>🔔 Tell me when it's on OTT</button><span class="small muted land-help"></span>` : ""}
       </div>
     </article>`;
   root.innerHTML = `
@@ -3290,10 +3326,11 @@ async function initWeek() {
       <a class="chip" href="ott-this-week.html" aria-pressed="${!l}">All</a>
       ${langs.map((c) => `<a class="chip" href="ott-this-week.html?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
     </nav>
-    <section><div class="section-head"><h2>🆕 New on OTT this week</h2></div>
+    <section><div class="section-head"><h2>🆕 New on OTT this week</h2><button class="btn small alert-btn" type="button" hidden>🔔 Weekly OTT alerts</button></div>
       ${newList.length ? `<div class="ulist">${newList.map((f) => card(f, "new")).join("")}</div>` : `<div class="empty">Nothing new ${langName ? `in ${esc(langName)} ` : ""}this week yet. <a href="ott-this-week.html">See all languages</a>.</div>`}
     </section>
-    <section><div class="section-head"><h2>⏳ Coming to OTT soon</h2></div>
+    <section><div class="section-head"><h2>⏳ Coming to OTT soon</h2><button class="btn small" id="land-all" type="button" hidden>🔔 Alert me for all</button></div>
+      <p class="small muted" id="land-all-help"></p>
       <p class="muted small">Announced dates first; then our estimate for films still in cinemas (Hindi films usually stream about 8 weeks after release, South Indian films about 4).</p>
       ${soonList.length ? `<div class="ulist">${soonList.map((f) => card(f, "soon")).join("")}</div>` : `<div class="empty">No OTT dates ${langName ? `for ${esc(langName)} films ` : ""}in the next few weeks yet. <a href="upcoming.html?show=now">See what's in cinemas</a>.</div>`}
     </section>
@@ -3316,6 +3353,12 @@ async function initWeek() {
       <span><strong>Get this every week</strong><span>Follow Masala Mischief on WhatsApp for new OTT releases.</span></span>
       <span class="wa-go">Follow</span>
     </a>`;
+
+  // 🔔 for the whole "coming soon" list (or one film at a time with the bell on its card), and the weekly roundup.
+  const soonKeys = soonList.map((f) => f.key).filter(Boolean);
+  initLandAll(soonKeys, document.getElementById("land-all"), document.getElementById("land-all-help"));
+  root.querySelectorAll(".land-bell").forEach((b) => initLandBell(b.dataset.key, b, b.nextElementSibling));
+  initAlerts(); // the "Weekly OTT alerts" button above is added after the page loads
 
   // The share box: message and image for the chosen list.
   let kind = newList.length ? "new" : "soon";
