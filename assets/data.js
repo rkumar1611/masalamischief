@@ -1266,6 +1266,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-10-31",
   items: [
+    { title: "Hanging Up", year: 2000, lang: "English", app: "Netflix", added: "2026-10-31", url: "https://www.netflix.com/title/60000419", note: "Directed by Diane Keaton · IMDb 4.9" },
+    { title: "Wanderlust", year: 2012, lang: "English", app: "Netflix", added: "2026-10-31", url: "https://www.netflix.com/title/70202146", note: "Directed by David Wain · IMDb 5.6" },
     { title: "Gargi", year: 2022, lang: "Tamil", app: "SonyLIV", added: "2026-10-31", url: "https://www.sonyliv.com/movies/gargi-1000183696", note: "Directed by Gautham Ramachandran · IMDb 8.1" },
     { title: "Demon Slayer: Kimetsu no Yaiba Infinity Castle", year: 2025, app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/demon-slayer-kimetsu-no-yaiba-infinity-castle-i-1090537771", note: "Directed by Haruo Sotozaki · IMDb 8.3" },
     { title: "The Pursuit of Happyness", year: 2006, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/the-pursuit-of-happyness-1000007713", note: "Directed by Gabriele Muccino · IMDb 8" },
@@ -1278,8 +1280,6 @@ const NEW_ON_OTT = {
     { title: "On the Waterfront", year: 1954, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/60000711", note: "Directed by Elia Kazan · IMDb 8.1" },
     { title: "Far and Away", year: 1992, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/492899", note: "Directed by Ron Howard · IMDb 6.6" },
     { title: "Christy", year: 2025, lang: "English", app: "JioHotstar", added: "2026-10-29", url: "https://www.hotstar.com/in/movies/christy/1271719030", note: "Directed by David Michôd · IMDb 6.6" },
-    { title: "Raja Natwarlal", year: 2014, lang: "Hindi", app: "JioHotstar", added: "2026-10-29", url: "https://www.hotstar.com/in/movies/raja-natwarlal/1271719024", note: "Directed by Kunal Deshmukh · IMDb 6.2" },
-    { title: "The Conjuring", year: 2013, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/70251894", note: "Directed by James Wan · IMDb 7.5" },
   ],
 };
 
