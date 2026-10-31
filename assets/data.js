@@ -581,7 +581,7 @@ const MOVIES = [
   {
     id: "oppenheimer", title: "Oppenheimer", year: 2023, lang: "English", audio: ["English", "Hindi"],
     genres: ["Drama", "Biography"], runtime: 180,
-    moods: ["mind-bender", "rainy-sunday"], masala: 2, quality: 9,
+    moods: ["mind-bender", "rainy-sunday", "edge-of-seat"], masala: 4, quality: 9,
     tagline: "Three hours of men talking in rooms, and somehow it's a thriller.",
     review: [
       "Christopher Nolan tells the story of J. Robert Oppenheimer, the physicist who led the building of the atomic bomb, cutting between the race to build it and the hearings that later broke him. Cillian Murphy is haunting.",
@@ -1094,7 +1094,7 @@ const WATCH_LINKS = {
     "ZEE5": "https://www.zee5.com/movies/details/watch-hanuman-2024-full-hanu-man-movie-online-on-zee5/0-0-1z5531939",
   },
   "oppenheimer": {
-    "JioHotstar": "https://www.hotstar.com/in/1971011128",
+    "JioHotstar": "https://www.hotstar.com/in/movies/oppenheimer/1971011128",
     "ZEE5": "https://www.zee5.com/movies/details/watch-oppenheimer-full-hd-movie-on-rent-online-on-zee5/0-0-1z5465540",
     "Amazon": "https://www.primevideo.com/detail?gti=amzn1.dv.gti.0653d989-0412-4e01-b466-f657bf48121e",
     "Apple TV": "https://tv.apple.com/in/movie/oppenheimer/umc.cmc.5gylew9icuhfiifdv3oxwxen8",
