@@ -1264,8 +1264,9 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-10-30",
+  checked: "2026-10-31",
   items: [
+    { title: "Gargi", year: 2022, lang: "Tamil", app: "SonyLIV", added: "2026-10-31", url: "https://www.sonyliv.com/movies/gargi-1000183696", note: "Directed by Gautham Ramachandran · IMDb 8.1" },
     { title: "Demon Slayer: Kimetsu no Yaiba Infinity Castle", year: 2025, app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/demon-slayer-kimetsu-no-yaiba-infinity-castle-i-1090537771", note: "Directed by Haruo Sotozaki · IMDb 8.3" },
     { title: "The Pursuit of Happyness", year: 2006, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/the-pursuit-of-happyness-1000007713", note: "Directed by Gabriele Muccino · IMDb 8" },
     { title: "Resident Evil", year: 2002, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/resident-evil-2002-1090541183", note: "Directed by Paul W. S. Anderson · IMDb 6.6" },
@@ -1279,7 +1280,6 @@ const NEW_ON_OTT = {
     { title: "Christy", year: 2025, lang: "English", app: "JioHotstar", added: "2026-10-29", url: "https://www.hotstar.com/in/movies/christy/1271719030", note: "Directed by David Michôd · IMDb 6.6" },
     { title: "Raja Natwarlal", year: 2014, lang: "Hindi", app: "JioHotstar", added: "2026-10-29", url: "https://www.hotstar.com/in/movies/raja-natwarlal/1271719024", note: "Directed by Kunal Deshmukh · IMDb 6.2" },
     { title: "The Conjuring", year: 2013, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/70251894", note: "Directed by James Wan · IMDb 7.5" },
-    { title: "Annabelle: Creation", year: 2017, lang: "English", app: "Netflix", added: "2026-10-28", url: "https://www.netflix.com/title/80158661", note: "Directed by David F. Sandberg · IMDb 6.5" },
   ],
 };
 

@@ -64,8 +64,8 @@ visitor's own browser. Nothing is sent to a server, and nothing is collected abo
 Visit counts come from Cloudflare Web Analytics (turned on in the Cloudflare dashboard): no cookies, no
 personal profiles, just anonymous page-view totals.
 
-After changing anything in `assets/`, bump the `?v=94` number on the `<link>`/`<script>` tags in every
-`.html` file (e.g. to `?v=95`), otherwise returning visitors may keep seeing the old cached version.
+After changing anything in `assets/`, bump the `?v=95` number on the `<link>`/`<script>` tags in every
+`.html` file (e.g. to `?v=96`), otherwise returning visitors may keep seeing the old cached version.
 
 The bundled reviews are starter copy in the house voice: rewrite them in your own words before
 launch, and check the `audio` (dubbed languages) for each film, since that varies by platform.
