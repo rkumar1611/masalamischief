@@ -1,0 +1,30 @@
+# Every day at 9 am India time, after the morning catalogue build has been published: tells people who
+# tapped "Tell me when it's on OTT" on a film that it's now on an app (scripts/send-alerts.mjs with
+# ALERT_KIND=landed). Needs the ADMIN_PASSWORD repository secret (same value as in Cloudflare).
+# Run it by hand from GitHub → Actions → "Film landed alerts" → Run workflow.
+name: Film landed alerts
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Send "now on OTT" alerts
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ALERT_KIND: landed
+        run: node scripts/send-alerts.mjs

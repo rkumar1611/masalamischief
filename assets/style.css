@@ -354,6 +354,10 @@ a.ott:hover, a.ott:focus-visible { transform: translateY(-1px); box-shadow: 0 3p
 .quick-answers dd { margin: 0; color: var(--ink-soft); }
 /* OTT release date for films in cinemas (film page, In theatres cards) */
 .ott-due { margin: 8px 0 0; padding: 8px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+.ott-due p { margin: 0; }
+.ott-due .btn { margin-top: 8px; }
+.ott-due #land-help:empty { display: none; }
+.ott-due #land-help { margin-top: 6px; }
 .ott-due-chip { font-weight: 600; }
 /* OTT releases this week: the ready-made WhatsApp post */
 .wa-post { margin: 28px 0 8px; scroll-margin-top: 80px; padding: 16px; background: var(--surface); border: 1.5px solid color-mix(in srgb, #25d366 45%, var(--line)); border-radius: var(--radius); }

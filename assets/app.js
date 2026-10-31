@@ -224,8 +224,61 @@ function blockedSteps(ua) {
 // series on your watchlist ("hi-tv123"), so the alert can say when one gets a new season.
 const alertChoice = () => store.get("alertChoice", { langs: [], apps: [] });
 const savedSeries = () => watchlist().filter((id) => /^_[a-z]{2}-tv\d+$/.test(id)).map((id) => id.slice(1)).slice(-100);
+// Films the "Tell me when it's on OTT" 🔔 is on for ("hi-123"), and whether the Friday roundup is on too
+// (turning on a film's 🔔 alone doesn't switch the roundup on).
+const landWatch = () => store.get("landWatch", []);
+const weeklyOn = () => store.get("weeklyOn", true);
 const alertPost = (body) => fetch("/api/push/subscribe", { method: "POST", headers: { "content-type": "application/json" },
-  body: JSON.stringify({ ...body, ...alertChoice(), series: savedSeries() }) });
+  body: JSON.stringify({ ...body, ...alertChoice(), series: savedSeries(), titles: landWatch().slice(-100) }) });
+const pushSupported = () => location.protocol !== "file:" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+// "Tell me when it's on OTT" on a film page: the button turns an alert for this film on or off, switching
+// on this browser's alerts (asking permission) the first time.
+function initLandBell(key, btn, help) {
+  if (!pushSupported()) return;
+  const on = () => landWatch().includes(key);
+  const paint = (text) => { btn.hidden = false; btn.textContent = text || (on() ? "🔕 Stop telling me" : "🔔 Tell me when it's on OTT"); };
+  paint();
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    help.innerHTML = "";
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (on()) {
+        store.set("landWatch", landWatch().filter((x) => x !== key));
+        if (sub && !landWatch().length && !weeklyOn()) { // nothing left to tell this browser about
+          await sub.unsubscribe();
+          alertPost({ endpoint: sub.endpoint, off: true }).catch(() => {});
+        } else if (sub) alertPost(sub.toJSON()).catch(() => {});
+        paint();
+        return;
+      }
+      if (!sub) {
+        const perm = Notification.permission === "denied" ? "denied" : await Notification.requestPermission();
+        if (perm === "denied") { help.innerHTML = blockedSteps(navigator.userAgent).replace(/(tap|click) 🔔 again/, "try again"); return; }
+        if (perm !== "granted") return;
+        paint("⏳ Turning on alerts…");
+        const { key: vapid } = await fetch("/api/push/key").then((r) => r.json());
+        const raw = Uint8Array.from(atob(vapid.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
+        store.set("weeklyOn", false); // a new browser from here gets film alerts only, not the Friday roundup
+        store.set("landWatch", [...landWatch(), key]);
+        const r = await alertPost({ ...sub.toJSON(), weekly: false });
+        if (!r.ok) { store.set("landWatch", landWatch().filter((x) => x !== key)); await sub.unsubscribe().catch(() => {}); paint("🔔 Couldn't turn on. Try again"); return; }
+      } else {
+        store.set("landWatch", [...landWatch(), key]);
+        const r = await alertPost(sub.toJSON());
+        if (!r.ok) { store.set("landWatch", landWatch().filter((x) => x !== key)); paint("🔔 Couldn't save. Try again"); return; }
+      }
+      paint();
+      help.innerHTML = "We'll send a message here the day it's out on an app in India.";
+    } catch {
+      paint("🔔 Couldn't turn on. Try again");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
 // After saving or removing a series: if alerts are on, update the list we hold (no message is sent).
 function syncAlerts() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || location.protocol === "file:") return;
@@ -298,8 +351,8 @@ function initAlerts() {
   }
   paint(false);
   navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((s) => {
-    paint(Boolean(s));
-    showPrefs(Boolean(s));
+    paint(Boolean(s) && weeklyOn());
+    showPrefs(Boolean(s) && weeklyOn());
     // Already on: make sure our list has it (fixes a save that was cut off; no message is sent).
     if (s && Notification.permission === "granted") post(s.toJSON()).catch(() => {});
   }).catch(() => {});
@@ -308,6 +361,22 @@ function initAlerts() {
     try {
       const reg = await navigator.serviceWorker.ready;
       const cur = await reg.pushManager.getSubscription();
+      if (cur && !weeklyOn()) { // here only for films' 🔔 so far: add the Friday roundup
+        store.set("weeklyOn", true);
+        paint(true);
+        showPrefs(true);
+        openChoice(prefsBtns[btns.indexOf(b)]);
+        post({ ...cur.toJSON(), weekly: true }).catch(() => {});
+        return;
+      }
+      if (cur && landWatch().length) { // keep the films' alerts, stop the Friday roundup
+        store.set("weeklyOn", false);
+        paint(false);
+        showPrefs(false);
+        document.getElementById("alert-choice")?.remove();
+        post({ ...cur.toJSON(), weekly: false }).catch(() => {});
+        return;
+      }
       if (cur) {
         await cur.unsubscribe();
         paint(false);
@@ -324,6 +393,7 @@ function initAlerts() {
       const { key } = await fetch("/api/push/key").then((r) => r.json());
       const raw = Uint8Array.from(atob(key.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
       const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: raw });
+      store.set("weeklyOn", true);
       paint(true);
       showPrefs(true);
       openChoice(prefsBtns[btns.indexOf(b)]); // straight after turning on: ask what they'd like
@@ -2582,7 +2652,8 @@ async function initFilm() {
   const seasons = tv && f.s ? `${f.s} season${f.s === 1 ? "" : "s"}` : "";
   // When it should reach OTT, for films in (or just out of) cinemas.
   const due = ottDue(f);
-  const dueLine = due ? `<p class="ott-due">📅 <strong>OTT release:</strong> ${esc(ottDueShort(due))}${due.sure ? "" : ` <span class="muted small">· not announced yet</span>`}</p>` : "";
+  const dueLine = due ? `<div class="ott-due"><p>📅 <strong>OTT release:</strong> ${esc(ottDueShort(due))}${due.sure ? "" : ` <span class="muted small">· not announced yet</span>`}</p>
+    <button class="btn small" id="land-bell" type="button" hidden>🔔 Tell me when it's on OTT</button><p class="small muted" id="land-help"></p></div>` : "";
   // Same wording as the server's (lib/seo.js filmSearchTitle): how people search, "<film> OTT".
   document.title = `${f.t}${years ? ` (${years})` : ""} ${due ? "OTT Release Date & Platform" : "OTT: Where to Watch Online"} · ${f.l === "en" ? "Hollywood" : lang} ${tv ? "Web Series" : "Movie"}`;
   // Dubbed versions on the apps that list them (f.au, from the weekly JustWatch check; not Netflix).
@@ -2658,6 +2729,7 @@ async function initFilm() {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
   };
   renderMoreLike(document.getElementById("similar-slot"), f, `🍿 Liked ${f.t}? Try these`);
+  if (due) initLandBell(`${code}-${rawId}`, document.getElementById("land-bell"), document.getElementById("land-help"));
   root.querySelector(".panel-watch").after(reportBox(`c:${code}-${rawId}`, f.t, () => f.w));
   // Save to the watchlist (kept on this device, like saved reviews).
   const saveId = catSaveId(f);
