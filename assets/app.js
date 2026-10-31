@@ -3117,6 +3117,7 @@ async function initUpcoming() {
             <span class="muted small">${esc(langLabel(CAT_LANGS[f.l]))}${f.g.length ? ` · ${esc(f.g.slice(0, 2).join(", "))}` : ""}${f.c ? ` · ${esc(f.c)}` : ""}${f.v ? ` · ★ ${f.v}` : ""}</span>
             ${f.cast.length ? `<span class="small">With ${f.cast.map(([id, n]) => `<a href="person.html?id=${id}">${esc(n)}</a>`).join(", ")}</span>` : ""}
             ${due ? `<span class="small ott-due-chip">📅 OTT: ${esc(ottDueShort(due))}</span>` : ""}
+            ${f.pg ? `<button class="btn small land-bell" type="button" data-key="${f.l}-${f.id}" hidden>🔔 Tell me when it's on OTT</button><span class="small muted land-help"></span>` : ""}
             ${f.tr ? trailerBtn(f.tr, f.t) : ""}
           </div>
         </article>`;
@@ -3153,6 +3154,8 @@ async function initUpcoming() {
             </div>
           </article>`).join("")}</div>
       </section>`).join("") || (showNow ? "" : `<div class="empty">No upcoming films found right now.</div>`)}`;
+  // The 🔔 on each in-theatres card that has a film page (alerts need the film in the catalogue).
+  root.querySelectorAll(".land-bell").forEach((b) => initLandBell(b.dataset.key, b, b.nextElementSibling));
   // The list arrives after the page loads, so jump to a film's card (#u-…, from search) once it's drawn.
   if (location.hash.length > 4) document.getElementById(location.hash.slice(1))?.scrollIntoView();
 }
