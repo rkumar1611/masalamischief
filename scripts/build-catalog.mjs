@@ -873,6 +873,11 @@ function writeSitemaps(all, people) {
 function writeListsSitemap(upcoming) {
   const index = JSON.parse(readFileSync(new URL("lists/index.json", OUT), "utf8"));
   const paths = ["/ott", "/best", ...index.ott.map(([s]) => `/ott?app=${s}`)];
+  // New OTT releases per language (/ott?l=ml), for every language in the apps' latest lists.
+  try {
+    const ott = JSON.parse(readFileSync(new URL("lists/ott.json", OUT), "utf8"));
+    paths.push(...[...new Set(Object.values(ott).flatMap((L) => L.items.map((f) => f.l)))].map((l) => `/ott?l=${l}`));
+  } catch { /* no lists yet */ }
   for (const [l, b] of Object.entries(index.best)) {
     b.kinds.forEach((k) => paths.push(`/best?l=${l}${k === "tv" ? "&k=tv" : ""}`));
     b.genres.forEach(([g, , movies, tv]) => {
