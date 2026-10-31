@@ -314,6 +314,20 @@ function attachLinks(titles, links, have) {
 let linkCount = 0;
 let linksFresh = false; // JustWatch was checked on this run (Sundays), not just last week's links kept
 
+// OTT release date (od) for films from the last year: TMDB's "Digital" release (type 4) for India; else
+// one elsewhere whose note names an app we list (Netflix and Prime launch worldwide on the same day).
+// The note sometimes names the app (oa). Films without one get an estimate on the page instead.
+function ottRelease(d) {
+  if (d.release_date && d.release_date < day(-365)) return {};
+  const all = d.release_dates?.results || [];
+  const digital = (r) => (r?.release_dates || []).filter((x) => x.type === 4 && x.release_date)
+    .map((x) => ({ d: x.release_date.slice(0, 10), app: APP_RULES.find(([re]) => re.test(x.note || ""))?.[1] }));
+  const india = digital(all.find((r) => r.iso_3166_1 === "IN"));
+  const pick = (india.length ? india : all.flatMap(digital).filter((x) => x.app))
+    .filter((x) => !d.release_date || x.d >= d.release_date).sort((a, b) => a.d.localeCompare(b.d))[0];
+  return pick ? { od: pick.d, ...(pick.app ? { oa: pick.app } : {}) } : {};
+}
+
 function toFilm(d, lang) {
   const apps = appsOf(d);
   const cert = (d.release_dates?.results?.find((r) => r.iso_3166_1 === "IN")?.release_dates || [])
@@ -325,6 +339,7 @@ function toFilm(d, lang) {
     ...(d.original_title && d.original_title !== d.title ? { o: d.original_title } : {}),
     y: +(d.release_date || "").slice(0, 4) || null,
     ...(d.release_date ? { rd: d.release_date } : {}),
+    ...ottRelease(d),
     g: (d.genres || []).map((g) => g.name),
     r: d.runtime || null,
     v: Math.round((d.vote_average || 0) * 10) / 10,
@@ -553,7 +568,7 @@ async function daily() {
   await writePeopleBios();
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, od, oa, ...rest }) => rest;
 
 // More like this (ml): six titles for each title page, worked out here so the page doesn't have to
 // download a whole language list: TMDB's recommendations (rc) first, then titles in the same language
@@ -925,6 +940,7 @@ async function writeUpcoming(known) {
       .filter((x) => x >= day(-NOW_DAYS) && x <= day(0)).sort().pop();
     return { l: f.l, id: f.id, t: f.t, d: inCinemas || d.release_date, p: f.p, g: f.g, ...(f.n >= 10 ? { v: f.v } : {}),
       ...(f.c ? { c: f.c } : {}), ...(f.tr ? { tr: f.tr } : {}), cast: (f.cast || []).slice(0, 2).map((c) => [c[0], c[1]]),
+      ...(f.od ? { od: f.od } : {}), ...(f.oa ? { oa: f.oa } : {}),
       ...(known.has(keyOf(f)) ? { pg: 1 } : {}) };
   }, (d) => !appsOf(d).length);
   now.sort((a, b) => b.d.localeCompare(a.d) || a.t.localeCompare(b.t));
