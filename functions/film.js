@@ -4,7 +4,7 @@
 // right film, plus structured data for Google (Movie or TVSeries, breadcrumbs, visitors' rating stars
 // once there are audience reviews). Data comes from assets/catalog/t/<lang>/<n>.json (see manifest.json).
 // If anything goes wrong, the plain page is served as before.
-import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions } from "../lib/seo.js";
+import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions, filmSearchTitle, filmSearchDesc } from "../lib/seo.js";
 import { audienceRating } from "../lib/community.js";
 
 const LANGS = {
@@ -32,15 +32,10 @@ export async function onRequestGet(context) {
     const tv = f.k === "tv";
     const years = tv && f.y ? (f.end ? (f.ye ? `${f.y}–${f.ye}` : `${f.y}`) : `${f.y}–`) : f.y ? `${f.y}` : "";
     const url = `${SITE}/film?id=${code}-${rawId}`;
-    const title = `${f.t}${years ? ` (${years})` : ""}${tv ? " · series" : ""} · where to watch · Masala Mischief`;
+    // Search wording: "<film> OTT", with the answer first (see lib/seo.js).
+    const title = filmSearchTitle({ ...f, l: code });
     const ogTitle = `${f.t}${years ? ` (${years})` : ""} · ${LANGS[code]} ${tv ? "series" : "movie"} · ★ ${f.v}/10`;
-    const leads = (f.cast || []).slice(0, 3).map((c) => c[1]);
-    const desc = [
-      f.w.length ? `Streaming in India on ${f.w.join(", ")}.` : "Where to watch in India.",
-      leads.length ? `With ${leads.join(", ")}.` : "",
-      f.g.length ? `${f.g.join(", ")}.` : "",
-      f.ov || "",
-    ].filter(Boolean).join(" ").slice(0, 300);
+    const desc = filmSearchDesc(f);
     const image = f.b ? `https://image.tmdb.org/t/p/w1280${f.b}` : f.p ? `https://image.tmdb.org/t/p/w780${f.p}` : null;
 
     const body = `

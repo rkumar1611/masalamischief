@@ -31,13 +31,14 @@ export async function onRequestGet(context) {
     const links = { ...((WATCH_LINKS && WATCH_LINKS[m.id]) || {}), ...((fresh && fresh.u) || {}) };
     const notes = PARENT_NOTES[m.id];
     const url = `${SITE}/review?id=${encodeURIComponent(m.id)}`;
-    const title = `${m.title} (${m.year}) review · Masala Mischief`;
+    // Search wording: "<film> review", rating and OTT up front (see lib/seo.js).
+    const title = `${m.title} (${m.year}) Review, Rating & OTT · Masala Mischief`;
     const ogTitle = `${m.title} · 🌶️ ${m.masala}/5 Masala Meter · ★ ${m.quality}/10`;
     const leads = (extras.cast || []).slice(0, 3).map((c) => c[1]);
     const desc = [
-      m.tagline,
+      `${m.title} review: ${m.quality}/10, Masala Meter ${m.masala}/5. ${m.tagline}`,
+      stream.length ? `OTT: streaming on ${stream.join(", ")} in India.` : "OTT: not on a subscription app in India right now.",
       `${lang} film, ${m.year}${leads.length ? `, with ${leads.join(", ")}` : ""}.`,
-      stream.length ? `Streaming on ${stream.join(", ")}.` : "",
       notes ? `Family Pick, ${notes.age}+.` : "",
     ].filter(Boolean).join(" ");
 

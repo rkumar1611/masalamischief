@@ -60,7 +60,8 @@ export async function onRequestGet(context) {
     const url = `${SITE}/person?id=${pid}`;
     const photo = p && p[1];
     const top = titles.slice(0, 4).map((t) => `${t.t}${t.y ? ` (${t.y})` : ""}`);
-    const title = `${name}: movies and series, where to watch · Masala Mischief`;
+    // Search wording: "<name> movies", "<name> series".
+    const title = `${name} Movies & Web Series: Full List, Where to Watch`;
     const desc = `${name}'s ${titles.length} movies and series on Masala Mischief: ${top.join(", ")}${titles.length > 4 ? " and more" : ""}. Ratings, trailers and where to stream them in India.`;
 
     const body = `

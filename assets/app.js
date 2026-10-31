@@ -1161,7 +1161,7 @@ function initReview() {
     root.innerHTML = `<div class="empty">We couldn't find that review. <a href="reviews.html">See all reviews</a>.</div>`;
     return;
   }
-  document.title = `${m.title} review · Masala Mischief`;
+  document.title = `${m.title} (${m.year}) Review, Rating & OTT · Masala Mischief`; // as functions/review.js
   const dubs = m.audio.filter((a) => a !== m.lang);
   const shareText = `${m.title}: ${m.masala}/5 on the Masala Meter, ${m.quality}/10 overall. ${m.tagline}`;
   const pageUrl = location.href;
@@ -2438,7 +2438,8 @@ async function initFilm() {
   const lang = langLabel(CAT_LANGS[f.l]);
   const years = yearsOf(f);
   const seasons = tv && f.s ? `${f.s} season${f.s === 1 ? "" : "s"}` : "";
-  document.title = `${f.t}${years ? ` (${years})` : ""}${tv ? " · series" : ""} · where to watch · Masala Mischief`;
+  // Same wording as the server's (lib/seo.js filmSearchTitle): how people search, "<film> OTT".
+  document.title = `${f.t}${years ? ` (${years})` : ""} OTT: Where to Watch Online · ${f.l === "en" ? "Hollywood" : lang} ${tv ? "Web Series" : "Movie"}`;
   // Dubbed versions on the apps that list them (f.au, from the weekly JustWatch check; not Netflix).
   const dubs = f.w.length ? (f.au || []).map((c) => langLabel(CAT_LANGS[c] || "")).filter(Boolean) : [];
   const cinemas = inCinemas(f);
@@ -2571,7 +2572,7 @@ async function initPerson() {
   const movies = titles.filter((f) => f.k !== "tv").length;
   const series = titles.length - movies;
   const langs = [...new Set(titles.map((f) => langLabel(CAT_LANGS[f.l] || "")).filter(Boolean))];
-  document.title = `${name}: movies, series and where to watch · Masala Mischief`;
+  document.title = `${name} Movies & Web Series: Full List, Where to Watch`; // as functions/person.js
   root.innerHTML = `
     <div class="person-head">
       ${photo ? `<img class="person-photo" src="${tmdb(photo, "w342")}" alt="${esc(name)}" decoding="async">` : `<span class="person-photo cast-none">${esc(name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(""))}</span>`}
