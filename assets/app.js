@@ -2652,7 +2652,7 @@ async function initFilm() {
   const seasons = tv && f.s ? `${f.s} season${f.s === 1 ? "" : "s"}` : "";
   // When it should reach OTT, for films in (or just out of) cinemas.
   const due = ottDue(f);
-  const dueLine = due ? `<div class="ott-due"><p>📅 <strong>OTT release:</strong> ${esc(ottDueShort(due))}${due.sure ? "" : ` <span class="muted small">· not announced yet</span>`}</p>
+  const dueLine = due ? `<div class="ott-due"><p>⏳ <strong>OTT release:</strong> ${esc(ottDueShort(due))}${due.sure ? "" : ` <span class="muted small">· not announced yet</span>`}</p>
     <button class="btn small" id="land-bell" type="button" hidden>🔔 Tell me when it's on OTT</button><p class="small muted" id="land-help"></p></div>` : "";
   // Same wording as the server's (lib/seo.js filmSearchTitle): how people search, "<film> OTT".
   document.title = `${f.t}${years ? ` (${years})` : ""} ${due ? "OTT Release Date & Platform" : "OTT: Where to Watch Online"} · ${f.l === "en" ? "Hollywood" : lang} ${tv ? "Web Series" : "Movie"}`;
@@ -2704,7 +2704,7 @@ async function initFilm() {
             : cinemas
               ? `<p class="muted small">🎬 ${out ? "In cinemas now" : `In cinemas from ${fmtDate(f.rd)}`}, not streaming yet. Pick your city for showtimes and tickets:</p><div class="otts">${ticketLinks()}</div>`
               : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
-          ${due ? `<p class="small"><strong>📅 OTT release:</strong> ${esc(ottDueText(f, due))}</p>` : ""}
+          ${due ? `<p class="small"><strong>⏳ OTT release:</strong> ${esc(ottDueText(f, due))}</p>` : ""}
           <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}${fix ? `, corrected ${fmtDate(fix.date)} from a reader's report` : ""}. Availability changes, so confirm in the app.</p>
         </div>
         <div class="side">
@@ -3116,7 +3116,7 @@ async function initUpcoming() {
             <strong>${name}</strong>
             <span class="muted small">${esc(langLabel(CAT_LANGS[f.l]))}${f.g.length ? ` · ${esc(f.g.slice(0, 2).join(", "))}` : ""}${f.c ? ` · ${esc(f.c)}` : ""}${f.v ? ` · ★ ${f.v}` : ""}</span>
             ${f.cast.length ? `<span class="small">With ${f.cast.map(([id, n]) => `<a href="person.html?id=${id}">${esc(n)}</a>`).join(", ")}</span>` : ""}
-            ${due ? `<span class="small ott-due-chip">📅 OTT: ${esc(ottDueShort(due))}</span>` : ""}
+            ${due ? `<span class="small ott-due-chip">⏳ OTT: ${esc(ottDueShort(due))}</span>` : ""}
             ${f.pg ? `<button class="btn small land-bell" type="button" data-key="${f.l}-${f.id}" hidden>🔔 Tell me when it's on OTT</button><span class="small muted land-help"></span>` : ""}
             ${f.tr ? trailerBtn(f.tr, f.t) : ""}
           </div>
@@ -3133,7 +3133,7 @@ async function initUpcoming() {
     </nav>
     <div class="page-head"><h1>${esc(heading)}</h1>
       <p class="lead">${showNow
-        ? `${lang ? `${esc(lang)} films` : "Films"} in Indian cinemas and not streaming yet. Book tickets to pick your city, cinema and showtime. 📅 OTT dates are the announced ones where known, otherwise our estimate.`
+        ? `${lang ? `${esc(lang)} films` : "Films"} in Indian cinemas and not streaming yet. Book tickets to pick your city, cinema and showtime. ⏳ OTT dates are the announced ones where known, otherwise our estimate.`
         : `The most-awaited ${lang ? `${esc(lang)} ` : ""}films of the next few months, with release dates and trailers. Dates can move, so check closer to release.`}</p></div>
     <nav class="chips app-tabs" aria-label="Languages">
       <a class="chip" href="${href(showNow, "")}" aria-pressed="${!l}">All</a>
@@ -3274,7 +3274,7 @@ async function initWeek() {
     <article class="ucard">
       ${f.p ? `<img src="${tmdb(f.p, "w185")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
       <div class="ucard-body">
-        <span class="udate">${kind === "new" ? `Added ${shortDay(f.date)}` : f.est ? `Expected ${esc(soonWhen(f).replace(/^expected /, ""))}` : `📅 ${shortDay(f.date)}`}</span>
+        <span class="udate">${kind === "new" ? `Added ${shortDay(f.date)}` : f.est ? `Expected ${esc(soonWhen(f).replace(/^expected /, ""))}` : `On OTT ${shortDay(f.date)}`}</span>
         <strong>${f.href ? `<a href="${f.href}">${esc(f.t)}</a>` : esc(f.t)}</strong>
         <span class="muted small">${[f.l && langLabel(CAT_LANGS[f.l] || ""), kind === "new" ? f.y : "", kind === "new" && f.recent ? "🆕 New film" : "", f.est ? `in cinemas since ${shortDay(f.cinema)}` : ""].filter(Boolean).map(esc).join(" · ")}</span>
         ${kind === "new" && f.note ? `<span class="small">${esc(f.note)}</span>` : ""}
@@ -3293,7 +3293,7 @@ async function initWeek() {
     <section><div class="section-head"><h2>🆕 New on OTT this week</h2></div>
       ${newList.length ? `<div class="ulist">${newList.map((f) => card(f, "new")).join("")}</div>` : `<div class="empty">Nothing new ${langName ? `in ${esc(langName)} ` : ""}this week yet. <a href="ott-this-week.html">See all languages</a>.</div>`}
     </section>
-    <section><div class="section-head"><h2>📅 Coming to OTT soon</h2></div>
+    <section><div class="section-head"><h2>⏳ Coming to OTT soon</h2></div>
       <p class="muted small">Announced dates first; then our estimate for films still in cinemas (Hindi films usually stream about 8 weeks after release, South Indian films about 4).</p>
       ${soonList.length ? `<div class="ulist">${soonList.map((f) => card(f, "soon")).join("")}</div>` : `<div class="empty">No OTT dates ${langName ? `for ${esc(langName)} films ` : ""}in the next few weeks yet. <a href="upcoming.html?show=now">See what's in cinemas</a>.</div>`}
     </section>
