@@ -68,6 +68,10 @@ const UPCOMING_PER_LANG = 12;
 // streaming yet, most popular first in each language.
 const NOW_DAYS = 35;
 const NOW_PER_LANG = 8;
+// Films out in the last IN_CINEMAS_DAYS days and on no app yet are re-checked every day (at most
+// IN_CINEMAS_MAX, best-known first), to catch the day they reach OTT.
+const IN_CINEMAS_DAYS = 120;
+const IN_CINEMAS_MAX = 250;
 
 // TMDB provider names (India) → our app names. Anything else is left out.
 const APP_RULES = [
@@ -512,6 +516,8 @@ async function main() {
   const freshSeries = await seriesDetails(t.fetch);
   const series = [...t.reuse, ...freshSeries].sort((a, b) => b.n - a.n);
   writeNewSeasons(freshSeries, have);
+  const refetched = new Set(m.fetch.map(([id, l]) => `${l}-${id}`));
+  writeLanded(films.filter((f) => refetched.has(keyOf(f))), have);
   const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : PLAN[lang].tv);
   const keptSeries = OUT_LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, tvLimit(lang)));
   if (films.length < Math.min(have.size * 0.8, 20000) || films.length < LANGS.length * 50) {
@@ -554,12 +560,18 @@ async function daily() {
     queue(await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, 3), moviePicks, lang);
     queue(await discover("tv", lang, { ...tvBase, sort_by: "popularity.desc", "first_air_date.gte": newSince, "first_air_date.lte": today }, 1), tvPicks, lang);
   }
-  console.log(`Daily: ${moviePicks.length} films and ${tvPicks.length} series to fetch.`);
+  // Films still in cinemas (out in the last IN_CINEMAS_DAYS, on no app yet) are checked every day, so
+  // "Tell me when it's on OTT" alerts go out the day they arrive. The best-known first, up to a cap.
+  const watching = [...have.values()].filter((f) => f.k !== "tv" && f.rd && f.rd >= day(-IN_CINEMAS_DAYS) && f.rd <= today && !(f.w || []).length)
+    .sort((a, b) => b.n - a.n).slice(0, IN_CINEMAS_MAX);
+  for (const f of watching) queue([f.id], moviePicks, f.l, true);
+  console.log(`Daily: ${moviePicks.length} films (${watching.length} in cinemas) and ${tvPicks.length} series to fetch.`);
 
   const fresh = new Map([...(await movieDetails(moviePicks)), ...(await seriesDetails(tvPicks))].map((f) => [keyOf(f), f]));
   const added = [...fresh.keys()].filter((k) => !have.has(k));
   console.log(`New titles: ${added.length}${added.length ? ` (${added.slice(0, 20).join(", ")}${added.length > 20 ? "…" : ""})` : ""}.`);
   const before = new Map(have);
+  writeLanded(fresh.values(), have);
   for (const [k, f] of fresh) have.set(k, f);
   attachLinks([...have.values()], null, before);
   writeCatalogue([...have.values()], trendIds);
@@ -974,6 +986,22 @@ function writeNewSeasons(fresh, have) {
   const items = [...found, ...old.filter((x) => x.f >= day(-SEASON_DAYS) && !found.some((n) => n.k === x.k))];
   writeIfChanged(file, JSON.stringify({ items }));
   console.log(`New seasons: ${found.length} this week${found.length ? ` (${found.slice(0, 10).map((x) => `${x.t} S${x.s}`).join(", ")})` : ""}.`);
+}
+
+// landed.json: films that just reached an app in India (not on any before, on one now), kept for
+// LANDED_DAYS, for the "Tell me when it's on OTT" alert (functions/api/push/send.js?kind=landed).
+// Only films already in the catalogue count, so a new entry never looks like an arrival.
+const LANDED_DAYS = 14;
+function writeLanded(fresh, have) {
+  const file = new URL("landed.json", OUT);
+  const old = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")).items : [];
+  const found = [...fresh].filter((f) => {
+    const was = have.get(keyOf(f));
+    return f.k !== "tv" && was && !(was.w || []).length && !(was.ja || []).length && (f.w || []).length;
+  }).map((f) => ({ k: keyOf(f), t: f.t, w: f.w.slice(0, 3), f: day(0) }));
+  const items = [...found, ...old.filter((x) => x.f >= day(-LANDED_DAYS) && !found.some((n) => n.k === x.k))];
+  writeIfChanged(file, JSON.stringify({ items }));
+  console.log(`Landed on OTT: ${found.length} today${found.length ? ` (${found.slice(0, 10).map((x) => `${x.t} on ${x.w[0]}`).join(", ")})` : ""}.`);
 }
 
 // Actor and director details for their pages (pb/<id % BIO_SHARDS>.json): { id: [bio, born, birthplace,
