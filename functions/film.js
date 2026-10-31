@@ -4,7 +4,7 @@
 // right film, plus structured data for Google (Movie or TVSeries, breadcrumbs, visitors' rating stars
 // once there are audience reviews). Data comes from assets/catalog/t/<lang>/<n>.json (see manifest.json).
 // If anything goes wrong, the plain page is served as before.
-import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions, filmSearchTitle, filmSearchDesc } from "../lib/seo.js";
+import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions, filmSearchTitle, filmSearchDesc, quickAnswers } from "../lib/seo.js";
 import { audienceRating } from "../lib/community.js";
 
 const LANGS = {
@@ -43,8 +43,8 @@ export async function onRequestGet(context) {
         <h1>${esc(f.t)}${years ? ` (${years})` : ""}</h1>
         <p>${esc(LANGS[code])} ${tv ? "series" : "movie"} · ${esc(f.g.join(", "))}${tv && f.s ? ` · ${f.s} season${f.s === 1 ? "" : "s"}` : !tv && f.r ? ` · ${f.r} min` : ""} · TMDB ${f.v}/10</p>
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
+        <section><h2>Quick answers</h2><dl>${quickAnswers({ ...f, l: code }).map(([q, a]) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join("")}</dl></section>
         ${castLine(f, f.k)}
-        <p>${f.w.length ? `Streaming in India on ${esc(f.w.join(", "))}.` : "Not on a subscription app in India right now."}</p>
       </article>`;
 
     const jsonLd = {

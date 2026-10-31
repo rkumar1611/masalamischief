@@ -493,6 +493,30 @@ function trailerBtn(key, title, query) {
     : `<a class="btn" target="_blank" rel="noopener" href="https://www.youtube.com/results?search_query=${encodeURIComponent(query)}">▶ Watch trailer</a>`;
 }
 
+// Quick answers on film pages, as lib/seo.js quickAnswers() puts them in the HTML for search engines.
+const CERT_MEANS = { U: "suitable for all ages", UA: "parental guidance for under-12s", A: "adults only", S: "for specialised audiences" };
+function quickAnswers(f) {
+  const tv = f.k === "tv";
+  const today = new Date().toISOString().slice(0, 10);
+  const apps = (f.ja && f.ja.length ? f.ja : f.w) || [];
+  const where = apps.length ? `streaming on ${apps.slice(0, 3).join(", ")} in India.`
+    : !tv && f.rd && f.rd > today ? `releasing in cinemas on ${fmtDate(f.rd)}; the OTT release comes after its cinema run.`
+    : !tv && f.rd && (Date.parse(today) - Date.parse(f.rd)) / 864e5 <= 60 ? "in cinemas now, not on any OTT app in India yet."
+    : "not on any OTT app in India right now.";
+  const qa = [[`Where can I watch ${f.t}?`, `${f.t} is ${where}`]];
+  const dubs = (f.au || []).map((c) => (c === "en" ? "English" : c === "ja" ? "Japanese" : CAT_LANGS[c])).filter(Boolean);
+  if (dubs.length && apps.length) qa.push([`Is ${f.t} dubbed?`, `Yes, it's also available in ${dubs.join(", ")} on the apps that list audio languages.`]);
+  const certSays = CERT_MEANS[f.c] || (/^U\/A (\d+)\+$/.exec(f.c || "") ? `parental guidance for under-${/^U\/A (\d+)\+$/.exec(f.c)[1]}s` : "");
+  if (f.c) qa.push([`What is ${f.t}'s certificate?`, `${f.c}${certSays ? `: ${certSays}` : ""}.`]);
+  if (!tv && f.r) qa.push([`How long is ${f.t}?`, `${Math.floor(f.r / 60) ? `${Math.floor(f.r / 60)} h ` : ""}${f.r % 60} min.`]);
+  if (tv && f.s) qa.push([`How many seasons does ${f.t} have?`, `${f.s} season${f.s === 1 ? "" : "s"}${f.end ? "; it has ended" : " so far"}.`]);
+  if (f.rd) qa.push([`When did ${f.t} release?`, `${new Date(f.rd + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}, in ${f.l === "en" ? "English" : CAT_LANGS[f.l] || "its original language"}.`]);
+  const cast = (f.cast || []).slice(0, 4).map((c) => c[1]);
+  const dir = (f.dir || []).slice(0, 2).map((d) => d[1]);
+  if (cast.length) qa.push([`Who is in ${f.t}?`, `${cast.join(", ")}${dir.length ? `; ${tv ? "created" : "directed"} by ${dir.join(" and ")}` : ""}.`]);
+  return qa;
+}
+
 // "Book tickets": BookMyShow and District don't offer links to one film, so these open each site's
 // movies page (it asks for your city once), where everything in cinemas is listed with showtimes.
 const TICKET_SITES = [["BookMyShow", "https://in.bookmyshow.com/explore/movies"], ["District", "https://www.district.in/movies/"]];
@@ -2472,6 +2496,7 @@ async function initFilm() {
         ${leavingLine(f.lv)}
         ${cinemas ? `<div class="stream-line"><span class="muted small">🎬 ${out ? "In cinemas · book on" : `In cinemas ${fmtDate(f.rd)} · book on`}</span>${ticketLinks()}</div>` : ""}
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
+        <section class="quick-answers"><h2>⚡ Quick answers</h2><dl>${quickAnswers(f).map(([q, a]) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join("")}</dl></section>
         ${castRow({ ...f, kind: f.k })}
         <div class="panel not-reviewed">
           <h3>🌶️ Not reviewed yet</h3>
@@ -2533,6 +2558,7 @@ async function initFilm() {
 // person.html?id=<TMDB person id>. Their titles come from the catalogue's people index
 // (assets/catalog/p/<id % shards>.json, shard count in manifest.json) plus our reviewed films (reviewed.json).
 const PEOPLE_SHARDS = 64; // the older layout's people/<id % 64>.json
+const PERSON_BIO_SHARDS = 256; // pb/<id % 256>.json, as scripts/build-catalog.mjs BIO_SHARDS
 
 async function initPerson() {
   const root = document.getElementById("person");
@@ -2541,9 +2567,12 @@ async function initPerson() {
   if (!pid) return notFound();
   const man = await loadCatalog("manifest");
   const v2 = man && man.layout >= 2;
-  const [shard, reviewed] = await Promise.all([
-    loadCatalog(v2 ? `p/${pid % man.shards.p}` : `people/${pid % PEOPLE_SHARDS}`), loadCatalog("reviewed")]);
+  const [shard, reviewed, bios] = await Promise.all([
+    loadCatalog(v2 ? `p/${pid % man.shards.p}` : `people/${pid % PEOPLE_SHARDS}`), loadCatalog("reviewed"),
+    loadCatalog(`pb/${pid % PERSON_BIO_SHARDS}`)]);
   const p = shard && shard[pid];
+  // Their details (pb/, fetched once from TMDB by the build): [bio, born, birthplace, died, main job].
+  const [bio, born, birthplace, died, job] = (bios && bios[pid]) || [];
 
   // Our reviewed films with this person, as catalogue-style entries.
   const roleIn = (x) => {
@@ -2580,6 +2609,24 @@ async function initPerson() {
   const movies = titles.filter((f) => f.k !== "tv").length;
   const series = titles.length - movies;
   const langs = [...new Set(titles.map((f) => langLabel(CAT_LANGS[f.l] || "")).filter(Boolean))];
+  // About them: job, birth, a short bio; their best-known titles (the catalogue lists them most popular
+  // first) and the newest one.
+  const fmtDay = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const ageNow = born && !died ? Math.floor((Date.now() - new Date(born + "T00:00:00")) / 3.15576e10) : 0;
+  const facts = [
+    job === "Directing" ? "Director" : job === "Writing" ? "Writer" : job === "Acting" ? "Actor" : job,
+    born ? `Born ${fmtDay(born)}${birthplace ? ` in ${birthplace}` : ""}${ageNow ? ` (age ${ageNow})` : ""}` : birthplace ? `From ${birthplace}` : "",
+    died ? `Died ${fmtDay(died)}` : "",
+  ].filter(Boolean).join(" · ");
+  const knownFor = found.slice(0, 4);
+  const thisYear = new Date().getFullYear();
+  const latest = found.filter((f) => f.y && f.y <= thisYear + 1).sort((a, b) => b.y - a.y)[0];
+  const titleLink = (f) => `<a href="${filmHref({ ...f, mine: f.k !== "tv" && byTmdb[f.id] })}">${esc(f.t)}</a>${f.y ? ` (${f.y})` : ""}`;
+  const about = `
+    ${facts ? `<p class="person-facts">${esc(facts)}</p>` : ""}
+    ${bio ? `<p class="person-bio${bio.length > 320 ? " clamp" : ""}" id="pbio">${esc(bio)}</p>${bio.length > 320 ? `<button class="btn small" type="button" id="pbio-more">Read more</button>` : ""}` : ""}
+    ${knownFor.length ? `<p class="person-known"><strong>Known for:</strong> ${knownFor.map(titleLink).join(", ")}</p>` : ""}
+    ${latest ? `<p class="person-known"><strong>Latest:</strong> ${titleLink(latest)}</p>` : ""}`;
   document.title = `${name} Movies & Web Series: Full List, Where to Watch`; // as functions/person.js
   root.innerHTML = `
     <div class="person-head">
@@ -2588,6 +2635,7 @@ async function initPerson() {
         <p class="eyebrow">Cast & crew</p>
         <h1>${esc(name)}</h1>
         <p class="lead">${movies ? `${movies} movie${movies === 1 ? "" : "s"}` : ""}${movies && series ? " and " : ""}${series ? `${series} series` : ""} on Masala Mischief${langs.length ? ` · ${esc(langs.join(", "))}` : ""}. ${have.size || ours.length ? "Our reviews first, then newest." : "Newest first."}</p>
+        ${about}
         ${extLinks({ tmdbUrl: `https://www.themoviedb.org/person/${pid}` })}
       </div>
     </div>
@@ -2602,6 +2650,7 @@ async function initPerson() {
   };
   if (kinds.length > 1) chips(document.getElementById("pview"), kinds, (v) => v === view, (v) => { view = v; paint(); });
   paint();
+  document.getElementById("pbio-more")?.addEventListener("click", (e) => { document.getElementById("pbio").classList.remove("clamp"); e.currentTarget.remove(); });
 }
 
 /* ---------- List pages: New on <app>, Best-of lists, Upcoming ---------- */

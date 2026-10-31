@@ -21,10 +21,12 @@ export async function onRequestGet(context) {
     // Layout 2: p/<id % shards>.json, each person with their titles; older builds: people/<id % 64>.json with keys only.
     const man = (await asset("/assets/catalog/manifest.json")) || {};
     const v2 = man.layout >= 2;
-    const [shard, reviewed] = await Promise.all([
+    const [shard, reviewed, bios] = await Promise.all([
       asset(v2 ? `/assets/catalog/p/${pid % man.shards.p}.json` : `/assets/catalog/people/${pid % PEOPLE_SHARDS}.json`),
       asset("/assets/catalog/reviewed.json"),
+      asset(`/assets/catalog/pb/${pid % 256}.json`), // [bio, born, birthplace, died, job], as app.js PERSON_BIO_SHARDS
     ]);
+    const [bio, born, birthplace, died, job] = (bios && bios[pid]) || [];
     const { MOVIES, IMAGES } = globalThis.MM_DATA;
 
     // Our reviewed films with this person.
@@ -62,11 +64,17 @@ export async function onRequestGet(context) {
     const top = titles.slice(0, 4).map((t) => `${t.t}${t.y ? ` (${t.y})` : ""}`);
     // Search wording: "<name> movies", "<name> series".
     const title = `${name} Movies & Web Series: Full List, Where to Watch`;
-    const desc = `${name}'s ${titles.length} movies and series on Masala Mischief: ${top.join(", ")}${titles.length > 4 ? " and more" : ""}. Ratings, trailers and where to stream them in India.`;
+    const fmtDay = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+    const role = job === "Directing" ? "director" : job === "Writing" ? "writer" : job === "Acting" ? "actor" : "";
+    const facts = [born ? `Born ${fmtDay(born)}${birthplace ? ` in ${birthplace}` : ""}` : "", died ? `died ${fmtDay(died)}` : ""].filter(Boolean).join(", ");
+    const firstLine = bio ? (bio.match(/^.*?[.!?](\s|$)/) || [bio])[0].trim() : "";
+    const desc = `${name}${role ? `, ${role}` : ""}: ${titles.length} movies and web series, including ${top.join(", ")}. ${firstLine || facts ? `${firstLine || `${facts}.`} ` : ""}Where to stream them in India.`.slice(0, 300);
 
     const body = `
       <article class="ssr-review">
         <h1>${esc(name)}</h1>
+        ${facts ? `<p>${esc(facts)}.</p>` : ""}
+        ${bio ? `<p>${esc(bio)}</p>` : ""}
         <p>${titles.length} movies and series, newest first.</p>
         <ul>${titles.map((t) => `<li><a href="${t.href}">${esc(t.t)}</a>${t.y ? ` (${t.y})` : ""}${t.tv ? " · series" : ""}</li>`).join("")}</ul>
       </article>`;
@@ -74,7 +82,9 @@ export async function onRequestGet(context) {
     const jsonLd = {
       "@context": "https://schema.org",
       "@graph": [
-        { "@type": "Person", name, url, image: tmdbImg(photo, "w500"), sameAs: [`https://www.themoviedb.org/person/${pid}`] },
+        { "@type": "Person", name, url, image: tmdbImg(photo, "w500"), sameAs: [`https://www.themoviedb.org/person/${pid}`],
+          ...(born ? { birthDate: born } : {}), ...(birthplace ? { birthPlace: birthplace } : {}), ...(died ? { deathDate: died } : {}),
+          ...(role ? { jobTitle: role } : {}), ...(bio ? { description: bio } : {}) },
         breadcrumbs([["Home", `${SITE}/`], ["Movies & series", `${SITE}/films`], [name, url]]),
       ],
     };
