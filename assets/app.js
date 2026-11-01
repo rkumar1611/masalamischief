@@ -2372,8 +2372,11 @@ function titleMatch(query, title) {
   if (!qw.length || !tw.length) return 0;
   const joinedQ = skeleton(qw.join("")), joinedT = skeleton(tw.filter((w) => !SEARCH_STOP.has(w)).join(""));
   let total = 0;
+  const used = new Set(); // a word of the title fits one typed word only ("manya mallika" isn't "Maliah" twice)
   for (const [i, q] of qw.entries()) {
-    const best = Math.max(...tw.map((t) => wordFit(q, t, i === qw.length - 1)));
+    let best = 0, at = -1;
+    tw.forEach((t, k) => { if (used.has(k)) return; const s = wordFit(q, t, i === qw.length - 1); if (s > best) { best = s; at = k; } });
+    if (at >= 0) used.add(at);
     if (!best) {
       // "spiderman", "brakingbad", "shahrukh": the whole thing without spaces, against the title's start.
       // Only for long enough searches, so "salar" doesn't turn into "Sahara". Ending exactly where a word
