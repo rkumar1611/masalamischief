@@ -1264,22 +1264,22 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-10-31",
+  checked: "2026-11-01",
   items: [
+    { title: "Taxi Driver", year: 1976, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/18907685", note: "Directed by Martin Scorsese · IMDb 8.2" },
+    { title: "Radio", year: 2003, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60031265", note: "Directed by Michael Tollin · IMDb 6.9" },
+    { title: "Click", year: 2006, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/70041162", note: "Directed by Frank Coraci · IMDb 6.5" },
+    { title: "The Bridge on the River Kwai", year: 1957, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60002970", note: "Directed by David Lean · IMDb 8.1" },
+    { title: "The Revenant", year: 2015, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/80064516", note: "Directed by Alejandro G. Iñárritu · IMDb 8" },
+    { title: "The Sweetest Thing", year: 2002, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60022057", note: "Directed by Roger Kumble · IMDb 5.2" },
+    { title: "The Front Runner", year: 2018, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/81012480", note: "Directed by Jason Reitman · IMDb 6.1" },
+    { title: "Seven Years in Tibet", year: 1997, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/1179053", note: "Directed by Jean-Jacques Annaud · IMDb 7.1" },
     { title: "Hanging Up", year: 2000, lang: "English", app: "Netflix", added: "2026-10-31", url: "https://www.netflix.com/title/60000419", note: "Directed by Diane Keaton · IMDb 4.9" },
     { title: "Wanderlust", year: 2012, lang: "English", app: "Netflix", added: "2026-10-31", url: "https://www.netflix.com/title/70202146", note: "Directed by David Wain · IMDb 5.6" },
     { title: "Gargi", year: 2022, lang: "Tamil", app: "SonyLIV", added: "2026-10-31", url: "https://www.sonyliv.com/movies/gargi-1000183696", note: "Directed by Gautham Ramachandran · IMDb 8.1" },
     { title: "Demon Slayer: Kimetsu no Yaiba Infinity Castle", year: 2025, app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/demon-slayer-kimetsu-no-yaiba-infinity-castle-i-1090537771", note: "Directed by Haruo Sotozaki · IMDb 8.3" },
     { title: "The Pursuit of Happyness", year: 2006, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/the-pursuit-of-happyness-1000007713", note: "Directed by Gabriele Muccino · IMDb 8" },
     { title: "Resident Evil", year: 2002, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/resident-evil-2002-1090541183", note: "Directed by Paul W. S. Anderson · IMDb 6.6" },
-    { title: "The Social Network", year: 2010, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/the-social-network-1000042081", note: "Directed by David Fincher · IMDb 7.8" },
-    { title: "Spider-Man: Homecoming", year: 2017, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/spider-man-homecoming-1000042078", note: "Directed by Jon Watts · IMDb 7.4" },
-    { title: "Nowhere to Run", year: 1993, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/814862", note: "Directed by Robert Harmon · IMDb 5.7" },
-    { title: "Baththa", year: 2026, lang: "Tamil", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/83064751", note: "Directed by Balaji Tharaneetharan · IMDb 9", kids: true },
-    { title: "10 Cloverfield Lane", year: 2016, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/80082850", note: "Directed by Dan Trachtenberg · IMDb 7.2" },
-    { title: "On the Waterfront", year: 1954, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/60000711", note: "Directed by Elia Kazan · IMDb 8.1" },
-    { title: "Far and Away", year: 1992, lang: "English", app: "Netflix", added: "2026-10-29", url: "https://www.netflix.com/title/492899", note: "Directed by Ron Howard · IMDb 6.6" },
-    { title: "Christy", year: 2025, lang: "English", app: "JioHotstar", added: "2026-10-29", url: "https://www.hotstar.com/in/movies/christy/1271719030", note: "Directed by David Michôd · IMDb 6.6" },
   ],
 };
 
