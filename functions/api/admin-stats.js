@@ -3,17 +3,19 @@
 import { json, isAdmin, ensureSchema } from "../../lib/community.js";
 import { ensureFixesSchema } from "../../lib/fixes.js";
 import { ensurePushSchema } from "../../lib/push.js";
+import { ensureAccountSchema, accountsOn } from "../../lib/account.js";
 
 export async function onRequestGet({ request, env }) {
   if (!isAdmin(request, env)) return json({ error: "Wrong password." }, 401);
   if (!env.DB) return json({ error: "The database isn't connected." }, 503);
   const one = async (setup, sql) => { try { await setup(env.DB); return await env.DB.prepare(sql).first(); } catch { return null; } };
-  const [reviews, fixes, push] = await Promise.all([
+  const [reviews, fixes, push, users] = await Promise.all([
     one(ensureSchema, `SELECT SUM(CASE WHEN approved = 0 THEN 1 ELSE 0 END) AS pending, SUM(CASE WHEN approved = 1 AND hidden = 0 AND staff = 0 THEN 1 ELSE 0 END) AS live,
       SUM(CASE WHEN reports > 0 THEN 1 ELSE 0 END) AS reported FROM reviews`),
     one(ensureFixesSchema, "SELECT COUNT(*) AS open FROM fixes WHERE status = 'open'"),
     one(ensurePushSchema, `SELECT COUNT(*) AS total, SUM(CASE WHEN weekly = 1 THEN 1 ELSE 0 END) AS weekly,
       SUM(CASE WHEN titles <> '' THEN 1 ELSE 0 END) AS waiting FROM push_subs`),
+    accountsOn(env) ? one(ensureAccountSchema, "SELECT COUNT(*) AS total FROM users") : null,
   ]);
-  return json({ reviews, fixes, push, secrets: { github: Boolean(env.GITHUB_TOKEN), turnstile: Boolean(env.TURNSTILE_SECRET), reviewsAutoPublish: env.REVIEWS_AUTOPUBLISH === "1" } });
+  return json({ reviews, fixes, push, users, secrets: { accounts: accountsOn(env), github: Boolean(env.GITHUB_TOKEN), turnstile: Boolean(env.TURNSTILE_SECRET), reviewsAutoPublish: env.REVIEWS_AUTOPUBLISH === "1" } });
 }

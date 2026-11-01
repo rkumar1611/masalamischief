@@ -29,12 +29,17 @@ const streamsOn = (m) => m.apps || (WATCH[m.id] && WATCH[m.id].stream) || [];
 const fmtDate = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 // Per-device storage for ratings, watchlist and theme. Works without it (private mode etc.).
+// The lists in SYNC_KEYS also follow a signed-in visitor to their other phones (see Accounts below):
+// every change to one calls syncHook, which the account code sets.
+const SYNC_KEYS = new Set(["watchlist", "watchlistInfo", "ratings", "landWatch", "alertChoice"]);
+let syncHook = null;
 const store = {
   get(key, fallback) {
     try { const v = localStorage.getItem("mm:" + key); return v === null ? fallback : JSON.parse(v); } catch { return fallback; }
   },
   set(key, value) {
     try { localStorage.setItem("mm:" + key, JSON.stringify(value)); } catch {}
+    if (syncHook && SYNC_KEYS.has(key)) syncHook();
   },
 };
 // The watchlist holds our review ids ("rrr") and catalogue titles as "_<lang>-<id>" ("_hi-864692",
@@ -107,6 +112,7 @@ function renderChrome() {
       <a class="logo" href="index.html">${mark}<span class="logo-words">Masala <span>Mischief</span></span></a>
       <button class="theme-btn search-btn" id="search-btn" type="button" aria-label="Search movies and series" aria-expanded="false">🔍</button>
       <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch light or dark mode"></button>
+      <button class="theme-btn acct-btn" id="acct-btn" type="button" aria-label="Account" aria-expanded="false"${store.get("acctOn", false) ? "" : " hidden"}>👤</button>
       <button class="theme-btn menu-btn" id="menu-btn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="main-nav">☰</button>
       <nav class="nav" id="main-nav" aria-label="Main">${links}<button class="nav-install install-btn" type="button" hidden>📲 Install app</button></nav>
       <div class="site-search" id="site-search" hidden>
@@ -172,6 +178,7 @@ function renderChrome() {
   initInstall();
   initAlerts();
   initUpdates();
+  initAccount();
 }
 
 // New version available: the installed app (or a tab left open) keeps running the version it loaded.
@@ -314,6 +321,149 @@ function initLandAll(keys, btn, help) {
     }
   });
 }
+/* ---------- Accounts: Sign in with Google, so the watchlist, ratings and film alerts follow you ----------
+   Only when the site has accounts switched on (GOOGLE_CLIENT_ID in Cloudflare; /api/config says so).
+   Signed in: every change to the lists in SYNC_KEYS is saved to the site a moment later, and the latest
+   copy is fetched on each visit (the last save wins; the first sign-in on a phone merges both lists).
+   We keep Google's account id, your first name and these lists: no email, no photo. */
+const acct = { applying: false, timer: 0, popup: null };
+const signedIn = () => Boolean(store.get("acctName", ""));
+const syncSnapshot = () => Object.fromEntries([...SYNC_KEYS].map((k) => [k, store.get(k, k === "watchlistInfo" || k === "ratings" ? {} : k === "alertChoice" ? { langs: [], apps: [] } : [])]));
+function applySyncSnapshot(d) {
+  acct.applying = true;
+  try { SYNC_KEYS.forEach((k) => { if (d[k] !== undefined) store.set(k, d[k]); }); } finally { acct.applying = false; }
+}
+const unionList = (a, b) => [...new Set([...(a || []), ...(b || [])])];
+function mergeSnapshots(local, server) {
+  const choice = (local.alertChoice.langs.length || local.alertChoice.apps.length) ? local.alertChoice : server.alertChoice;
+  return { watchlist: unionList(server.watchlist, local.watchlist), watchlistInfo: { ...server.watchlistInfo, ...local.watchlistInfo },
+    ratings: { ...server.ratings, ...local.ratings }, landWatch: unionList(server.landWatch, local.landWatch), alertChoice: choice };
+}
+function localSignOut() {
+  ["acctName", "syncAt", "syncDirty"].forEach((k) => { try { localStorage.removeItem(`mm:${k}`); } catch {} });
+  syncHook = null;
+  paintAccountButton();
+}
+async function syncPush() {
+  if (!signedIn()) return;
+  const res = await fetch("/api/account/data", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ data: syncSnapshot() }) }).catch(() => null);
+  if (res && res.status === 401) { localSignOut(); return; }
+  if (!res || !res.ok) return; // offline: stays marked, goes next time
+  const out = await res.json().catch(() => ({}));
+  store.set("syncAt", out.updated || Date.now());
+  store.set("syncDirty", false);
+}
+// Called on every change to a synced list: save a moment later (one save for a burst of taps).
+function syncChanged() {
+  if (acct.applying || !signedIn()) return;
+  store.set("syncDirty", true);
+  clearTimeout(acct.timer);
+  acct.timer = setTimeout(syncPush, 1500);
+}
+async function syncPull() {
+  if (!signedIn()) return;
+  const res = await fetch("/api/account/data").catch(() => null);
+  if (res && res.status === 401) { localSignOut(); return; }
+  if (!res || !res.ok) return;
+  const { data, updated } = await res.json();
+  const before = JSON.stringify(syncSnapshot());
+  const syncAt = store.get("syncAt", 0), dirty = store.get("syncDirty", false);
+  if (!data) await syncPush(); // a new account: upload what's on this phone
+  else if (!syncAt) { applySyncSnapshot(mergeSnapshots(syncSnapshot(), data)); await syncPush(); } // first time on this phone: combine
+  else if (updated > syncAt) {
+    applySyncSnapshot(dirty ? mergeSnapshots(syncSnapshot(), data) : data);
+    store.set("syncAt", updated);
+    if (dirty) await syncPush();
+  } else if (dirty) await syncPush();
+  if (JSON.stringify(syncSnapshot()) !== before) {
+    syncAlerts(); // film alerts follow the list: tell the push server what this phone now waits for
+    if (!sessionStorage.getItem("mm-synced")) { sessionStorage.setItem("mm-synced", "1"); location.reload(); } // redraw with the synced lists
+  }
+}
+function paintAccountButton() {
+  const b = document.getElementById("acct-btn");
+  if (!b) return;
+  const name = store.get("acctName", "");
+  b.hidden = !store.get("acctOn", false);
+  b.textContent = name ? (name[0] || "👤").toUpperCase() : "👤";
+  b.classList.toggle("signed-in", Boolean(name));
+  b.setAttribute("aria-label", name ? `Account: ${name}` : "Sign in");
+}
+let googleLoading = null;
+const loadGoogle = () => (googleLoading = googleLoading || new Promise((resolve, reject) => {
+  const s = document.createElement("script");
+  s.src = "https://accounts.google.com/gsi/client"; s.async = true; s.onload = () => resolve(window.google); s.onerror = reject;
+  document.head.append(s);
+}));
+async function openAccountPanel() {
+  const btn = document.getElementById("acct-btn");
+  if (acct.popup) { acct.popup.remove(); acct.popup = null; btn.setAttribute("aria-expanded", "false"); return; }
+  const pop = document.createElement("div");
+  pop.className = "acct-pop";
+  const name = store.get("acctName", "");
+  pop.innerHTML = name
+    ? `<p><strong>Hi, ${esc(name)} 👋</strong></p>
+       <p class="small muted">Your watchlist, ratings and film alerts are saved to your account and follow you to your other phones.</p>
+       <div class="acct-actions"><a class="btn small" href="reviews.html?saved=1">My watchlist</a><button class="btn small" type="button" data-out>Sign out</button></div>
+       <p class="small"><button class="link-btn" type="button" data-del>Delete my account and saved data</button></p>`
+    : `<p><strong>Keep your watchlist on all your phones</strong></p>
+       <p class="small muted">Sign in with Google and your watchlist, ratings and "tell me when it's on OTT" alerts follow you. We keep only your first name and these lists, never your email.</p>
+       <div id="g-btn" class="g-btn"><span class="small muted">Loading Google…</span></div>
+       <p class="small muted"><a href="privacy.html#accounts">What we keep</a></p>`;
+  document.querySelector(".site-header .wrap").append(pop);
+  acct.popup = pop;
+  btn.setAttribute("aria-expanded", "true");
+  const close = () => { pop.remove(); acct.popup = null; btn.setAttribute("aria-expanded", "false"); };
+  pop.addEventListener("click", async (e) => {
+    if (e.target.closest("[data-out]")) { await fetch("/api/account/logout", { method: "POST" }).catch(() => {}); localSignOut(); close(); location.reload(); }
+    if (e.target.closest("[data-del]") && confirm("Delete your account and the lists saved on our server? The watchlist on this phone stays.")) {
+      await fetch("/api/account/delete", { method: "POST" }).catch(() => {}); localSignOut(); close(); location.reload();
+    }
+  });
+  if (name) return;
+  try {
+    const cfg = await getCommunityConfig();
+    const g = await loadGoogle();
+    g.accounts.id.initialize({
+      client_id: cfg.googleClientId,
+      callback: async (resp) => {
+        const r = await fetch("/api/account/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ credential: resp.credential }) })
+          .then(async (x) => ({ ok: x.ok, ...(await x.json().catch(() => ({}))) })).catch(() => ({ ok: false }));
+        if (!r.ok) { const gb = document.getElementById("g-btn"); if (gb) gb.innerHTML = `<span class="small">${esc(r.error || "Couldn't sign in. Please try again.")}</span>`; return; }
+        store.set("acctName", r.name); store.set("syncAt", 0); store.set("syncDirty", false);
+        syncHook = syncChanged;
+        close(); paintAccountButton();
+        sessionStorage.removeItem("mm-synced");
+        await syncPull();
+        if (!sessionStorage.getItem("mm-synced")) location.reload(); // so the page shows you're signed in
+      },
+    });
+    const slot = document.getElementById("g-btn");
+    if (slot) { slot.innerHTML = ""; g.accounts.id.renderButton(slot, { theme: "outline", size: "large", shape: "pill", text: "signin_with" }); }
+  } catch {
+    const slot = document.getElementById("g-btn");
+    if (slot) slot.innerHTML = `<span class="small">Couldn't load Google sign-in. Please try again.</span>`;
+  }
+}
+async function initAccount() {
+  const b = document.getElementById("acct-btn");
+  if (!b || location.protocol === "file:") return;
+  b.addEventListener("click", openAccountPanel);
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-acct-open]")) { if (!acct.popup) openAccountPanel(); window.scrollTo({ top: 0, behavior: "smooth" }); } });
+  paintAccountButton();
+  if (signedIn()) { syncHook = syncChanged; syncPull(); }
+  // Whether the site has accounts on (checked once per visit); the button stays hidden when it doesn't.
+  if (!sessionStorage.getItem("mm-acct-checked")) {
+    const cfg = await getCommunityConfig().catch(() => null);
+    sessionStorage.setItem("mm-acct-checked", "1");
+    const on = Boolean(cfg && cfg.accounts);
+    if (on !== store.get("acctOn", false)) { store.set("acctOn", on); paintAccountButton(); }
+  }
+}
+// A nudge under the watchlist for people who haven't signed in (when accounts are on).
+const accountNudge = () => (store.get("acctOn", false) && !signedIn()
+  ? `<button class="btn small" type="button" data-acct-open>👤 Sign in to keep your watchlist on all your phones</button>` : "");
+
 // After saving or removing a series: if alerts are on, update the list we hold (no message is sent).
 function syncAlerts() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || location.protocol === "file:") return;
@@ -1076,7 +1226,7 @@ function initReviews() {
     bar.innerHTML = `<span>📤 Share your watchlist with friends</span>
       <a class="btn primary small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`${text} ${link}`)}">WhatsApp</a>
       ${navigator.share ? `<button class="btn small" type="button" id="share-list">More…</button>` : ""}
-      <button class="btn small" type="button" id="copy-list">Copy link</button>`;
+      <button class="btn small" type="button" id="copy-list">Copy link</button> ${accountNudge()}`;
     document.getElementById("copy-list").addEventListener("click", async (e) => {
       try { await navigator.clipboard.writeText(link); e.target.textContent = "✓ Copied"; } catch { prompt("Copy this link:", link); }
     });

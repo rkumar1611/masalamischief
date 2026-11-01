@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Admin · Masala Mischief</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/style.css?v=107">
+  <link rel="stylesheet" href="assets/style.css?v=108">
   <style>
     .adm { max-width: 960px; margin: 24px auto; padding: 0 16px 80px; }
     .adm h1 { margin: 0 0 4px; }
@@ -209,12 +209,14 @@
         stat(f.open || 0, "wrong-info reports open", "reports", f.open) +
         stat(r.reported || 0, "reviews reported", "audience", r.reported) +
         stat(MOVIES.length, "our own reviews", "reviews") +
-        stat(r.live || 0, "readers' reviews live");
+        stat(r.live || 0, "readers' reviews live") +
+        (d.secrets && d.secrets.accounts ? stat(d.users ? d.users.total : 0, "visitors signed in with Google") : "");
       $("push-stats").innerHTML =
         stat(p.total, "phones with alerts on") + stat(p.weekly, "get the Friday roundup") + stat(p.waiting, "waiting for a film to land");
       const s = d.secrets || {};
       $("setup").innerHTML = [
         s.github ? `<span class="adm-ok">✓ Publishing from the site is set up.</span>` : `<span class="adm-bad">✗ GITHUB_TOKEN isn't set in Cloudflare, so publishing and applying corrections won't work.</span>`,
+        s.accounts ? `<span class="adm-ok">✓ Visitor sign-in (Google) is on.</span>` : `<span class="muted">Visitor sign-in is off (add GOOGLE_CLIENT_ID in Cloudflare to turn it on).</span>`,
         s.turnstile ? `<span class="adm-ok">✓ Spam check on.</span>` : `<span class="adm-bad">✗ Spam check keys missing: visitors can't post reviews.</span>`,
         s.reviewsAutoPublish ? "Readers' reviews go live without approval." : "Readers' reviews wait for your approval.",
       ].join(" ");
