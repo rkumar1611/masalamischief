@@ -17,7 +17,7 @@ export async function onRequestGet({ request, env }) {
   const filter = new URL(request.url).searchParams.get("filter");
   const where = FILTERS[filter] ?? FILTERS.pending;
   const { results } = await env.DB.prepare(
-    `SELECT id, title, name, masala, score, body, created, reports, hidden, approved FROM reviews ${where} ORDER BY created DESC LIMIT 200`
+    `SELECT id, title, name, masala, score, body, created, reports, hidden, approved, staff FROM reviews ${where} ORDER BY created DESC LIMIT 200`
   ).all();
   const totals = await env.DB.prepare(
     `SELECT COUNT(*) AS all_reviews,

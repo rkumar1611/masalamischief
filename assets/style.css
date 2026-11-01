@@ -725,6 +725,16 @@ body.gp-active .page-head h1 { font-size: clamp(1.5rem, 4vw, 2.2rem); }
 .cm-list p { margin: 8px 0 0; }
 .cm-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
 .pr-inline { font-weight: 700; font-size: 0.9rem; }
+.cm-list li.cm-staff { border-color: var(--chilli); background: color-mix(in srgb, var(--chilli) 7%, var(--surface)); }
+.cm-badge { font-size: 0.72rem; font-weight: 800; color: #fff; background: var(--chilli); border-radius: 999px; padding: 2px 8px; }
+.cm-admin { display: flex; gap: 14px; }
+/* Admin shortcut (only when signed in at /admin): a small floating button with the quick links */
+.admin-fab { position: fixed; left: 12px; bottom: 12px; z-index: 55; font-size: 0.9rem; }
+.admin-fab > summary { list-style: none; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 1.3rem; background: var(--ink); color: var(--bg); box-shadow: var(--shadow-lg); }
+.admin-fab > summary::-webkit-details-marker { display: none; }
+.admin-fab nav { position: absolute; left: 0; bottom: 54px; display: grid; gap: 2px; min-width: 210px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow-lg); }
+.admin-fab nav a, .admin-fab nav button { font: inherit; text-align: left; background: none; border: 0; color: var(--ink); text-decoration: none; padding: 9px 10px; border-radius: 10px; cursor: pointer; }
+.admin-fab nav a:hover, .admin-fab nav button:hover { background: var(--surface-2); }
 .cm-report { background: none; border: 0; color: var(--ink-soft); font: inherit; font-size: 0.8rem; cursor: pointer; padding: 0; margin-top: 6px; text-decoration: underline; }
 .prose { max-width: 760px; }
 .prose li { margin-bottom: 8px; }

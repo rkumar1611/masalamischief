@@ -1905,10 +1905,15 @@ function loadTurnstile() {
   });
 }
 
+// The admin password, when you're signed in on this device (/admin; "keep me signed in" uses localStorage).
+// It's only ever sent to our own /api/ endpoints.
+const adminPw = () => { try { return sessionStorage.getItem("mm-admin") || localStorage.getItem("mm-admin") || ""; } catch { return ""; } };
+
 async function initCommunity(titleKey, el, label) {
   el.innerHTML = `<div class="section-head"><h2>🗣️ Audience reviews</h2></div><p class="muted">Loading…</p>`;
   const cfg = await getCommunityConfig();
-  if (!cfg.reviews) {
+  const admin = adminPw();
+  if (!cfg.reviews && !admin) {
     el.innerHTML = `<div class="section-head"><h2>🗣️ Audience reviews</h2></div>
       <p class="muted">Audience ratings and reviews are opening soon. Watch this space.</p>`;
     return;
@@ -1923,7 +1928,8 @@ async function initCommunity(titleKey, el, label) {
     <div class="section-head"><h2>🗣️ Audience reviews</h2></div>
     <div class="aud-summary" id="cm-summary"></div>
     <form class="cm-form" id="cm-form" novalidate>
-      <h3>Your turn: what did you think of ${esc(label)}?</h3>
+      <h3>${admin ? `🛡️ Post our take on ${esc(label)}` : `Your turn: what did you think of ${esc(label)}?`}</h3>
+      ${admin ? `<p class="small muted">You're signed in as admin: this goes up at once as <strong>Masala Mischief team</strong>, on top of the audience reviews, and isn't counted in their average.</p>` : ""}
       <div class="cm-row">
         <span class="cm-label">Masala Meter</span>
         <span class="cm-chillies" id="cm-masala" role="radiogroup" aria-label="Your Masala Meter">
@@ -1937,26 +1943,26 @@ async function initCommunity(titleKey, el, label) {
       <textarea id="cm-body" maxlength="1000" rows="4" placeholder="A few words: what worked, what didn't? (no spoilers, no links)"></textarea>
       <div class="cm-row cm-bottom">
         <input id="cm-name" type="text" maxlength="40" placeholder="Display name" autocomplete="nickname">
-        <label class="toggle"><input type="checkbox" id="cm-adult"> I'm 18 or over</label>
+        ${admin ? "" : `<label class="toggle"><input type="checkbox" id="cm-adult"> I'm 18 or over</label>`}
       </div>
-      <div id="cm-ts"></div>
+      ${admin ? "" : `<div id="cm-ts"></div>`}
       <div class="cm-row">
-        <button class="btn primary" type="submit" id="cm-submit">Post review</button>
+        <button class="btn primary" type="submit" id="cm-submit">${admin ? "Post as team" : "Post review"}</button>
         <span class="small" id="cm-msg" role="status"></span>
       </div>
-      <p class="fine">We read every review before it goes up (usually within a day), then it appears under your display name. Please follow our <a href="privacy.html#rules">community rules</a>. See how we handle your data in our <a href="privacy.html">privacy note</a>.</p>
+      ${admin ? "" : `<p class="fine">We read every review before it goes up (usually within a day), then it appears under your display name. Please follow our <a href="privacy.html#rules">community rules</a>. See how we handle your data in our <a href="privacy.html">privacy note</a>.</p>`}
     </form>
     <ol class="cm-list" id="cm-list"></ol>`;
 
   const $ = (id) => el.querySelector(`#${id}`);
-  try { $("cm-name").value = store.get("reviewName", ""); } catch {}
+  try { $("cm-name").value = admin ? "Masala Mischief" : store.get("reviewName", ""); } catch {}
   const chillies = [...el.querySelectorAll("#cm-masala button")];
   const paintChillies = () => chillies.forEach((b) => { const on = +b.dataset.n <= masala; b.classList.toggle("on", on); b.setAttribute("aria-checked", +b.dataset.n === masala); });
   chillies.forEach((b) => b.addEventListener("click", () => { masala = masala === +b.dataset.n ? 0 : +b.dataset.n; paintChillies(); }));
 
   let token = "";
   let widget;
-  loadTurnstile().then((ts) => {
+  if (!admin) loadTurnstile().then((ts) => {
     widget = ts.render($("cm-ts"), { sitekey: cfg.sitekey, theme: currentTheme(), callback: (t) => (token = t), "expired-callback": () => (token = "") });
   }).catch(() => { $("cm-msg").textContent = "Couldn't load the spam check. Please refresh."; });
 
@@ -1969,17 +1975,26 @@ async function initCommunity(titleKey, el, label) {
          <span class="muted">from ${s.count} ${s.count === 1 ? "review" : "reviews"}</span>`
       : `<span class="muted">No audience reviews yet. Be the first!</span>`;
     $("cm-list").innerHTML = res.reviews.map((r) => `
-      <li>
-        <div class="cm-head"><strong>${esc(r.name)}</strong>
+      <li${r.staff ? ` class="cm-staff"` : ""}>
+        <div class="cm-head"><strong>${esc(r.name)}</strong>${r.staff ? `<span class="cm-badge" title="Written by the Masala Mischief team">✓ Team</span>` : ""}
           ${r.masala ? `<span class="pr-inline">🌶️ ${r.masala}/5</span>` : ""}${r.score ? `<span class="pr-inline">★ ${r.score}/10</span>` : ""}
           <span class="muted small">${ago(r.created)}</span></div>
         ${r.body ? `<p>${esc(r.body).replace(/\n/g, "<br>")}</p>` : ""}
-        <button class="cm-report" type="button" data-id="${r.id}">Report</button>
+        ${admin ? `<span class="cm-admin"><button class="cm-report" type="button" data-a="hide" data-id="${r.id}">🙈 Hide</button><button class="cm-report" type="button" data-a="delete" data-id="${r.id}">🗑 Delete</button></span>`
+          : r.staff ? "" : `<button class="cm-report" type="button" data-id="${r.id}">Report</button>`}
       </li>`).join("");
   }
 
   $("cm-list").addEventListener("click", async (e) => {
     const b = e.target.closest(".cm-report");
+    // Signed in as admin: hide or delete a review right here (same as /admin).
+    if (b && b.dataset.a) {
+      if (b.dataset.a === "delete" && !confirm("Delete this review for good?")) return;
+      b.disabled = true;
+      await fetch("/api/admin", { method: "POST", headers: { authorization: `Bearer ${admin}`, "content-type": "application/json" }, body: JSON.stringify({ action: b.dataset.a, id: +b.dataset.id }) }).catch(() => {});
+      load();
+      return;
+    }
     if (!b || b.disabled) return;
     if (!confirm("Report this review as spam, abusive or a spoiler?")) return;
     b.disabled = true;
@@ -1992,19 +2007,19 @@ async function initCommunity(titleKey, el, label) {
     const msg = $("cm-msg");
     const payload = {
       t: titleKey, name: $("cm-name").value, masala: masala || null, score: $("cm-score").value || null,
-      body: $("cm-body").value, adult: $("cm-adult").checked, token,
+      body: $("cm-body").value, adult: admin ? true : $("cm-adult").checked, token,
     };
     if (!payload.adult) { msg.textContent = "Please confirm you're 18 or over."; return; }
-    if (!token) { msg.textContent = "One moment, the spam check is still running…"; return; }
+    if (!admin && !token) { msg.textContent = "One moment, the spam check is still running…"; return; }
     $("cm-submit").disabled = true;
     msg.textContent = "Posting…";
-    const res = await fetch("/api/reviews", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) })
+    const res = await fetch("/api/reviews", { method: "POST", headers: { "content-type": "application/json", ...(admin ? { authorization: `Bearer ${admin}` } : {}) }, body: JSON.stringify(payload) })
       .then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) })).catch(() => ({ ok: false, error: "Network problem. Please try again." }));
     $("cm-submit").disabled = false;
     if (window.turnstile && widget !== undefined) { window.turnstile.reset(widget); token = ""; }
-    if (!res.ok) { msg.textContent = res.error || "Something went wrong."; return; }
-    store.set("reviewName", payload.name.trim());
-    msg.textContent = res.published ? "Thanks! Your review is up." : "Thanks! Your review will appear once we've checked it.";
+    if (!res.ok) { msg.textContent = /password/i.test(res.error || "") ? "Admin sign-in expired. Open /admin and sign in again." : (res.error || "Something went wrong."); return; }
+    if (!admin) store.set("reviewName", payload.name.trim());
+    msg.textContent = res.published ? (admin ? "✓ Posted as Masala Mischief team." : "Thanks! Your review is up.") : "Thanks! Your review will appear once we've checked it.";
     $("cm-body").value = ""; $("cm-score").value = ""; masala = 0; paintChillies();
     load();
   });
@@ -3381,6 +3396,32 @@ async function initWeek() {
   paint();
 }
 
+// Signed in at /admin on this device: a small 🛡️ button on every page with the shortcuts (dashboard, write,
+// edit this review, reports, sign out). Nothing is added for visitors.
+function initAdminFab() {
+  if (!adminPw() || ["write"].includes(document.body.dataset.page)) return;
+  const page = document.body.dataset.page;
+  const reviewId = page === "review" ? new URLSearchParams(location.search).get("id") : "";
+  const fab = document.createElement("details");
+  fab.className = "admin-fab";
+  fab.innerHTML = `<summary aria-label="Admin shortcuts">🛡️</summary>
+    <nav>
+      <a href="/admin">🏠 Admin dashboard</a>
+      <a href="/write">✍️ Write a new review</a>
+      ${reviewId ? `<a href="/write?edit=${encodeURIComponent(reviewId)}">✏️ Edit this review</a>` : ""}
+      <a href="/admin#reports">🛠️ Wrong-info reports</a>
+      <a href="/admin#audience">🗣️ Audience reviews</a>
+      <button type="button" data-out>🚪 Sign out</button>
+    </nav>`;
+  fab.querySelector("[data-out]").addEventListener("click", () => {
+    try { sessionStorage.removeItem("mm-admin"); localStorage.removeItem("mm-admin"); } catch {}
+    fab.remove();
+    location.reload();
+  });
+  document.body.append(fab);
+}
+
 renderChrome();
+initAdminFab();
 freshenWatch(); // the saved where-to-watch now; the latest one in the background
 ({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming, week: initWeek }[document.body.dataset.page] || (() => {}))();

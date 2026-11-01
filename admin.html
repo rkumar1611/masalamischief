@@ -4,36 +4,104 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Review admin · Masala Mischief</title>
+  <title>Admin · Masala Mischief</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/style.css?v=106">
+  <link rel="stylesheet" href="assets/style.css?v=107">
   <style>
-    .adm { max-width: 900px; margin: 32px auto; padding: 0 16px; }
-    .adm-login, .adm-row { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 10px 0; }
-    .adm-login input { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); width: min(320px, 100%); }
+    .adm { max-width: 960px; margin: 24px auto; padding: 0 16px 80px; }
+    .adm h1 { margin: 0 0 4px; }
+    .adm-login, .adm-row, .adm-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin: 10px 0; }
+    .adm-login input[type=password] { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); width: min(320px, 100%); box-sizing: border-box; }
+    .adm-login label.keep { display: flex; gap: 8px; align-items: center; margin: 10px 0; font-size: 0.92rem; }
+    .adm-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .adm-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 8px 0; }
+    .adm-tabs .chip { position: relative; }
+    .adm-tabs .n { display: inline-block; min-width: 1.3em; margin-left: 6px; padding: 0 6px; border-radius: 999px; background: var(--chilli); color: #fff; font-size: 0.75rem; font-weight: 800; text-align: center; }
     .adm-row.hidden { opacity: 0.6; border-style: dashed; }
     .adm-row.pending { border-color: var(--turmeric); }
+    .adm-row.staff { border-color: var(--chilli); }
     .adm-row .meta { font-size: 0.85rem; color: var(--ink-soft); }
     .adm-row p { margin: 8px 0; white-space: pre-wrap; }
-    .adm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .adm-actions button { font: inherit; padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+    .adm-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .adm-actions button, .adm-actions a { font: inherit; padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; text-decoration: none; }
     .adm-actions .danger { color: var(--chilli); }
+    .adm-stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin: 10px 0 18px; }
+    .adm-stat { display: block; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; cursor: pointer; }
+    .adm-stat strong { display: block; font-size: 1.9rem; line-height: 1.1; }
+    .adm-stat.alert { border-color: var(--chilli); }
+    .adm-big { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 10px 0; }
+    .adm-big a { text-align: center; }
+    .adm-find { font: inherit; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); width: 100%; box-sizing: border-box; margin: 8px 0; }
+    .adm-links { display: grid; gap: 8px; }
+    .adm-links a { display: block; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); text-decoration: none; color: var(--ink); font-weight: 700; }
+    .adm-links small { display: block; font-weight: 400; color: var(--ink-soft); }
+    .adm-ok { color: #2e7d32; } .adm-bad { color: var(--chilli); }
   </style>
 </head>
 <body class="has-chrome">
   <main class="adm">
-    <p><a class="btn primary" href="/write">✍️ Write or edit one of our reviews</a></p>
-    <h1>🛡️ Site admin</h1>
-    <p class="muted">Readers' wrong-info reports, then audience reviews. New reviews wait here until you approve them. Approve the good ones, delete spam or anything that breaks the community rules. Approved reviews with 3 reports are hidden again until you check them.</p>
+    <div class="adm-top">
+      <div><h1>🛡️ Masala Mischief admin</h1><p class="muted small">Everything in one place: your reviews, readers' reviews, reports and alerts.</p></div>
+      <div class="adm-actions" id="top-actions" hidden><a href="/">View site</a><button type="button" id="signout">🚪 Sign out</button></div>
+    </div>
+
     <form class="adm-login" id="login">
       <label for="pw"><strong>Admin password</strong></label><br>
       <input type="password" id="pw" autocomplete="current-password">
+      <label class="keep"><input type="checkbox" id="keep"> Keep me signed in on this device (so the 🛡️ shortcut and one-tap posting work on every page)</label>
       <button class="btn primary" type="submit">Open</button>
       <span class="small" id="login-msg"></span>
     </form>
+
     <div id="panel" hidden>
-      <section class="adm-fixes">
-        <h2>🛠️ Wrong-info reports</h2>
+      <nav class="adm-tabs" id="tabs" aria-label="Admin sections">
+        <button class="chip" type="button" data-t="home">🏠 Home</button>
+        <button class="chip" type="button" data-t="reviews">✍️ Our reviews</button>
+        <button class="chip" type="button" data-t="audience">🗣️ Readers' reviews<span class="n" id="n-audience" hidden></span></button>
+        <button class="chip" type="button" data-t="reports">🛠️ Wrong-info<span class="n" id="n-reports" hidden></span></button>
+        <button class="chip" type="button" data-t="alerts">📣 Alerts</button>
+        <button class="chip" type="button" data-t="links">🔗 Shortcuts</button>
+      </nav>
+
+      <!-- Home -->
+      <section data-s="home">
+        <div class="adm-stats" id="stats"></div>
+        <div class="adm-big">
+          <a class="btn primary" href="/write">✍️ Write a new review</a>
+          <button class="btn" type="button" data-go="reviews">✏️ Edit one of our reviews</button>
+          <button class="btn" type="button" data-go="audience">🗣️ Approve readers' reviews</button>
+          <button class="btn" type="button" data-go="reports">🛠️ Fix wrong info</button>
+        </div>
+        <div class="adm-card">
+          <h2>💬 Post our take on any film</h2>
+          <p class="muted small">While you're signed in on this device, open any film or review page and scroll to <strong>Audience reviews</strong>. The form there says "Post our take": it goes up at once as <strong>Masala Mischief team</strong>, pinned on top, with no spam check. You can also hide or delete any review on the page itself, and use the 🛡️ button at the bottom left for shortcuts.</p>
+          <p class="small" id="setup"></p>
+        </div>
+      </section>
+
+      <!-- Our reviews -->
+      <section data-s="reviews" hidden>
+        <div class="adm-actions"><a class="btn primary" href="/write">✍️ Write a new review</a></div>
+        <input class="adm-find" id="mine-find" type="search" placeholder="Search our reviews…" aria-label="Search our reviews">
+        <p class="small muted" id="mine-count"></p>
+        <div id="mine"></div>
+      </section>
+
+      <!-- Readers' reviews -->
+      <section data-s="audience" hidden>
+        <p class="muted small">New reviews wait here until you approve them. Approved reviews with 3 reports are hidden again until you check them.</p>
+        <div class="chips" id="filters">
+          <button class="chip" type="button" data-f="pending">⏳ Waiting for approval</button>
+          <button class="chip" type="button" data-f="reported">🚩 Reported</button>
+          <button class="chip" type="button" data-f="hidden">🙈 Hidden</button>
+          <button class="chip" type="button" data-f="all">All</button>
+        </div>
+        <p class="small muted" id="totals"></p>
+        <div id="rows"></div>
+      </section>
+
+      <!-- Wrong-info reports -->
+      <section data-s="reports" hidden>
         <p class="muted small">From "Wrong app? Tell us" on film and review pages. <strong>Apply</strong> fixes the page's apps for 90 days (by then the weekly app check has usually caught up); check the app first. Details reports: fix by hand, then mark done.</p>
         <div class="chips" id="fix-filters">
           <button class="chip" type="button" data-ff="open">📬 Open</button>
@@ -42,47 +110,142 @@
         </div>
         <div id="fix-rows"></div>
       </section>
-      <h2>🗣️ Audience reviews</h2>
-      <div class="chips" id="filters">
-        <button class="chip" type="button" data-f="pending">⏳ Waiting for approval</button>
-        <button class="chip" type="button" data-f="reported">🚩 Reported</button>
-        <button class="chip" type="button" data-f="hidden">🙈 Hidden</button>
-        <button class="chip" type="button" data-f="all">All</button>
-      </div>
-      <p class="small muted" id="totals"></p>
-      <div id="rows"></div>
+
+      <!-- Alerts -->
+      <section data-s="alerts" hidden>
+        <div class="adm-stats" id="push-stats"></div>
+        <div class="adm-card">
+          <h2>📣 Friday roundup</h2>
+          <p class="muted small">Goes out by itself every Friday at 7 pm. Send it now only if it failed or you want it early; people get it again, so use it sparingly.</p>
+          <div class="adm-actions"><button type="button" data-send="weekly">Send this week's roundup now</button><span class="small" id="send-weekly-msg"></span></div>
+        </div>
+        <div class="adm-card">
+          <h2>🎬 "Now on OTT" alerts</h2>
+          <p class="muted small">Goes out by itself every day at 9 am, for films people asked to be told about. Each film is announced to a phone only once, so sending now is safe.</p>
+          <div class="adm-actions"><button type="button" data-send="landed">Send "now on OTT" alerts now</button><span class="small" id="send-landed-msg"></span></div>
+        </div>
+      </section>
+
+      <!-- Shortcuts -->
+      <section data-s="links" hidden>
+        <div class="adm-links">
+          <a href="/write">✍️ Write or edit a review<small>The review form (also from the Our reviews tab)</small></a>
+          <a href="/ott-this-week">📺 OTT releases this week<small>Copy or share the WhatsApp post from here</small></a>
+          <a href="https://whatsapp.com/channel/0029VbA1FqA5a248kESjLD0Z" target="_blank" rel="noopener">💬 Our WhatsApp channel<small>Open in WhatsApp to post</small></a>
+          <a href="https://search.google.com/search-console" target="_blank" rel="noopener">🔍 Google Search Console<small>Impressions, clicks, which pages Google has indexed</small></a>
+          <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener">☁️ Cloudflare<small>Pages deployments, analytics, secrets, database</small></a>
+          <a href="https://github.com/rkumar1611/masalamischief/actions" target="_blank" rel="noopener">⚙️ GitHub Actions<small>Daily and Sunday catalogue builds, alerts: run any by hand</small></a>
+          <a href="https://github.com/rkumar1611/masalamischief" target="_blank" rel="noopener">📁 The site's code on GitHub<small>Every change we've made is listed here</small></a>
+        </div>
+      </section>
     </div>
   </main>
+  <script src="assets/data.js?v=104"></script>
   <script>
-    // Password is kept for this tab only (sessionStorage), never in the page.
+    // The password is kept for this tab (sessionStorage), or on this device if you tick "keep me signed in"
+    // (localStorage), and is only ever sent to our own /api/ endpoints, never put in the page.
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    let pw = "";
-    try { pw = sessionStorage.getItem("mm-admin") || ""; } catch {}
+    const stored = () => { try { return sessionStorage.getItem("mm-admin") || localStorage.getItem("mm-admin") || ""; } catch { return ""; } };
+    let pw = stored();
+    let tab = "home";
     let filter = "pending";
+    let fixFilter = "open";
+    const auth = () => ({ authorization: `Bearer ${pw}`, "content-type": "application/json" });
     const titleLink = (t) => t.startsWith("r:") ? `review.html?id=${encodeURIComponent(t.slice(2))}` : `film.html?id=${encodeURIComponent(t.slice(2))}`;
+    const ago = (t) => new Date(t).toLocaleString("en-IN");
 
-    async function api(method, body) {
-      const res = await fetch(method === "GET" ? `/api/admin?filter=${filter}` : "/api/admin", {
-        method, headers: { authorization: `Bearer ${pw}`, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined,
-      });
-      return { status: res.status, data: await res.json().catch(() => ({})) };
+    async function api(path, method = "GET", body) {
+      const res = await fetch(path, { method, headers: auth(), body: body ? JSON.stringify(body) : undefined });
+      return { status: res.status, ok: res.ok, data: await res.json().catch(() => ({})) };
     }
 
-    async function load() {
-      const { status, data } = await api("GET");
-      if (status === 401) { $("panel").hidden = true; $("login").hidden = false; $("login-msg").textContent = "Wrong password."; return; }
-      if (status !== 200) { $("login-msg").textContent = data.error || "Reviews aren't switched on yet."; return; }
-      try { sessionStorage.setItem("mm-admin", pw); } catch {}
-      if ($("login").hidden === false) loadFixes();
-      $("login").hidden = true; $("panel").hidden = false;
+    // ---- Sign in / out
+    async function signIn(fromForm) {
+      const { status, data } = await api("/api/admin-stats");
+      if (status === 401) { $("panel").hidden = true; $("login").hidden = false; $("top-actions").hidden = true; $("login-msg").textContent = fromForm ? "Wrong password." : ""; return; }
+      try {
+        sessionStorage.setItem("mm-admin", pw);
+        if ($("keep").checked) localStorage.setItem("mm-admin", pw);
+      } catch {}
+      $("login").hidden = true; $("panel").hidden = false; $("top-actions").hidden = false;
+      renderStats(data);
+      show((location.hash || "#home").slice(1));
+    }
+    $("login").addEventListener("submit", (e) => { e.preventDefault(); pw = $("pw").value; signIn(true); });
+    $("signout").addEventListener("click", () => {
+      try { sessionStorage.removeItem("mm-admin"); localStorage.removeItem("mm-admin"); } catch {}
+      pw = ""; location.hash = ""; location.reload();
+    });
+    // Already signed in on this device: the "keep" box starts ticked so it stays that way.
+    try { $("keep").checked = Boolean(localStorage.getItem("mm-admin")); } catch {}
+
+    // ---- Tabs
+    const TABS = ["home", "reviews", "audience", "reports", "alerts", "links"];
+    function show(name) {
+      tab = TABS.includes(name) ? name : "home";
+      document.querySelectorAll("[data-s]").forEach((s) => (s.hidden = s.dataset.s !== tab));
+      document.querySelectorAll("#tabs [data-t]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.t === tab));
+      history.replaceState(null, "", `#${tab}`);
+      if (tab === "home") refreshStats();
+      if (tab === "reviews") renderMine();
+      if (tab === "audience") loadReviews();
+      if (tab === "reports") loadFixes();
+      if (tab === "alerts") refreshStats();
+    }
+    $("tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-t]"); if (b) show(b.dataset.t); });
+    document.addEventListener("click", (e) => { const b = e.target.closest("[data-go]"); if (b) show(b.dataset.go); });
+    window.addEventListener("hashchange", () => { if (pw && !$("panel").hidden) show(location.hash.slice(1)); });
+
+    // ---- Home and Alerts: the numbers
+    async function refreshStats() { const { data, ok } = await api("/api/admin-stats"); if (ok) renderStats(data); }
+    function renderStats(d) {
+      const r = d.reviews || {}, f = d.fixes || {}, p = d.push || {};
+      const badge = (id, n) => { $(id).hidden = !n; $(id).textContent = n || ""; };
+      badge("n-audience", r.pending); badge("n-reports", f.open);
+      const stat = (n, label, go, hot) => `<a class="adm-stat${hot ? " alert" : ""}" ${go ? `data-go="${go}"` : ""}><strong>${n ?? "–"}</strong>${label}</a>`;
+      $("stats").innerHTML =
+        stat(r.pending || 0, "readers' reviews waiting", "audience", r.pending) +
+        stat(f.open || 0, "wrong-info reports open", "reports", f.open) +
+        stat(r.reported || 0, "reviews reported", "audience", r.reported) +
+        stat(MOVIES.length, "our own reviews", "reviews") +
+        stat(r.live || 0, "readers' reviews live");
+      $("push-stats").innerHTML =
+        stat(p.total, "phones with alerts on") + stat(p.weekly, "get the Friday roundup") + stat(p.waiting, "waiting for a film to land");
+      const s = d.secrets || {};
+      $("setup").innerHTML = [
+        s.github ? `<span class="adm-ok">✓ Publishing from the site is set up.</span>` : `<span class="adm-bad">✗ GITHUB_TOKEN isn't set in Cloudflare, so publishing and applying corrections won't work.</span>`,
+        s.turnstile ? `<span class="adm-ok">✓ Spam check on.</span>` : `<span class="adm-bad">✗ Spam check keys missing: visitors can't post reviews.</span>`,
+        s.reviewsAutoPublish ? "Readers' reviews go live without approval." : "Readers' reviews wait for your approval.",
+      ].join(" ");
+    }
+
+    // ---- Our reviews (the list of films we've reviewed; Edit opens /write)
+    function renderMine() {
+      const q = ($("mine-find").value || "").trim().toLowerCase();
+      const list = MOVIES.slice().sort((a, b) => b.reviewed.localeCompare(a.reviewed))
+        .filter((m) => !q || `${m.title} ${m.year} ${m.lang} ${m.genres.join(" ")}`.toLowerCase().includes(q));
+      $("mine-count").textContent = `${list.length} of ${MOVIES.length} reviews, newest first.`;
+      $("mine").innerHTML = list.map((m) => `
+        <div class="adm-row">
+          <div class="meta"><strong>${esc(m.title)}</strong> (${m.year}) · ${esc(m.lang)} · 🌶️ ${m.masala}/5 · ★ ${m.quality}/10 · reviewed ${esc(m.reviewed)}</div>
+          <div class="adm-actions"><a href="/write?edit=${encodeURIComponent(m.id)}">✏️ Edit</a><a href="review.html?id=${encodeURIComponent(m.id)}" target="_blank">👁 View</a></div>
+        </div>`).join("") || `<p class="muted">No match.</p>`;
+    }
+    $("mine-find").addEventListener("input", renderMine);
+
+    // ---- Readers' reviews (/api/admin)
+    async function loadReviews() {
+      const { status, data } = await api(`/api/admin?filter=${filter}`);
+      if (status === 401) { signIn(false); return; }
+      if (status !== 200) { $("rows").innerHTML = `<p class="muted">${esc(data.error || "Reviews aren't switched on yet.")}</p>`; return; }
       document.querySelectorAll("#filters [data-f]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.f === filter));
       const t = data.totals || {};
       $("totals").textContent = `${t.pending || 0} waiting · ${t.live || 0} live · ${t.reported || 0} reported · ${t.all_reviews || 0} in total`;
       $("rows").innerHTML = data.reviews.map((r) => `
-        <div class="adm-row${!r.approved ? " pending" : r.hidden ? " hidden" : ""}">
-          <div class="meta"><a href="${titleLink(r.title)}" target="_blank">${esc(r.title)}</a> · <strong>${esc(r.name)}</strong>
-            ${r.masala ? ` · 🌶️ ${r.masala}/5` : ""}${r.score ? ` · ★ ${r.score}/10` : ""} · ${new Date(r.created).toLocaleString("en-IN")}
+        <div class="adm-row${r.staff ? " staff" : !r.approved ? " pending" : r.hidden ? " hidden" : ""}">
+          <div class="meta"><a href="${titleLink(r.title)}" target="_blank">${esc(r.title)}</a> · <strong>${esc(r.name)}</strong>${r.staff ? " · ✓ team" : ""}
+            ${r.masala ? ` · 🌶️ ${r.masala}/5` : ""}${r.score ? ` · ★ ${r.score}/10` : ""} · ${ago(r.created)}
             ${r.reports ? ` · 🚩 ${r.reports} report${r.reports > 1 ? "s" : ""}` : ""}${!r.approved ? " · ⏳ waiting" : r.hidden ? " · hidden" : " · live"}</div>
           ${r.body ? `<p>${esc(r.body)}</p>` : ""}
           <div class="adm-actions">
@@ -91,21 +254,27 @@
           </div>
         </div>`).join("") || `<p class="muted">Nothing here. 🎉</p>`;
     }
+    $("filters").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { filter = b.dataset.f; loadReviews(); } });
+    $("rows").addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-a]");
+      if (!b) return;
+      if (b.dataset.a === "delete" && !confirm("Delete this review for good?")) return;
+      await api("/api/admin", "POST", { action: b.dataset.a, id: +b.dataset.id });
+      loadReviews(); refreshStats();
+    });
 
-    // Wrong-info reports (/api/fixes).
-    let fixFilter = "open";
+    // ---- Wrong-info reports (/api/fixes)
     const KIND_LABEL = { gone: "Not on", also: "Also on", details: "Wrong details", other: "Other" };
     async function loadFixes() {
-      const res = await fetch(`/api/fixes?filter=${fixFilter}`, { headers: { authorization: `Bearer ${pw}` } });
-      const data = await res.json().catch(() => ({}));
+      const { ok, data } = await api(`/api/fixes?filter=${fixFilter}`);
       document.querySelectorAll("#fix-filters [data-ff]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ff === fixFilter));
       document.querySelector('#fix-filters [data-ff="open"]').textContent = `📬 Open${data.open ? ` (${data.open})` : ""}`;
-      if (!res.ok) { $("fix-rows").innerHTML = `<p class="muted">${esc(data.error || "Couldn't load reports.")}</p>`; return; }
+      if (!ok) { $("fix-rows").innerHTML = `<p class="muted">${esc(data.error || "Couldn't load reports.")}</p>`; return; }
       $("fix-rows").innerHTML = data.fixes.map((f) => {
         const appFix = f.kind === "gone" || f.kind === "also";
         return `
         <div class="adm-row${f.status === "open" ? " pending" : ""}">
-          <div class="meta"><a href="${titleLink(f.target)}" target="_blank"><strong>${esc(f.name || f.target)}</strong></a> · ${new Date(f.updated).toLocaleString("en-IN")}
+          <div class="meta"><a href="${titleLink(f.target)}" target="_blank"><strong>${esc(f.name || f.target)}</strong></a> · ${ago(f.updated)}
             ${f.count > 1 ? ` · 👥 ${f.count} people` : ""}</div>
           <p><strong>${KIND_LABEL[f.kind] || esc(f.kind)}${appFix ? ` ${esc(f.app)}` : ""}</strong>${f.note ? `: ${esc(f.note)}` : ""}</p>
           <div class="adm-actions">
@@ -123,24 +292,36 @@
       if (!b) return;
       const msg = document.querySelector(`[data-msg="${b.dataset.id}"]`);
       b.disabled = true; msg.textContent = b.dataset.fa === "apply" ? "Saving to the site…" : "";
-      const res = await fetch("/api/fixes", { method: "POST", headers: { authorization: `Bearer ${pw}`, "content-type": "application/json" },
-        body: JSON.stringify({ action: b.dataset.fa, id: +b.dataset.id }) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { b.disabled = false; msg.textContent = data.error || "Something went wrong."; return; }
+      const { ok, data } = await api("/api/fixes", "POST", { action: b.dataset.fa, id: +b.dataset.id });
+      if (!ok) { b.disabled = false; msg.textContent = data.error || "Something went wrong."; return; }
       if (b.dataset.fa === "apply") alert("Saved. The page shows the fix in a minute or two.");
-      loadFixes();
+      loadFixes(); refreshStats();
     });
 
-    $("login").addEventListener("submit", (e) => { e.preventDefault(); pw = $("pw").value; load(); });
-    $("filters").addEventListener("click", (e) => { const b = e.target.closest("[data-f]"); if (b) { filter = b.dataset.f; load(); } });
-    $("rows").addEventListener("click", async (e) => {
-      const b = e.target.closest("[data-a]");
+    // ---- Alerts: send by hand
+    document.querySelector('[data-s="alerts"]').addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-send]");
       if (!b) return;
-      if (b.dataset.a === "delete" && !confirm("Delete this review for good?")) return;
-      await api("POST", { action: b.dataset.a, id: +b.dataset.id });
-      load();
+      const kind = b.dataset.send;
+      const msg = $(`send-${kind}-msg`);
+      if (!confirm(kind === "weekly" ? "Send this week's roundup to everyone who has it on, now?" : "Send the \"now on OTT\" alerts now?")) return;
+      b.disabled = true;
+      let after = 0, sent = 0, removed = 0;
+      try {
+        for (let i = 0; i < 2000 && after !== null; i++) {
+          msg.textContent = `Sending… ${sent} so far`;
+          const res = await fetch(`/api/push/send?after=${after}${kind === "landed" ? "&kind=landed" : ""}`, { method: "POST", headers: auth() });
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(out.error || `Error ${res.status}`);
+          if (out.note) { msg.textContent = out.note; after = null; break; }
+          sent += out.sent; removed += out.removed; after = out.next;
+        }
+        if (!msg.textContent.startsWith("Nothing")) msg.textContent = `Done: ${sent} sent${removed ? `, ${removed} removed (alerts turned off)` : ""}.`;
+      } catch (err) { msg.textContent = `Stopped: ${err.message}`; }
+      b.disabled = false; refreshStats();
     });
-    if (pw) load();
+
+    if (pw) signIn(false);
   </script>
 </body>
 </html>

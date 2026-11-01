@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="assets/style.css?v=106">
+  <link rel="stylesheet" href="assets/style.css?v=107">
   <style>
     .wr { max-width: 860px; }
     .wr-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin: 14px 0; box-shadow: var(--shadow); display: grid; gap: 12px; }
@@ -34,6 +34,7 @@
 </head>
 <body data-page="write">
   <main class="wrap wr">
+    <p><a class="btn small" href="/admin">← Admin dashboard</a></p>
     <div class="page-head">
       <h1>✍️ Write a review</h1>
       <p class="lead">Pick the film, add your verdict, preview it, publish. It's live on the site about a minute later.</p>
@@ -105,16 +106,15 @@
       </section>
     </div>
   </main>
-  <script src="assets/data.js?v=106"></script>
-  <script src="assets/app.js?v=106"></script>
+  <script src="assets/data.js?v=107"></script>
+  <script src="assets/app.js?v=107"></script>
   <script>
     // The page uses the site's own helpers (app.js): search, title files, cards. The password stays in
     // this tab (sessionStorage) and is only sent to our /api/publish-review. Wrapped so its names
     // can't clash with app.js's.
     (() => {
     const $ = (id) => document.getElementById(id);
-    let pw = "";
-    try { pw = sessionStorage.getItem("mm-admin") || ""; } catch {}
+    let pw = adminPw(); // signed in at /admin (this tab, or kept on this device)
     const LANG_CHOICES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "English", "Marathi", "Bengali", "Punjabi", "Korean"];
     const APP_CHOICES = [...PLATFORMS, "MX Player", "Lionsgate Play", "Apple TV", "Amazon", "YouTube"];
     const LEVELS = ["violence", "romance", "language", "scary"];
@@ -249,6 +249,9 @@
       try { sessionStorage.setItem("mm-admin", pw); } catch {}
       $("login").hidden = true; $("form").hidden = false;
       paintAll(); preview();
+      // /write?edit=<review id> (the Edit buttons in /admin and on review pages) opens that review.
+      const edit = new URLSearchParams(location.search).get("edit");
+      if (edit && movieById(edit)) { $("existing").value = edit; loadExisting(edit); }
     }
     $("login").addEventListener("submit", (e) => { e.preventDefault(); pw = $("pw").value; open(); });
     if (pw) open();
