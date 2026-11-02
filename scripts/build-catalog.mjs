@@ -162,7 +162,8 @@ const JW_PAGE = `query P($f: TitleFilter, $after: String, $pkg: [String!]) {
 // Two small requests per app, once a week (the first run at least 6 days after the last); only titles
 // we have pages for.
 const TOP_COUNT = 10;
-const JW_TOP = `query T($f: TitleFilter) { popularTitles(country: IN, first: 30, sortBy: POPULAR, filter: $f) {
+const TOP_VERSION = 2; // bump to rebuild top10.json before it is due (2: only titles streaming on the app itself)
+const JW_TOP = `query T($f: TitleFilter) { popularTitles(country: IN, first: 100, sortBy: POPULAR, filter: $f) {
   edges { node { content(country: IN, language: "en") { externalIds { tmdbId } } } } } }`;
 
 // What happened to the last JustWatch request that failed (also saved in manifest.json as linksNote).
@@ -1068,15 +1069,17 @@ async function writePeopleBios() {
 async function writeTop10(all) {
   const file = new URL("top10.json", OUT);
   const old = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : null;
-  if (old && old.built > day(-6)) { console.log(`Top 10: from ${old.built}, not due yet.`); return; }
+  if (old && old.v === TOP_VERSION && old.built > day(-6)) { console.log(`Top 10: from ${old.built}, not due yet.`); return; }
   const byId = new Map(all.map((f) => [String(f.id), f]));
   const apps = [];
+  const known = new Set(APP_RULES.map((r) => r[1]).filter((n) => n !== "MX Player"));
   try {
     for (const [pkg, name] of Object.entries(JW_APPS)) {
       const row = { app: name };
       for (const [type, key, prefix] of [["MOVIE", "movies", ""], ["SHOW", "series", "tv"]]) {
         const p = (await jw(JW_TOP, { f: { packages: [pkg], objectTypes: [type] } })).popularTitles;
         row[key] = [...new Set(p.edges.map((e) => byId.get(`${prefix}${e.node.content?.externalIds?.tmdbId}`)).filter(Boolean))]
+          .filter((f) => !known.has(name) || (f.w || []).includes(name)) // JustWatch also counts rent/buy and free-with-ads; the Top 10 is what streams on the app itself
           .slice(0, TOP_COUNT).map(compact);
       }
       if (row.movies.length || row.series.length) apps.push(row);
@@ -1085,7 +1088,7 @@ async function writeTop10(all) {
     console.log(`Top 10: ${e.message}; keeping the last one.`);
     return;
   }
-  writeIfChanged(file, JSON.stringify({ built: day(0), apps }));
+  writeIfChanged(file, JSON.stringify({ built: day(0), v: TOP_VERSION, apps }));
   console.log(`Top 10: ${apps.length} apps.`);
 }
 
