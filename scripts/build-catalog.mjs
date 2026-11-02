@@ -78,7 +78,7 @@ const APP_RULES = [
   [/netflix/i, "Netflix"], [/prime video/i, "Prime Video"], [/hotstar|jiocinema/i, "JioHotstar"],
   [/zee5/i, "ZEE5"], [/sony ?liv/i, "SonyLIV"], [/sun ?nxt/i, "Sun NXT"], [/^aha/i, "aha"],
   [/manorama/i, "ManoramaMAX"], [/mx ?player/i, "MX Player"], [/lionsgate/i, "Lionsgate Play"],
-  [/crunchyroll/i, "Crunchyroll"],
+  [/crunchyroll/i, "Crunchyroll"], [/apple tv/i, "Apple TV"],
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
