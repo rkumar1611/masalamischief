@@ -2201,7 +2201,9 @@ const APP_SEARCH = {
 };
 const appSearchUrl = (app, title) =>
   APP_SEARCH[app] ? (APP_SEARCH[app].endsWith("=") ? APP_SEARCH[app] + encodeURIComponent(title) : APP_SEARCH[app]) : PLATFORM_HOME[app];
-const directUrl = (f, app) => (f.u && /^https:\/\//.test(f.u[app] || "") ? f.u[app] : "");
+// JustWatch gives an episode link for Apple TV series; the show's own page is tv.apple.com/in/show/<showId>.
+const appleShow = (u) => { const m = /\/episode\/.*[?&]showId=(umc\.cmc\.[a-z0-9]+)/.exec(u); return m ? `https://tv.apple.com/in/show/${m[1]}` : u; };
+const directUrl = (f, app) => (f.u && /^https:\/\//.test(f.u[app] || "") ? (app === "Apple TV" ? appleShow(f.u[app]) : f.u[app]) : "");
 const appUrl = (f, app) => directUrl(f, app) || appSearchUrl(app, f.t);
 
 const catCache = {};
