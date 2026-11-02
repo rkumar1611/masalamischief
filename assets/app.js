@@ -1,12 +1,12 @@
 // Shared rendering for every page. Each HTML page sets <body data-page="...">.
 
 const NAV = [
-  { href: "index.html", label: "Home", page: "home" },
-  { href: "reviews.html", label: "Our reviews", page: "reviews" },
-  { href: "films.html", label: "Movies & series", page: "films" },
-  { href: "suggest.html", label: "What should I watch?", page: "suggest" },
-  { href: "family.html", label: "Family Picks", page: "family" },
-  { href: "group.html", label: "Group Pick", page: "group" },
+  { href: "/", label: "Home", page: "home" },
+  { href: "reviews", label: "Our reviews", page: "reviews" },
+  { href: "films", label: "Movies & series", page: "films" },
+  { href: "suggest", label: "What should I watch?", page: "suggest" },
+  { href: "family", label: "Family Picks", page: "family" },
+  { href: "group", label: "Group Pick", page: "group" },
 ];
 
 const GENRE_ICONS = {
@@ -109,7 +109,7 @@ function renderChrome() {
   ).join("");
   document.body.insertAdjacentHTML("afterbegin", `
     <header class="site-header"><div class="wrap">
-      <a class="logo" href="index.html">${mark}<span class="logo-words">Masala <span>Mischief</span></span></a>
+      <a class="logo" href="/">${mark}<span class="logo-words">Masala <span>Mischief</span></span></a>
       <button class="theme-btn search-btn" id="search-btn" type="button" aria-label="Search movies and series" aria-expanded="false">🔍</button>
       <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch light or dark mode"></button>
       <button class="theme-btn acct-btn" id="acct-btn" type="button" aria-label="Account" aria-expanded="false"${store.get("acctOn", false) ? "" : " hidden"}>👤</button>
@@ -127,7 +127,7 @@ function renderChrome() {
     <footer class="site-footer"><div class="wrap">
       <div class="footer-top">
         <div class="footer-brand">
-          <a class="logo" href="index.html">${mark}<span class="logo-words">Masala <span>Mischief</span></span></a>
+          <a class="logo" href="/">${mark}<span class="logo-words">Masala <span>Mischief</span></span></a>
           <p>Indian and Hollywood film reviews with extra chilli, and where to stream them in India.</p>
           <div class="how-rate">
             <span><b>🌶️ Masala Meter</b> how much fun, 1 to 5</span>
@@ -141,20 +141,20 @@ function renderChrome() {
         </div>
         <nav class="footer-col" aria-label="Explore">
           <h4>Explore</h4>
-          <a href="reviews.html">Our reviews</a><a href="films.html">Movies & series</a>
-          <a href="films.html?view=top-movie">Top 50 movies</a><a href="films.html?view=top-tv">Top 50 series</a>
-          <a href="films.html?view=top-anime">Anime</a>
-          <a href="ott-this-week.html">OTT releases this week</a><a href="ott.html">New on OTT</a><a href="upcoming.html?show=now">In theatres</a><a href="upcoming.html">Upcoming movies</a><a href="best.html">Best-of lists</a>
+          <a href="reviews">Our reviews</a><a href="films">Movies & series</a>
+          <a href="films?view=top-movie">Top 50 movies</a><a href="films?view=top-tv">Top 50 series</a>
+          <a href="films?view=top-anime">Anime</a>
+          <a href="ott-this-week">OTT releases this week</a><a href="ott">New on OTT</a><a href="upcoming?show=now">In theatres</a><a href="upcoming">Upcoming movies</a><a href="best">Best-of lists</a>
         </nav>
         <nav class="footer-col" aria-label="Pick something">
           <h4>Pick something</h4>
-          <a href="suggest.html">What should I watch?</a><a href="family.html">Family Picks</a>
-          <a href="group.html">Group Pick</a><a href="reviews.html?saved=1">My watchlist</a>
+          <a href="suggest">What should I watch?</a><a href="family">Family Picks</a>
+          <a href="group">Group Pick</a><a href="reviews?saved=1">My watchlist</a>
         </nav>
         <nav class="footer-col" aria-label="About">
           <h4>About</h4>
-          <a href="privacy.html">Privacy & community rules</a>
-          <a href="privacy.html#rules">How audience reviews work</a>
+          <a href="privacy">Privacy & community rules</a>
+          <a href="privacy#rules">How audience reviews work</a>
         </nav>
       </div>
       <div class="footer-bottom">
@@ -404,12 +404,12 @@ async function openAccountPanel() {
   pop.innerHTML = name
     ? `<p><strong>Hi, ${esc(name)} 👋</strong></p>
        <p class="small muted">Your watchlist, ratings and film alerts are saved to your account and follow you to your other phones.</p>
-       <div class="acct-actions"><a class="btn small" href="reviews.html?saved=1">My watchlist</a><button class="btn small" type="button" data-out>Sign out</button></div>
+       <div class="acct-actions"><a class="btn small" href="reviews?saved=1">My watchlist</a><button class="btn small" type="button" data-out>Sign out</button></div>
        <p class="small"><button class="link-btn" type="button" data-del>Delete my account and saved data</button></p>`
     : `<p><strong>Keep your watchlist on all your phones</strong></p>
        <p class="small muted">Sign in with Google and your watchlist, ratings and "tell me when it's on OTT" alerts follow you. We keep only your first name and these lists, never your email.</p>
        <div id="g-btn" class="g-btn"><span class="small muted">Loading Google…</span></div>
-       <p class="small muted"><a href="privacy.html#accounts">What we keep</a></p>`;
+       <p class="small muted"><a href="privacy#accounts">What we keep</a></p>`;
   document.querySelector(".site-header .wrap").append(pop);
   acct.popup = pop;
   btn.setAttribute("aria-expanded", "true");
@@ -685,7 +685,7 @@ function initSiteSearch() {
   });
   document.getElementById("site-search-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    if (q.value.trim()) location.href = `films.html?q=${encodeURIComponent(q.value.trim())}`;
+    if (q.value.trim()) location.href = `films?q=${encodeURIComponent(q.value.trim())}`;
   });
   let t;
   q.addEventListener("input", () => {
@@ -709,7 +709,7 @@ function initSiteSearch() {
       const pScore = !people.length ? 0 : nickname("people", term) ? 3 : titleMatch(term, people[0].name);
       const peopleFirst = people.length && (!hits.length || pScore > hits[0].score || (pScore >= 2.5 && people[0].titles >= 10));
       const peopleHtml = people.map((p) => `
-            <a class="sr" href="person.html?id=${p.id}">
+            <a class="sr" href="person?id=${p.id}">
               ${p.photo ? `<img class="sr-face" src="${tmdb(p.photo, "w92")}" alt="" loading="lazy">` : `<span class="sr-none">👤</span>`}
               <span><strong>${esc(p.name)}</strong><span class="muted small">Actor / director · ${p.titles} titles</span></span>
             </a>`).join("");
@@ -721,7 +721,7 @@ function initSiteSearch() {
             </a>`).join("");
       out.innerHTML = hits.length || people.length
         ? (peopleFirst ? peopleHtml + titlesHtml : titlesHtml + peopleHtml) +
-          (hits.length ? `<a class="sr-all" href="films.html?q=${encodeURIComponent(q.value.trim())}">See all results →</a>` : "")
+          (hits.length ? `<a class="sr-all" href="films?q=${encodeURIComponent(q.value.trim())}">See all results →</a>` : "")
         : `<p class="muted small sr-empty">No matches. Try another spelling.</p>`;
     }, 120);
   });
@@ -882,7 +882,7 @@ function castRow(x) {
     ? `<img src="${tmdb(photo, "w185")}" alt="" loading="lazy" decoding="async">`
     : `<span class="cast-none">${esc(name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(""))}</span>`;
   const item = (id, name, role, photo) => `
-    <a class="cast-item" href="person.html?id=${id}">
+    <a class="cast-item" href="person?id=${id}">
       ${face(name, photo)}<strong>${esc(name)}</strong>${role ? `<span>${esc(role)}</span>` : ""}
     </a>`;
   return `
@@ -941,7 +941,7 @@ function platformLinks(m, list) {
 
 function card(m, extra = "") {
   return `
-    <a class="card" href="${m.href || `review.html?id=${encodeURIComponent(m.id)}`}">
+    <a class="card" href="${m.href || `review?id=${encodeURIComponent(m.id)}`}">
       ${poster(m)}
       <div class="card-body">
         ${extra}
@@ -997,7 +997,7 @@ function initHome() {
   const byDate = [...MOVIES].sort((a, b) => b.reviewed.localeCompare(a.reviewed));
   const featured = MOVIES.find((m) => m.id === FEATURED_ID) || byDate[0];
   document.getElementById("featured").innerHTML = `
-    <a class="featured" href="review.html?id=${featured.id}">
+    <a class="featured" href="review?id=${featured.id}">
       ${poster(featured, true)}
       <div class="featured-body">
         <span class="badge">Pick of the week</span>
@@ -1016,12 +1016,12 @@ function initHome() {
   document.getElementById("latest").innerHTML = byDate.filter((m) => m.id !== featured.id).slice(0, 8).map((m) => card(m)).join("");
   renderNewOnOtt();
   document.getElementById("moods").innerHTML = MOODS.map((m) => `
-    <a class="mood" href="suggest.html?mood=${m.id}">
+    <a class="mood" href="suggest?mood=${m.id}">
       <span class="e">${m.emoji}</span><strong>${m.label}</strong><span class="b">${m.blurb}</span>
     </a>`).join("");
 
   const top = (key) => [...MOVIES].sort((a, b) => b[key] - a[key] || b.quality - a.quality).slice(0, 5);
-  const row = (m, i, val) => `<li><a href="review.html?id=${m.id}"><b>${i + 1}</b><span>${esc(m.title)}<small>${langLabel(m.lang)} · ${m.year}</small></span>${val}</a></li>`;
+  const row = (m, i, val) => `<li><a href="review?id=${m.id}"><b>${i + 1}</b><span>${esc(m.title)}<small>${langLabel(m.lang)} · ${m.year}</small></span>${val}</a></li>`;
   document.getElementById("charts").innerHTML = `
     <div class="chart-box"><h3>🌶️ Most masala</h3><ol>${top("masala").map((m, i) => row(m, i, meter(m.masala))).join("")}</ol></div>
     <div class="chart-box"><h3>🏆 Highest rated</h3><ol>${top("quality").map((m, i) => row(m, i, score(m.quality))).join("")}</ol></div>`;
@@ -1039,9 +1039,9 @@ async function renderSavedHome() {
   const cat = await savedTitles(ids);
   const saved = ids.map((id) => {
     const m = movieById(id);
-    if (m) return { id, f: reviewAsFilm(m), href: `review.html?id=${encodeURIComponent(m.id)}` };
+    if (m) return { id, f: reviewAsFilm(m), href: `review?id=${encodeURIComponent(m.id)}` };
     const f = cat.find((x) => catSaveId(x) === id);
-    return f && { id, f, href: `film.html?id=${f.l}-${f.id}` };
+    return f && { id, f, href: `film?id=${f.l}-${f.id}` };
   }).filter(Boolean);
   if (saved.length) {
     document.getElementById("saved-section").hidden = false;
@@ -1067,7 +1067,7 @@ async function renderListTiles() {
   const going = leaving ? posters(leaving.items.filter((f) => f.n >= 50 && stillLeaving(f.lv))) : [];
   const trending = top ? posters(top.apps.flatMap((r) => r.movies.slice(0, 1))) : [];
   box.querySelectorAll("a").forEach((a) => {
-    const key = a.getAttribute("href");
+    const key = a.getAttribute("href").replace(/^([a-z-]+)(?=[?#]|$)/, "$1.html");
     const pics = key === "ott.html#top10" ? trending : key === "ott.html#leaving" ? going : key === "upcoming.html?show=now" ? showing : key.startsWith("upcoming.html") ? soon : previews[key];
     // Lists that aren't built yet (or are empty this week) leave the page instead of showing a bare link.
     if (!pics || !pics.length) { if (key.startsWith("ott.html#")) a.remove(); return; }
@@ -1101,8 +1101,8 @@ function renderTonight(featured) {
         <p class="muted small">Watch it now:</p>
         ${platformLinks(m, streamsOn(m))}
         <div class="cta-row">
-          <a class="btn primary" href="review.html?id=${encodeURIComponent(m.id)}">Read our review</a>
-          ${mood ? `<a class="btn" href="suggest.html?mood=${mood.id}">Not feeling it? More ${esc(mood.label.toLowerCase())} picks</a>` : ""}
+          <a class="btn primary" href="review?id=${encodeURIComponent(m.id)}">Read our review</a>
+          ${mood ? `<a class="btn" href="suggest?mood=${mood.id}">Not feeling it? More ${esc(mood.label.toLowerCase())} picks</a>` : ""}
         </div>
       </div>
     </div>
@@ -1143,11 +1143,11 @@ async function renderAudienceHome() {
   const resolve = (t) => {
     if (t.startsWith("r:")) {
       const m = movieById(t.slice(2));
-      return m && { name: m.title, sub: `${langLabel(m.lang)} · ${m.year}`, href: `review.html?id=${encodeURIComponent(m.id)}` };
+      return m && { name: m.title, sub: `${langLabel(m.lang)} · ${m.year}`, href: `review?id=${encodeURIComponent(m.id)}` };
     }
     const key = t.slice(2);
     const f = byKey[key];
-    return f && { name: f.t, sub: `${langLabel(CAT_LANGS[f.l])}${yearsOf(f) ? ` · ${yearsOf(f)}` : ""}`, href: `film.html?id=${key}` };
+    return f && { name: f.t, sub: `${langLabel(CAT_LANGS[f.l])}${yearsOf(f) ? ` · ${yearsOf(f)}` : ""}`, href: `film?id=${key}` };
   };
   const top = data.top.map((r) => ({ ...r, film: resolve(r.title) })).filter((r) => r.film).slice(0, 5);
   if (!top.length) return;
@@ -1203,8 +1203,8 @@ function initReviews() {
       bar.hidden = !shared.length;
       bar.innerHTML = missing.length
         ? `<button class="btn primary small" type="button" id="save-all">♡ Save all ${missing.length === shared.length ? "" : `${missing.length} new `}to my watchlist</button>
-           <a class="btn small" href="reviews.html">See all our reviews</a>`
-        : `<span>✓ All of these are in <a href="reviews.html?saved=1">your watchlist</a>.</span><a class="btn small" href="reviews.html">See all our reviews</a>`;
+           <a class="btn small" href="reviews">See all our reviews</a>`
+        : `<span>✓ All of these are in <a href="reviews?saved=1">your watchlist</a>.</span><a class="btn small" href="reviews">See all our reviews</a>`;
       const btn = document.getElementById("save-all");
       if (btn) btn.addEventListener("click", () => {
         // Keep the card details of their catalogue titles too, so your list can draw them.
@@ -1242,9 +1242,9 @@ function initReviews() {
     const info = store.get("watchlistInfo", {});
     const named = (id) => {
       const m = movieById(id);
-      if (m) return { title: m.title, href: `review.html?id=${encodeURIComponent(m.id)}` };
+      if (m) return { title: m.title, href: `review?id=${encodeURIComponent(m.id)}` };
       const f = info[id] || catSaved.find((x) => catSaveId(x) === id);
-      return f && { title: f.t, href: `film.html?id=${f.l}-${f.id}` };
+      return f && { title: f.t, href: `film?id=${f.l}-${f.id}` };
     };
     const soon = (leavingMap ? ids.filter((id) => leavingMap[id]) : []).map((id) => [named(id), leavingMap[id]]).filter(([m]) => m)
       .sort((a, b) => Object.values(a[1]).sort()[0].localeCompare(Object.values(b[1]).sort()[0]));
@@ -1471,7 +1471,7 @@ function initReview() {
   const m = movieById(id);
   const root = document.getElementById("review");
   if (!m) {
-    root.innerHTML = `<div class="empty">We couldn't find that review. <a href="reviews.html">See all reviews</a>.</div>`;
+    root.innerHTML = `<div class="empty">We couldn't find that review. <a href="reviews">See all reviews</a>.</div>`;
     return;
   }
   document.title = `${m.title} (${m.year}) Review, Rating & OTT · Masala Mischief`; // as functions/review.js
@@ -1558,7 +1558,7 @@ function initReview() {
             <dt>Year</dt><dd>${m.year}</dd>
             <dt>Runtime</dt><dd>${fmtRuntime(m.runtime)}</dd>
             <dt>Genre</dt><dd>${m.genres.join(", ")}</dd>
-            <dt>Watch when</dt><dd>${m.moods.map((mid) => `<a href="suggest.html?mood=${mid}">${moodById(mid).label}</a>`).join(", ")}</dd>
+            <dt>Watch when</dt><dd>${m.moods.map((mid) => `<a href="suggest?mood=${mid}">${moodById(mid).label}</a>`).join(", ")}</dd>
             <dt>Reviewed</dt><dd>${fmtDate(m.reviewed)}</dd>
           </dl>
         </div>
@@ -1790,7 +1790,7 @@ function initSuggest() {
     const p = new URLSearchParams();
     if (codes.size === 1) p.set("l", [...codes][0]);
     if (state.apps.size === 1) p.set("a", [...state.apps][0]);
-    document.getElementById("cat-more").href = `films.html${p.toString() ? "?" + p : ""}`;
+    document.getElementById("cat-more").href = `films${p.toString() ? "?" + p : ""}`;
     document.getElementById("cat-results").innerHTML = picks
       .map((f) => filmCard(f, 0, f.dubIn ? `🗣️ Dubbed in ${langLabel(CAT_LANGS[f.dubIn])}` : "")).join("");
   }
@@ -1813,7 +1813,7 @@ function initFamily() {
     out.innerHTML = list.map((m) => {
       const n = PARENT_NOTES[m.id];
       return `
-        <a class="family-card" href="review.html?id=${m.id}">
+        <a class="family-card" href="review?id=${m.id}">
           ${poster(m)}
           <div class="family-body">
             <div class="notes compact">${noteBars(n)}</div>
@@ -2014,13 +2014,13 @@ function groupResults(el, deck, room, linkFor, redo) {
       <a class="btn primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText)}">Share on WhatsApp</a>
       <button class="btn" id="gp-copy" type="button">Copy link</button>
       <button class="btn" id="gp-redo" type="button">Swipe again</button>
-      <a class="btn" href="group.html">New room</a>
+      <a class="btn" href="group">New room</a>
     </div>
     <p class="muted small">Voted so far: ${people.map((p) => `<span class="gp-voter${p === room.me ? " me" : ""}">${esc(p)}</span>`).join(" ")}</p>
     <ol class="gp-ranked">
       ${ranked.map((r) => `
         <li class="${n > 1 && r.yes.length === n ? "all" : ""}">
-          <a href="${r.m.href || `review.html?id=${encodeURIComponent(r.m.id)}`}">${esc(r.m.title)}</a>
+          <a href="${r.m.href || `review?id=${encodeURIComponent(r.m.id)}`}">${esc(r.m.title)}</a>
           <span class="gp-bar" style="--pct:${n ? Math.round((r.yes.length / n) * 100) : 0}%"><span></span></span>
           <span class="gp-count">${r.yes.length}/${n} yes</span>
           <span class="gp-who muted small">${r.yes.map(esc).join(", ")}</span>
@@ -2100,7 +2100,7 @@ async function initCommunity(titleKey, el, label) {
         <button class="btn primary" type="submit" id="cm-submit">${admin ? "Post as team" : "Post review"}</button>
         <span class="small" id="cm-msg" role="status"></span>
       </div>
-      ${admin ? "" : `<p class="fine">We read every review before it goes up (usually within a day), then it appears under your display name. Please follow our <a href="privacy.html#rules">community rules</a>. See how we handle your data in our <a href="privacy.html">privacy note</a>.</p>`}
+      ${admin ? "" : `<p class="fine">We read every review before it goes up (usually within a day), then it appears under your display name. Please follow our <a href="privacy#rules">community rules</a>. See how we handle your data in our <a href="privacy">privacy note</a>.</p>`}
     </form>
     <ol class="cm-list" id="cm-list"></ol>`;
 
@@ -2521,7 +2521,7 @@ function reviewedByTmdb() {
   MOVIES.forEach((m) => { if (IMAGES[m.id] && IMAGES[m.id].tmdb) map[IMAGES[m.id].tmdb] = m; });
   return map;
 }
-const filmHref = (f) => (f.mine ? `review.html?id=${encodeURIComponent(f.mine.id)}` : `film.html?id=${f.l}-${f.id}`);
+const filmHref = (f) => (f.mine ? `review?id=${encodeURIComponent(f.mine.id)}` : `film?id=${f.l}-${f.id}`);
 
 // Moods → TMDB genres (film and TV names), so catalogue titles can match a mood.
 const MOOD_GENRES = {
@@ -2623,7 +2623,7 @@ function catToMovie(f, full) {
   return {
     id: `_${d.l}-${d.id}`, catalog: true, kind: d.k, title: d.t, year: d.y, lang: CAT_LANGS[d.l], audio: [CAT_LANGS[d.l]],
     genres: d.g.length ? d.g : ["Drama"], runtime: d.r || 0, quality: d.v, masala: null, moods: [], tagline: blurb,
-    apps: d.w, still: d.b, cert: d.c, href: `film.html?id=${d.l}-${d.id}`,
+    apps: d.w, still: d.b, cert: d.c, href: `film?id=${d.l}-${d.id}`,
   };
 }
 
@@ -2765,7 +2765,7 @@ async function initFilms() {
     const people = q.length >= 3 ? await searchPeople(q, 8) : [];
     if (peopleFor !== q) return;
     box.hidden = !people.length;
-    box.innerHTML = people.map((p) => `<a href="person.html?id=${p.id}">${p.photo ? `<img src="${tmdb(p.photo, "w92")}" alt="" loading="lazy">` : `<span class="face-none">👤</span>`}<span>${esc(p.name)}<small>${p.titles} titles</small></span></a>`).join("");
+    box.innerHTML = people.map((p) => `<a href="person?id=${p.id}">${p.photo ? `<img src="${tmdb(p.photo, "w92")}" alt="" loading="lazy">` : `<span class="face-none">👤</span>`}<span>${esc(p.name)}<small>${p.titles} titles</small></span></a>`).join("");
     if (!results.length) paint(); // the empty message depends on whether anyone was found
   };
   const apply = async () => {
@@ -2847,10 +2847,10 @@ async function initFilm() {
   // Movies are "<lang>-<tmdb id>", series "<lang>-tv<tmdb id>".
   const id = /^\d+$/.test(rawId || "") ? +rawId : /^tv\d+$/.test(rawId || "") ? rawId : null;
   const mine = typeof id === "number" && reviewedByTmdb()[id];
-  if (mine) { location.replace(`review.html?id=${encodeURIComponent(mine.id)}`); return; }
+  if (mine) { location.replace(`review?id=${encodeURIComponent(mine.id)}`); return; }
   const [f, man, fix] = await Promise.all([id ? loadTitle(code, String(id)) : null, loadCatalog("manifest"), correctionFor(`${code}-${rawId}`)]);
   if (!f) {
-    root.innerHTML = `<div class="empty">We couldn't find that title. <a href="films.html">Browse movies & series</a>.</div>`;
+    root.innerHTML = `<div class="empty">We couldn't find that title. <a href="films">Browse movies & series</a>.</div>`;
     return;
   }
   // A reader's report we've checked and applied (overrides.json).
@@ -2952,7 +2952,7 @@ async function initFilm() {
 }
 
 /* ---------- Actor / director page ---------- */
-// person.html?id=<TMDB person id>. Their titles come from the catalogue's people index
+// person?id=<TMDB person id>. Their titles come from the catalogue's people index
 // (assets/catalog/p/<id % shards>.json, shard count in manifest.json) plus our reviewed films (reviewed.json).
 const PEOPLE_SHARDS = 64; // the older layout's people/<id % 64>.json
 const PERSON_BIO_SHARDS = 256; // pb/<id % 256>.json, as scripts/build-catalog.mjs BIO_SHARDS
@@ -2960,7 +2960,7 @@ const PERSON_BIO_SHARDS = 256; // pb/<id % 256>.json, as scripts/build-catalog.m
 async function initPerson() {
   const root = document.getElementById("person");
   const pid = (new URLSearchParams(location.search).get("id") || "").match(/^\d{1,9}$/)?.[0];
-  const notFound = () => { root.innerHTML = `<div class="empty">We couldn't find that person. <a href="films.html">Browse movies & series</a>.</div>`; };
+  const notFound = () => { root.innerHTML = `<div class="empty">We couldn't find that person. <a href="films">Browse movies & series</a>.</div>`; };
   if (!pid) return notFound();
   const man = await loadCatalog("manifest");
   const v2 = man && man.layout >= 2;
@@ -3054,7 +3054,7 @@ async function initPerson() {
 // Built ahead of time by scripts/build-catalog.mjs into assets/catalog/lists/ (and upcoming.json), so
 // each page loads one small file. functions/ott.js, best.js and upcoming.js put the same lists into the
 // HTML for search engines.
-const notReadyYet = (el) => { el.innerHTML = `<div class="empty">These lists are being prepared. Try again in a little while, or <a href="films.html">browse movies & series</a>.</div>`; };
+const notReadyYet = (el) => { el.innerHTML = `<div class="empty">These lists are being prepared. Try again in a little while, or <a href="films">browse movies & series</a>.</div>`; };
 const listLang = (l) => (l === "en" ? "Hollywood" : l === "ja" ? "anime" : CAT_LANGS[l] || "");
 
 // "Best Malayalam thriller movies", "Best Tamil movies of 2025", "Best Korean drama series".
@@ -3131,14 +3131,14 @@ async function initOtt() {
       <div class="fgrid">${pick.map((f) => filmCard(withMine(f), 0, `⏳ Leaves ${leavingText(f.lv, app)}`)).join("")}</div></section>`;
   };
   const tabs = `<nav class="chips app-tabs" aria-label="Streaming apps">${index.ott.map(([s, name]) =>
-    `<a class="chip" href="ott.html?app=${s}" aria-pressed="${s === appSlug}">${esc(name)}</a>`).join("")}</nav>`;
+    `<a class="chip" href="ott?app=${s}" aria-pressed="${s === appSlug}">${esc(name)}</a>`).join("")}</nav>`;
   const L = lists[appSlug];
   // By language (/ott?l=ml): every app's newest titles in that language, as lib/lists.js ottInLanguage().
   const langCode = new URLSearchParams(location.search).get("l") || "";
   const langWord = (c) => (c === "en" ? "Hollywood" : c === "ja" ? "Anime" : CAT_LANGS[c]);
   const langCodes = [...new Set(Object.values(lists).flatMap((x) => x.items.map((f) => f.l)))].filter((c) => CAT_LANGS[c]);
   const langChips = (on) => `<nav class="chips app-tabs" aria-label="Languages">${langCodes.map((c) =>
-    `<a class="chip" href="ott.html?l=${c}" aria-pressed="${c === on}">${esc(langWord(c))}</a>`).join("")}</nav>`;
+    `<a class="chip" href="ott?l=${c}" aria-pressed="${c === on}">${esc(langWord(c))}</a>`).join("")}</nav>`;
 
   if (!L && CAT_LANGS[langCode]) {
     const byKey = new Map();
@@ -3159,7 +3159,7 @@ async function initOtt() {
       ${movies.length ? `<section><div class="section-head"><h2>🎬 Movies</h2></div><div class="fgrid">${grid(movies)}</div></section>` : ""}
       ${series.length ? `<section><div class="section-head"><h2>📺 Web series</h2></div><div class="fgrid">${grid(series)}</div></section>` : ""}
       ${items.length ? "" : `<div class="empty">Nothing new in ${esc(Lang)} on OTT right now.</div>`}
-      <p><a href="ott.html">All apps →</a></p>`;
+      <p><a href="ott">All apps →</a></p>`;
     return;
   }
 
@@ -3170,7 +3170,7 @@ async function initOtt() {
         <p class="lead">The newest movies and series on every big streaming app in India. Pick an app, or a language.</p></div>
       ${langChips("")}
       <div class="app-grid">${index.ott.map(([s, name, count]) => `
-        <a class="app-tile" href="ott.html?app=${s}">
+        <a class="app-tile" href="ott?app=${s}">
           <span class="ott ott-${slug(name)}">${esc(name)}</span>
           <span class="app-posters">${(lists[s]?.items || []).slice(0, 4).map((f) => f.p ? `<img src="${tmdb(f.p, "w154")}" alt="" loading="lazy">` : "").join("")}</span>
           <strong>New on ${esc(name)}</strong><span class="muted small">${count.toLocaleString("en-IN")} titles</span>
@@ -3188,7 +3188,7 @@ async function initOtt() {
   const bestOnApp = Object.entries(index.best).flatMap(([code, b]) => {
     const r = (b.apps || []).find((row) => row[0] === appSlug);
     return !r ? [] : ["movie", "tv"].filter((kind) => r[kind === "tv" ? 3 : 2])
-      .map((kind) => `<a href="best.html?l=${code}&app=${appSlug}${kind === "tv" ? "&k=tv" : ""}">${esc(bestTitle(code, "", "", kind, L.name))}</a>`);
+      .map((kind) => `<a href="best?l=${code}&app=${appSlug}${kind === "tv" ? "&k=tv" : ""}">${esc(bestTitle(code, "", "", kind, L.name))}</a>`);
   });
   root.innerHTML = `
     <div class="page-head"><p class="eyebrow">📺 Streaming in India</p><h1>New on ${esc(L.name)}</h1>
@@ -3202,8 +3202,8 @@ async function initOtt() {
       <div class="chips list-filter" id="ott-filter"></div>
       <div class="fgrid" id="ott-grid"></div>
       <div class="cta-row list-more">
-        <a class="btn primary" href="films.html?a=${encodeURIComponent(L.name)}&s=rating">Top rated on ${esc(L.name)} →</a>
-        <a class="btn" href="films.html?a=${encodeURIComponent(L.name)}">All ${L.count.toLocaleString("en-IN")} titles on ${esc(L.name)}</a>
+        <a class="btn primary" href="films?a=${encodeURIComponent(L.name)}&s=rating">Top rated on ${esc(L.name)} →</a>
+        <a class="btn" href="films?a=${encodeURIComponent(L.name)}">All ${L.count.toLocaleString("en-IN")} titles on ${esc(L.name)}</a>
       </div>
     </section>
     ${bestOnApp.length ? `<section class="more-lists"><h2>Best on ${esc(L.name)}</h2><p class="hub-links">${bestOnApp.join("")}</p></section>` : ""}`;
@@ -3222,7 +3222,7 @@ async function initBest() {
   const index = await loadCatalog("lists/index");
   if (!index) return notReadyYet(root);
   const info = index.best[l];
-  const link = (q, text) => `<a href="best.html?${q}">${esc(text)}</a>`;
+  const link = (q, text) => `<a href="best?${q}">${esc(text)}</a>`;
 
   if (!info) {
     document.title = "Best movies and series lists: Hindi, Tamil, Telugu, Malayalam, Korean and more · Masala Mischief";
@@ -3249,7 +3249,7 @@ async function initBest() {
   const data = app && !appRow ? null : await loadCatalog(`lists/best-${l}${app ? `-${app}` : ""}`);
   const gInfo = g && data && data.genres[g];
   const list = !data ? null : y ? !app && data.years[y] : g ? gInfo && gInfo[k] : data.all[k];
-  if (!list) { root.innerHTML = `<div class="empty">We couldn't find that list. <a href="best.html">See all lists</a>.</div>`; return; }
+  if (!list) { root.innerHTML = `<div class="empty">We couldn't find that list. <a href="best">See all lists</a>.</div>`; return; }
   const heading = bestTitle(l, gInfo ? gInfo.name : "", y, k, appRow ? appRow[1] : "");
   document.title = `${heading}${y || app ? "" : " of all time"}${app ? " India" : ""} · top ${list.length} · Masala Mischief`;
   const byTmdb = reviewedByTmdb();
@@ -3284,7 +3284,7 @@ async function initBest() {
       ${g ? `<h2>${esc(gInfo.name)} in other languages</h2><p class="hub-links">${Object.entries(index.best)
         .filter(([code, b]) => code !== l && b.genres.some((r) => r[0] === g && r[k === "tv" ? 3 : 2]))
         .map(([code]) => link(`l=${code}&g=${g}${k === "tv" ? "&k=tv" : ""}`, bestTitle(code, gInfo.name, "", k))).join("")}</p>` : ""}
-      <p><a href="best.html">All best-of lists →</a></p>
+      <p><a href="best">All best-of lists →</a></p>
     </section>`;
 }
 
@@ -3307,7 +3307,7 @@ async function initUpcoming() {
     const q = new URLSearchParams();
     if (show) q.set("show", "now");
     if (code) q.set("l", code);
-    return `upcoming.html${q.toString() ? `?${q}` : ""}`;
+    return `upcoming${q.toString() ? `?${q}` : ""}`;
   };
   const count = (list) => list.filter((f) => !l || f.l === l).length;
   const showDay = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
@@ -3315,7 +3315,7 @@ async function initUpcoming() {
     <section id="now">
       <div class="booking-row">${ticketLinks()}</div>
       <div class="ulist">${now.map((f) => {
-        const name = f.pg ? `<a href="film.html?id=${f.l}-${f.id}">${esc(f.t)}</a>` : esc(f.t);
+        const name = f.pg ? `<a href="film?id=${f.l}-${f.id}">${esc(f.t)}</a>` : esc(f.t);
         const due = ottDue({ l: f.l, rd: f.d, od: f.od, oa: f.oa });
         return `
         <article class="ucard" id="n-${f.l}-${f.id}">
@@ -3324,7 +3324,7 @@ async function initUpcoming() {
             <span class="udate">Out ${showDay(f.d)}</span>
             <strong>${name}</strong>
             <span class="muted small">${esc(langLabel(CAT_LANGS[f.l]))}${f.g.length ? ` · ${esc(f.g.slice(0, 2).join(", "))}` : ""}${f.c ? ` · ${esc(f.c)}` : ""}${f.v ? ` · ★ ${f.v}` : ""}</span>
-            ${f.cast.length ? `<span class="small">With ${f.cast.map(([id, n]) => `<a href="person.html?id=${id}">${esc(n)}</a>`).join(", ")}</span>` : ""}
+            ${f.cast.length ? `<span class="small">With ${f.cast.map(([id, n]) => `<a href="person?id=${id}">${esc(n)}</a>`).join(", ")}</span>` : ""}
             ${due ? `<span class="small ott-due-chip">⏳ OTT: ${esc(ottDueShort(due))}</span>` : ""}
             ${f.pg ? `<button class="btn small land-bell" type="button" data-key="${f.l}-${f.id}" hidden>🔔 Tell me when it's on OTT</button><span class="small muted land-help"></span>` : ""}
             ${f.tr ? trailerBtn(f.tr, f.t) : ""}
@@ -3358,7 +3358,7 @@ async function initUpcoming() {
               <span class="udate">${new Date(f.d + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}</span>
               <strong>${esc(f.t)}</strong>
               <span class="muted small">${esc(langLabel(CAT_LANGS[f.l]))}${f.g.length ? ` · ${esc(f.g.slice(0, 2).join(", "))}` : ""}</span>
-              ${f.cast.length ? `<span class="small">With ${f.cast.map(([id, name]) => `<a href="person.html?id=${id}">${esc(name)}</a>`).join(", ")}</span>` : ""}
+              ${f.cast.length ? `<span class="small">With ${f.cast.map(([id, name]) => `<a href="person?id=${id}">${esc(name)}</a>`).join(", ")}</span>` : ""}
               ${f.tr ? trailerBtn(f.tr, f.t) : ""}
             </div>
           </article>`).join("")}</div>
@@ -3406,10 +3406,10 @@ async function weekData() {
   const up = (await loadCatalog("upcoming")) || {};
   // How well-known (TMDB votes; older files only have a rating for the better-known ones).
   const known = (f) => f.n || (f.v ? 10 : 0);
-  const soon = (up.soon || []).map((f) => ({ t: f.t, l: f.l, date: f.d, app: f.a || "", p: f.p, href: `film.html?id=${f.l}-${f.id}`, key: `${f.l}-${f.id}`, sure: true, n: known(f) }));
+  const soon = (up.soon || []).map((f) => ({ t: f.t, l: f.l, date: f.d, app: f.a || "", p: f.p, href: `film?id=${f.l}-${f.id}`, key: `${f.l}-${f.id}`, sure: true, n: known(f) }));
   const have = new Set(soon.map((f) => f.href));
   for (const f of up.now || []) {
-    const href = f.pg ? `film.html?id=${f.l}-${f.id}` : "";
+    const href = f.pg ? `film?id=${f.l}-${f.id}` : "";
     if (href && have.has(href)) continue;
     const due = ottDue({ l: f.l, rd: f.d, od: f.od, oa: f.oa }, today);
     // Estimates in the next 6 weeks; ones overdue by 2+ weeks probably have no OTT deal yet.
@@ -3497,16 +3497,16 @@ async function initWeek() {
       <p class="lead">What just arrived on Netflix, Prime Video, JioHotstar, ZEE5, SonyLIV and more in India, and the cinema films coming to OTT next. Updated daily · ${fmtDate(checked)}.</p>
       <p><a class="btn small" href="#wa-post">📲 Share this list on WhatsApp</a></p></div>
     <nav class="chips app-tabs" aria-label="Languages">
-      <a class="chip" href="ott-this-week.html" aria-pressed="${!l}">All</a>
-      ${langs.map((c) => `<a class="chip" href="ott-this-week.html?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
+      <a class="chip" href="ott-this-week" aria-pressed="${!l}">All</a>
+      ${langs.map((c) => `<a class="chip" href="ott-this-week?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
     </nav>
     <section><div class="section-head"><h2>🆕 New on OTT this week</h2><button class="btn small alert-btn" type="button" hidden>🔔 Weekly OTT alerts</button></div>
-      ${newList.length ? `<div class="ulist">${newList.map((f) => card(f, "new")).join("")}</div>` : `<div class="empty">Nothing new ${langName ? `in ${esc(langName)} ` : ""}this week yet. <a href="ott-this-week.html">See all languages</a>.</div>`}
+      ${newList.length ? `<div class="ulist">${newList.map((f) => card(f, "new")).join("")}</div>` : `<div class="empty">Nothing new ${langName ? `in ${esc(langName)} ` : ""}this week yet. <a href="ott-this-week">See all languages</a>.</div>`}
     </section>
     <section><div class="section-head"><h2>⏳ Coming to OTT soon</h2><button class="btn small" id="land-all" type="button" hidden>🔔 Alert me for all</button></div>
       <p class="small muted" id="land-all-help"></p>
       <p class="muted small">Announced dates first; then our estimate for films still in cinemas (Hindi films usually stream about 8 weeks after release, South Indian films about 4).</p>
-      ${soonList.length ? `<div class="ulist">${soonList.map((f) => card(f, "soon")).join("")}</div>` : `<div class="empty">No OTT dates ${langName ? `for ${esc(langName)} films ` : ""}in the next few weeks yet. <a href="upcoming.html?show=now">See what's in cinemas</a>.</div>`}
+      ${soonList.length ? `<div class="ulist">${soonList.map((f) => card(f, "soon")).join("")}</div>` : `<div class="empty">No OTT dates ${langName ? `for ${esc(langName)} films ` : ""}in the next few weeks yet. <a href="upcoming?show=now">See what's in cinemas</a>.</div>`}
     </section>
     <section class="wa-post panel" id="wa-post">
       <h2>📲 Share this week's picks</h2>

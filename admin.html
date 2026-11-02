@@ -7,7 +7,7 @@
   <title>Admin · Masala Mischief</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/assets/icons/icon-192.png" sizes="192x192" type="image/png">
-  <link rel="stylesheet" href="assets/style.css?v=117">
+  <link rel="stylesheet" href="assets/style.css?v=118">
   <style>
     .adm { max-width: 960px; margin: 24px auto; padding: 0 16px 80px; }
     .adm h1 { margin: 0 0 4px; }
@@ -141,7 +141,7 @@
       </section>
     </div>
   </main>
-  <script src="assets/data.js?v=117"></script>
+  <script src="assets/data.js?v=118"></script>
   <script>
     // The password is kept for this tab (sessionStorage), or on this device if you tick "keep me signed in"
     // (localStorage), and is only ever sent to our own /api/ endpoints, never put in the page.
@@ -153,7 +153,7 @@
     let filter = "pending";
     let fixFilter = "open";
     const auth = () => ({ authorization: `Bearer ${pw}`, "content-type": "application/json" });
-    const titleLink = (t) => t.startsWith("r:") ? `review.html?id=${encodeURIComponent(t.slice(2))}` : `film.html?id=${encodeURIComponent(t.slice(2))}`;
+    const titleLink = (t) => t.startsWith("r:") ? `review?id=${encodeURIComponent(t.slice(2))}` : `film?id=${encodeURIComponent(t.slice(2))}`;
     const ago = (t) => new Date(t).toLocaleString("en-IN");
 
     async function api(path, method = "GET", body) {
@@ -232,7 +232,7 @@
       $("mine").innerHTML = list.map((m) => `
         <div class="adm-row">
           <div class="meta"><strong>${esc(m.title)}</strong> (${m.year}) · ${esc(m.lang)} · 🌶️ ${m.masala}/5 · ★ ${m.quality}/10 · reviewed ${esc(m.reviewed)}</div>
-          <div class="adm-actions"><a href="/write?edit=${encodeURIComponent(m.id)}">✏️ Edit</a><a href="review.html?id=${encodeURIComponent(m.id)}" target="_blank">👁 View</a></div>
+          <div class="adm-actions"><a href="/write?edit=${encodeURIComponent(m.id)}">✏️ Edit</a><a href="review?id=${encodeURIComponent(m.id)}" target="_blank">👁 View</a></div>
         </div>`).join("") || `<p class="muted">No match.</p>`;
     }
     $("mine-find").addEventListener("input", renderMine);
