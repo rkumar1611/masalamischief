@@ -2194,6 +2194,7 @@ const APP_SEARCH = {
   "JioHotstar": "https://www.hotstar.com/in/explore?search_query=",
   "ZEE5": "https://www.zee5.com/search?q=",
   "aha": "https://www.aha.video/search?q=",
+  "ManoramaMAX": "https://www.manoramamax.com/search?q=",
   "SonyLIV": "https://www.sonyliv.com/search",
   "Crunchyroll": "https://www.crunchyroll.com/search?q=",
 };
