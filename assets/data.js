@@ -1264,8 +1264,10 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-01",
+  checked: "2026-11-02",
   items: [
+    { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
+    { title: "Heist", year: 2001, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60020557", note: "Directed by David Mamet · IMDb 6.5" },
     { title: "The Crush", year: 1993, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/409583", note: "Directed by Alan Shapiro · IMDb 5.9" },
     { title: "Anger Management", year: 2003, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60027583", note: "Directed by Peter Segal · IMDb 6.3" },
     { title: "The Quick and the Dead", year: 1995, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/885014", note: "Directed by Sam Raimi · IMDb 6.5" },
@@ -1278,8 +1280,6 @@ const NEW_ON_OTT = {
     { title: "The Sweetest Thing", year: 2002, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60022057", note: "Directed by Roger Kumble · IMDb 5.2" },
     { title: "The Front Runner", year: 2018, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/81012480", note: "Directed by Jason Reitman · IMDb 6.1" },
     { title: "Seven Years in Tibet", year: 1997, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/1179053", note: "Directed by Jean-Jacques Annaud · IMDb 7.1" },
-    { title: "Hanging Up", year: 2000, lang: "English", app: "Netflix", added: "2026-10-31", url: "https://www.netflix.com/title/60000419", note: "Directed by Diane Keaton · IMDb 4.9" },
-    { title: "Wanderlust", year: 2012, lang: "English", app: "Netflix", added: "2026-10-31", url: "https://www.netflix.com/title/70202146", note: "Directed by David Wain · IMDb 5.6" },
   ],
 };
 
