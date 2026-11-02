@@ -144,7 +144,7 @@ const appsOf = (d) => [...new Set((d["watch/providers"]?.results?.IN?.flatrate |
 // don't ask; titles keep last week's links.
 const JW_APPS = {
   nfx: "Netflix", prv: "Prime Video", jhs: "JioHotstar", zee: "ZEE5", snl: "SonyLIV", snx: "Sun NXT",
-  aha: "aha", mrx: "ManoramaMAX", mxp: "MX Player", lgp: "Lionsgate Play", cru: "Crunchyroll",
+  aha: "aha", mrx: "ManoramaMAX", mxp: "MX Player", lgp: "Lionsgate Play", cru: "Crunchyroll", atp: "Apple TV",
 };
 const JW_SLICE = 1900;
 const JW_WORKERS = 1;
