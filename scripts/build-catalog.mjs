@@ -282,9 +282,32 @@ async function appLinks() {
     return null;
   }
   console.log(`App links: ${links.size} titles from ${requests} JustWatch requests.`);
+  await dropDeadAha(links);
   if (links.size > 1000) return links;
   jwProblem = `only ${links.size} titles from ${requests} requests`;
   return null;
+}
+
+// JustWatch still lists some titles aha has taken down (about 1 in 6 aha links give "not found"). Those
+// links are dropped, so the title's button opens aha's search instead. Only a clear 404 counts; a timeout
+// or any other answer keeps the link.
+async function dropDeadAha(links) {
+  const urls = new Set();
+  for (const u of links.values()) if (u.aha) urls.add(u.aha);
+  const dead = new Set();
+  const queue = [...urls];
+  await Promise.all(Array.from({ length: 4 }, async () => {
+    while (queue.length) {
+      const url = queue.shift();
+      try {
+        const res = await fetch(url, { method: "HEAD", redirect: "follow", headers: { "user-agent": "Mozilla/5.0 (compatible; MasalaMischiefBot/1.0; +https://masalamischief.in)" } });
+        if (res.status === 404) dead.add(url);
+      } catch { /* keep the link */ }
+      await sleep(200);
+    }
+  }));
+  for (const u of links.values()) if (u.aha && dead.has(u.aha)) delete u.aha;
+  console.log(`aha links: ${urls.size} checked, ${dead.size} not found and dropped.`);
 }
 
 // f.u = { app: direct link } for the apps the title is on (TMDB's f.w and JustWatch's f.ja) that
