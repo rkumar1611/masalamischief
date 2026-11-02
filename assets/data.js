@@ -1266,6 +1266,10 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-01",
   items: [
+    { title: "The Crush", year: 1993, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/409583", note: "Directed by Alan Shapiro · IMDb 5.9" },
+    { title: "Anger Management", year: 2003, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60027583", note: "Directed by Peter Segal · IMDb 6.3" },
+    { title: "The Quick and the Dead", year: 1995, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/885014", note: "Directed by Sam Raimi · IMDb 6.5" },
+    { title: "Tomcats", year: 2001, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60020245", note: "Directed by Gregory Poirier · IMDb 5.3" },
     { title: "Taxi Driver", year: 1976, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/18907685", note: "Directed by Martin Scorsese · IMDb 8.2" },
     { title: "Radio", year: 2003, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60031265", note: "Directed by Michael Tollin · IMDb 6.9" },
     { title: "Click", year: 2006, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/70041162", note: "Directed by Frank Coraci · IMDb 6.5" },
@@ -1276,10 +1280,6 @@ const NEW_ON_OTT = {
     { title: "Seven Years in Tibet", year: 1997, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/1179053", note: "Directed by Jean-Jacques Annaud · IMDb 7.1" },
     { title: "Hanging Up", year: 2000, lang: "English", app: "Netflix", added: "2026-10-31", url: "https://www.netflix.com/title/60000419", note: "Directed by Diane Keaton · IMDb 4.9" },
     { title: "Wanderlust", year: 2012, lang: "English", app: "Netflix", added: "2026-10-31", url: "https://www.netflix.com/title/70202146", note: "Directed by David Wain · IMDb 5.6" },
-    { title: "Gargi", year: 2022, lang: "Tamil", app: "SonyLIV", added: "2026-10-31", url: "https://www.sonyliv.com/movies/gargi-1000183696", note: "Directed by Gautham Ramachandran · IMDb 8.1" },
-    { title: "Demon Slayer: Kimetsu no Yaiba Infinity Castle", year: 2025, app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/demon-slayer-kimetsu-no-yaiba-infinity-castle-i-1090537771", note: "Directed by Haruo Sotozaki · IMDb 8.3" },
-    { title: "The Pursuit of Happyness", year: 2006, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/the-pursuit-of-happyness-1000007713", note: "Directed by Gabriele Muccino · IMDb 8" },
-    { title: "Resident Evil", year: 2002, lang: "English", app: "SonyLIV", added: "2026-10-30", url: "https://www.sonyliv.com/movies/resident-evil-2002-1090541183", note: "Directed by Paul W. S. Anderson · IMDb 6.6" },
   ],
 };
 
