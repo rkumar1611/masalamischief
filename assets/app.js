@@ -2195,6 +2195,7 @@ const APP_SEARCH = {
   "ZEE5": "https://www.zee5.com/search?q=",
   "aha": "https://www.aha.video/search?q=",
   "ManoramaMAX": "https://www.manoramamax.com/search?q=",
+  "Apple TV": "https://tv.apple.com/in/search?term=",
   "SonyLIV": "https://www.sonyliv.com/search",
   "Crunchyroll": "https://www.crunchyroll.com/search?q=",
 };
