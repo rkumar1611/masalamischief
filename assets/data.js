@@ -1196,7 +1196,7 @@ const PLATFORM_HOME = {
 };
 
 // The OTT apps people can tick on the Suggest page.
-const PLATFORMS = ["Netflix", "Prime Video", "JioHotstar", "ZEE5", "SonyLIV", "Sun NXT", "aha", "ManoramaMAX"];
+const PLATFORMS = ["Netflix", "Prime Video", "JioHotstar", "ZEE5", "SonyLIV", "Sun NXT", "aha", "ManoramaMAX", "Apple TV"];
 
 // Parent notes for Family Picks. Levels: 0 none, 1 mild, 2 some, 3 strong.
 // age = the youngest age we'd suggest, watching with a grown-up.
