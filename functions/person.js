@@ -63,7 +63,8 @@ export async function onRequestGet(context) {
     const photo = p && p[1];
     const top = titles.slice(0, 4).map((t) => `${t.t}${t.y ? ` (${t.y})` : ""}`);
     // Search wording: "<name> movies", "<name> series".
-    const title = `${name} Movies & Web Series: Full List, Where to Watch`;
+    const movies = titles.filter((t) => !t.tv), series = titles.filter((t) => t.tv);
+    const title = `${name} Movies List${series.length ? " & Web Series" : ""}: ${titles.length} Titles, Where to Watch Online`;
     const fmtDay = (d) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
     const role = job === "Directing" ? "director" : job === "Writing" ? "writer" : job === "Acting" ? "actor" : "";
     const facts = [born ? `Born ${fmtDay(born)}${birthplace ? ` in ${birthplace}` : ""}` : "", died ? `died ${fmtDay(died)}` : ""].filter(Boolean).join(", ");
@@ -76,7 +77,9 @@ export async function onRequestGet(context) {
         ${facts ? `<p>${esc(facts)}.</p>` : ""}
         ${bio ? `<p>${esc(bio)}</p>` : ""}
         <p>${titles.length} movies and series, newest first.</p>
-        <ul>${titles.map((t) => `<li><a href="${t.href}">${esc(t.t)}</a>${t.y ? ` (${t.y})` : ""}${t.tv ? " · series" : ""}</li>`).join("")}</ul>
+        ${[[`${name} movies`, movies], [`${name} web series`, series]].filter(([, list]) => list.length).map(([h, list]) => `
+        <h2>${esc(h)}</h2>
+        <ul>${list.map((t) => `<li><a href="${t.href}">${esc(t.t)}</a>${t.y ? ` (${t.y})` : ""}${t.lang ? ` · ${esc(t.lang)}` : ""}</li>`).join("")}</ul>`).join("")}
       </article>`;
 
     const jsonLd = {

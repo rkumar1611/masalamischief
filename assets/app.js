@@ -3018,7 +3018,7 @@ async function initPerson() {
     ${bio ? `<p class="person-bio${bio.length > 320 ? " clamp" : ""}" id="pbio">${esc(bio)}</p>${bio.length > 320 ? `<button class="btn small" type="button" id="pbio-more">Read more</button>` : ""}` : ""}
     ${knownFor.length ? `<p class="person-known"><strong>Known for:</strong> ${knownFor.map(titleLink).join(", ")}</p>` : ""}
     ${latest ? `<p class="person-known"><strong>Latest:</strong> ${titleLink(latest)}</p>` : ""}`;
-  document.title = `${name} Movies & Web Series: Full List, Where to Watch`; // as functions/person.js
+  document.title = `${name} Movies List${series ? " & Web Series" : ""}: ${titles.length} Titles, Where to Watch Online`; // as functions/person.js
   root.innerHTML = `
     <div class="person-head">
       ${photo ? `<img class="person-photo" src="${tmdb(photo, "w342")}" alt="${esc(name)}" decoding="async">` : `<span class="person-photo cast-none">${esc(name.split(/\s+/).map((w) => w[0]).slice(0, 2).join(""))}</span>`}
