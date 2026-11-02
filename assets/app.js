@@ -2665,7 +2665,8 @@ async function initFilms() {
 
   // The titles to filter: on layout 2, one language at a time (key = its code), the best-known titles
   // across all languages (key ""), or search matches across all languages (key "q:<term>"). The older
-  // layout loads everything once (key ""). Our reviewed films are always added.
+  // layout loads everything once (key ""); with an app chosen, every language together (key "*"). Our
+  // reviewed films are always added.
   const cache = {};
   async function getList(key) {
     if (cache[key]) return cache[key];
@@ -2673,7 +2674,7 @@ async function initFilms() {
     let popular = false;
     if (key.startsWith("q:")) films = await searchCatalog(key.slice(2));
     else {
-      const cat = await loadIndex(key ? [key] : []);
+      const cat = await loadIndex(key === "*" ? Object.keys(CAT_LANGS) : key ? [key] : []);
       films = cat && cat.films;
       popular = !!(cat && cat.popular);
     }
@@ -2775,7 +2776,8 @@ async function initFilms() {
     $("ft").disabled = $("fs").disabled = isTop();
     $("fl").disabled = animeTop;
     paintView();
-    const key = layout < 2 ? "" : lang || (q.length >= 2 && !isTop() ? `q:${q}` : "");
+    // An app choice looks through every language ("*"), not just the best-known titles.
+    const key = layout < 2 ? "" : lang || (q.length >= 2 && !isTop() ? `q:${q}` : state.a && !isTop() ? "*" : "");
     if (key !== listKey) {
       const mine = ++run;
       if (listKey !== null) $("fcount").textContent = "Loading…";
