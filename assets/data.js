@@ -1266,6 +1266,9 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-02",
   items: [
+    { title: "Parasite", year: 2019, lang: "Korean", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/parasite-1000230983", note: "Directed by Bong Joon Ho · IMDb 8.5" },
+    { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/chaaver-1000253152", note: "Directed by Tinu Pappachan · IMDb 6.2" },
+    { title: "Creed II", year: 2018, lang: "English", app: "Prime Video", added: "2026-11-02", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.818b1c85-1e1a-4909-a736-e3ef5ccd2ede", note: "Directed by Steven Caple Jr. · IMDb 7.1" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
     { title: "Heist", year: 2001, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60020557", note: "Directed by David Mamet · IMDb 6.5" },
     { title: "The Crush", year: 1993, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/409583", note: "Directed by Alan Shapiro · IMDb 5.9" },
@@ -1277,9 +1280,6 @@ const NEW_ON_OTT = {
     { title: "Click", year: 2006, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/70041162", note: "Directed by Frank Coraci · IMDb 6.5" },
     { title: "The Bridge on the River Kwai", year: 1957, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60002970", note: "Directed by David Lean · IMDb 8.1" },
     { title: "The Revenant", year: 2015, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/80064516", note: "Directed by Alejandro G. Iñárritu · IMDb 8" },
-    { title: "The Sweetest Thing", year: 2002, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60022057", note: "Directed by Roger Kumble · IMDb 5.2" },
-    { title: "The Front Runner", year: 2018, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/81012480", note: "Directed by Jason Reitman · IMDb 6.1" },
-    { title: "Seven Years in Tibet", year: 1997, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/1179053", note: "Directed by Jean-Jacques Annaud · IMDb 7.1" },
   ],
 };
 
