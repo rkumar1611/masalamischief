@@ -9,7 +9,7 @@ const KEY = /^[a-z]{2,3}-(tv)?\d+$/;
 // The app names the catalogue uses (APP_RULES in scripts/build-catalog.mjs).
 const APPS = ["Netflix", "Prime Video", "JioHotstar", "ZEE5", "SonyLIV", "Sun NXT", "aha", "ManoramaMAX", "MX Player", "Lionsgate Play", "Crunchyroll", "Apple TV"];
 
-export async function onRequestGet({ request, env }) {
+async function get({ request, env }) {
   if (!env.DB) return notReady();
   if (!isAdmin(request, env)) return json({ error: "Not allowed." }, 401);
   await ensureCatalogSchema(env.DB);
@@ -17,8 +17,8 @@ export async function onRequestGet({ request, env }) {
   if (q.length < 2) return json({ titles: [] });
   const { results } = KEY.test(q.toLowerCase())
     ? await env.DB.prepare("SELECT * FROM catalog_titles WHERE key = ?").bind(q.toLowerCase()).all()
-    : await env.DB.prepare("SELECT * FROM catalog_titles WHERE title LIKE ? ESCAPE '\\' ORDER BY votes DESC LIMIT 15")
-      .bind(`%${q.replace(/[\\%_]/g, "\\$&")}%`).all();
+    : await env.DB.prepare("SELECT * FROM catalog_titles WHERE instr(lower(title), ?) > 0 ORDER BY votes DESC LIMIT 15")
+      .bind(q.toLowerCase()).all();
   if (!results.length) return json({ titles: [] });
   const keys = results.map((r) => r.key);
   const marks = keys.map(() => "?").join(",");
@@ -39,7 +39,7 @@ export async function onRequestGet({ request, env }) {
   });
 }
 
-export async function onRequestPost({ request, env }) {
+async function post({ request, env }) {
   if (!env.DB) return notReady();
   if (!isAdmin(request, env)) return json({ error: "Not allowed." }, 401);
   let body;
@@ -61,3 +61,8 @@ export async function onRequestPost({ request, env }) {
     .bind(key, JSON.stringify(apps), note, new Date().toISOString().slice(0, 10)).run();
   return json({ ok: true, override: { apps, note } });
 }
+
+// Admin only, so the real error is shown to help fix a problem quickly.
+const guard = (fn) => async (context) => { try { return await fn(context); } catch (e) { return json({ error: `Database error: ${e.message}`.slice(0, 300) }, 500); } };
+export const onRequestGet = guard(get);
+export const onRequestPost = guard(post);
