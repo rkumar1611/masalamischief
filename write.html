@@ -93,7 +93,6 @@
           <label>Scary <select id="p-scary"></select></label>
           <label style="grid-column: 1 / -1">Note for parents <input type="text" id="p-note" maxlength="400"></label>
         </div>
-        <label class="toggle"><input type="checkbox" id="featured"> ⭐ Make it Pick of the week (big on the home page)</label>
       </section>
 
       <section class="wr-box">
@@ -188,7 +187,6 @@
       $("review").value = m.review.join("\n\n"); $("hits").value = m.hits.join("\n"); $("misses").value = m.misses.join("\n");
       $("has-parent").checked = Boolean(p); $("parent").hidden = !p;
       if (p) { $("p-age").value = p.age; LEVELS.forEach((k) => ($(`p-${k}`).value = p[k] || 0)); $("p-note").value = p.note; }
-      $("featured").checked = FEATURED_ID === m.id;
       paintAll(); showPicked(); preview();
     }
     $("existing").addEventListener("change", () => $("existing").value && loadExisting($("existing").value));
@@ -203,7 +201,7 @@
         review: $("review").value.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean), hits: lines($("hits").value), misses: lines($("misses").value),
         stream: state.stream, rent: state.rent, links: state.links, tmdb: state.tmdb, poster: state.poster, backdrop: state.backdrop, imdb: state.imdb,
         parent: $("has-parent").checked ? { age: +$("p-age").value, ...Object.fromEntries(LEVELS.map((k) => [k, +$(`p-${k}`).value])), note: $("p-note").value.trim() } : null,
-        featured: $("featured").checked, reviewed: state.edit ? (movieById($("id").value) || {}).reviewed : undefined,
+        reviewed: state.edit ? (movieById($("id").value) || {}).reviewed : undefined,
       };
     }
     // Preview: the card as it appears in lists, and the review text.

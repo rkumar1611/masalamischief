@@ -46,7 +46,6 @@ Open `assets/data.js`, copy an existing film object, and change the fields. The 
 
 Other things you can edit in `assets/data.js`:
 
-- `FEATURED_ID` – the film shown as "Pick of the week" on the home page.
 - `NEW_ON_OTT` – the "New on OTT this week" strip. It updates itself: every morning GitHub runs
   `scripts/refresh-new-on-ott.mjs` (see `.github/workflows/refresh-new-on-ott.yml`), which adds the day's
   notable arrivals on Netflix, Prime Video, JioHotstar, ZEE5, SonyLIV, Sun NXT, aha and ManoramaMAX from

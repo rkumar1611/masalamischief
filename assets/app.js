@@ -995,12 +995,15 @@ const newOttItem = (n) => `
 
 function initHome() {
   const byDate = [...MOVIES].sort((a, b) => b.reviewed.localeCompare(a.reviewed));
-  const featured = MOVIES.find((m) => m.id === FEATURED_ID) || byDate[0];
+  // Pick of the day: a reviewed film that's streaming, the same for everyone all day (India time), a different one tomorrow.
+  const live = MOVIES.filter((m) => streamsOn(m).length).sort((a, b) => a.id.localeCompare(b.id));
+  const today = Math.floor((Date.now() + 5.5 * 36e5) / 864e5);
+  const featured = live.length ? live[(today * 53) % live.length] : byDate[0];
   document.getElementById("featured").innerHTML = `
     <a class="featured" href="review?id=${featured.id}">
       ${poster(featured, true)}
       <div class="featured-body">
-        <span class="badge">Pick of the week</span>
+        <span class="badge">Pick of the day</span>
         <h2>${esc(featured.title)}</h2>
         <p>${esc(featured.tagline)}</p>
         <div class="card-meta">${meter(featured.masala)}${score(featured.quality)}</div>

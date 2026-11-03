@@ -24,9 +24,6 @@ const LANGUAGES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "English"
 // How a film's original language is shown on cards and filters.
 const LANG_LABELS = { English: "Hollywood" };
 
-// The film shown big on the home page as "Pick of the week". Change the id each week.
-const FEATURED_ID = "kantara";
-
 const MOVIES = [
   {
     id: "3-idiots", title: "3 Idiots", year: 2009, lang: "Hindi", audio: ["Hindi"],
