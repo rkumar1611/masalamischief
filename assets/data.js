@@ -1263,6 +1263,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-03",
   items: [
+    { title: "Spider-Man: Far from Home", year: 2019, lang: "English", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/81055822", note: "Directed by Jon Watts · IMDb 7.3" },
     { title: "Rockstar", year: 2011, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70222861", note: "Directed by Imtiaz Ali · IMDb 7.8" },
     { title: "Raanjhanaa", year: 2013, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70286078", note: "Directed by Aanand L. Rai · IMDb 7.6" },
     { title: "Enemy", year: 2021, lang: "Tamil", app: "SonyLIV", added: "2026-11-03", url: "https://www.sonyliv.com/movies/enemy-1000161148", note: "Directed by Anand Shankar · IMDb 6.1" },
@@ -1276,7 +1277,6 @@ const NEW_ON_OTT = {
     { title: "The Quick and the Dead", year: 1995, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/885014", note: "Directed by Sam Raimi · IMDb 6.5" },
     { title: "Tomcats", year: 2001, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60020245", note: "Directed by Gregory Poirier · IMDb 5.3" },
     { title: "Taxi Driver", year: 1976, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/18907685", note: "Directed by Martin Scorsese · IMDb 8.2" },
-    { title: "Radio", year: 2003, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60031265", note: "Directed by Michael Tollin · IMDb 6.9" },
   ],
 };
 
