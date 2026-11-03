@@ -58,6 +58,11 @@ jobs:
           CATALOG_MODE: ${{ steps.mode.outputs.mode }}
         run: node scripts/build-catalog.mjs
 
+      # Stops the run (nothing is committed) if the build lost a big part of the catalogue or of one app; anything
+      # smaller is a warning in the run's summary (scripts/check-catalog.mjs).
+      - name: Check the catalogue
+        run: node scripts/check-catalog.mjs
+
       - name: Commit and push if it changed
         run: |
           git add -A assets/catalog
