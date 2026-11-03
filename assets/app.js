@@ -999,17 +999,7 @@ function initHome() {
   const live = MOVIES.filter((m) => streamsOn(m).length).sort((a, b) => a.id.localeCompare(b.id));
   const today = Math.floor((Date.now() + 5.5 * 36e5) / 864e5);
   const featured = live.length ? live[(today * 53) % live.length] : byDate[0];
-  document.getElementById("featured").innerHTML = `
-    <a class="featured" href="review?id=${featured.id}">
-      ${poster(featured, true)}
-      <div class="featured-body">
-        <span class="badge">Pick of the day</span>
-        <h2>${esc(featured.title)}</h2>
-        <p>${esc(featured.tagline)}</p>
-        <div class="card-meta">${meter(featured.masala)}${score(featured.quality)}</div>
-        ${platformChips(streamsOn(featured), 4)}
-      </div>
-    </a>`;
+  renderPickOfDay(featured, today);
 
   document.getElementById("stats").innerHTML = `
     <div><strong>${MOVIES.length}</strong><span>films reviewed</span></div>
@@ -1080,6 +1070,37 @@ async function renderListTiles() {
       <span class="ptile-label">${esc(label)}</span>`;
   });
   box.classList.add("tiles");
+}
+
+// Pick of the day, big on the home page: one film from this week's Top 10s (movies streaming in India, all
+// languages), the same for everyone all day and a different one tomorrow. Ours if we've reviewed it, otherwise
+// the catalogue's details. Falls back to one of our reviewed films (`fallback`) if the list can't load.
+async function renderPickOfDay(fallback, day) {
+  const el = document.getElementById("featured");
+  const show = (m) => {
+    el.innerHTML = `
+    <a class="featured" href="${m.href || `review?id=${m.id}`}">
+      ${poster(m, true)}
+      <div class="featured-body">
+        <span class="badge">Pick of the day</span>
+        <h2>${esc(m.title)}</h2>
+        <p>${esc(m.tagline)}</p>
+        <div class="card-meta">${m.catalog ? "" : meter(m.masala)}${score(m.quality)}</div>
+        ${platformChips(streamsOn(m), 4)}
+      </div>
+    </a>`;
+  };
+  try {
+    const top = await loadCatalog("top10");
+    const seen = new Set();
+    const pool = top.apps.flatMap((a) => a.movies).filter((f) => f.w && f.w.length && f.v >= 6.5 && f.n >= 100 && f.r >= 75 && !seen.has(`${f.l}-${f.id}`) && seen.add(`${f.l}-${f.id}`))
+      .sort((a, b) => `${a.l}-${a.id}`.localeCompare(`${b.l}-${b.id}`));
+    const f = pool[(day * 53) % pool.length];
+    const mine = reviewedByTmdb()[f.id];
+    show(mine || catToMovie(f, await loadTitle(f.l, f.id)));
+  } catch {
+    show(fallback);
+  }
 }
 
 // Tonight's pick: one of our reviewed films that's streaming, the same for everyone all day (India time),
