@@ -772,6 +772,17 @@ function ottDueText(f, due, today = new Date().toISOString().slice(0, 10)) {
 const ottDueShort = (due) => due.sure ? `${fmtDate(due.date)}${due.app ? ` on ${due.app}` : ""}`
   : due.date > new Date().toISOString().slice(0, 10) ? `expected ${roughly(due.date)}` : "due any time now";
 
+// The answer part of a film page's title, as lib/seo.js filmSearchWhat(): apps, OTT date, or "not announced".
+function filmSearchWhat(f, due) {
+  const apps = (f.ja && f.ja.length ? f.ja : f.w) || [];
+  if (apps.length) return `on ${apps.slice(0, 2).join(" & ")}: OTT Streaming Now`;
+  if (!due) return "OTT: Where to Watch Online";
+  if (due.sure) return `OTT Release Date: ${fmtDate(due.date)}${due.app ? ` on ${due.app}` : ""}`;
+  const x = new Date(`${due.date}T00:00:00Z`);
+  const when = due.date > new Date().toISOString().slice(0, 10) ? `Expected ${x.getUTCDate() <= 10 ? "Early" : x.getUTCDate() <= 20 ? "Mid" : "Late"} ${x.toLocaleDateString("en-IN", { month: "short", timeZone: "UTC" })}` : "Due Any Time Now";
+  return `OTT Release Date: Not Announced, ${when}`;
+}
+
 // Quick answers on film pages, as lib/seo.js quickAnswers() puts them in the HTML for search engines.
 const CERT_MEANS = { U: "suitable for all ages", UA: "parental guidance for under-12s", A: "adults only", S: "for specialised audiences" };
 function quickAnswers(f) {
@@ -2888,7 +2899,7 @@ async function initFilm() {
   const dueLine = due ? `<div class="ott-due"><p>⏳ <strong>OTT release:</strong> ${esc(ottDueShort(due))}${due.sure ? "" : ` <span class="muted small">· not announced yet</span>`}</p>
     <button class="btn small" id="land-bell" type="button" hidden>🔔 Tell me when it's on OTT</button><p class="small muted" id="land-help"></p></div>` : "";
   // Same wording as the server's (lib/seo.js filmSearchTitle): how people search, "<film> OTT".
-  document.title = `${f.t}${years ? ` (${years})` : ""} ${due ? "OTT Release Date & Platform" : "OTT: Where to Watch Online"} · ${f.l === "en" ? "Hollywood" : lang} ${tv ? "Web Series" : "Movie"}`;
+  document.title = `${f.t}${years ? ` (${years})` : ""} ${filmSearchWhat(f, due)} · ${f.l === "en" ? "Hollywood" : lang} ${tv ? "Web Series" : "Movie"}`;
   // Dubbed versions on the apps that list them (f.au, from the weekly JustWatch check; not Netflix).
   const dubs = f.w.length ? (f.au || []).map((c) => langLabel(CAT_LANGS[c] || "")).filter(Boolean) : [];
   const cinemas = inCinemas(f);
