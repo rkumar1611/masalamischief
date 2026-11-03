@@ -211,7 +211,8 @@
         stat(r.reported || 0, "reviews reported", "audience", r.reported) +
         stat(MOVIES.length, "our own reviews", "reviews") +
         stat(r.live || 0, "readers' reviews live") +
-        (d.secrets && d.secrets.accounts ? stat(d.users ? d.users.total : 0, "visitors signed in with Google") : "");
+        (d.secrets && d.secrets.accounts ? stat(d.users ? d.users.total : 0, "visitors signed in with Google") : "") +
+        (d.catalog ? stat((d.catalog.titles || 0).toLocaleString("en-IN"), "titles in our own database") + stat(d.catalog.arrived || 0, "arrivals on apps this week") + stat(d.catalog.gone || 0, "titles left an app this week") : "");
       $("push-stats").innerHTML =
         stat(p.total, "phones with alerts on") + stat(p.weekly, "get the Friday roundup") + stat(p.waiting, "waiting for a film to land");
       const s = d.secrets || {};
