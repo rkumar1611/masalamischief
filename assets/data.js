@@ -1263,6 +1263,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-03",
   items: [
+    { title: "Rockstar", year: 2011, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70222861", note: "Directed by Imtiaz Ali · IMDb 7.8" },
+    { title: "Raanjhanaa", year: 2013, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70286078", note: "Directed by Aanand L. Rai · IMDb 7.6" },
     { title: "Enemy", year: 2021, lang: "Tamil", app: "SonyLIV", added: "2026-11-03", url: "https://www.sonyliv.com/movies/enemy-1000161148", note: "Directed by Anand Shankar · IMDb 6.1" },
     { title: "Parasite", year: 2019, lang: "Korean", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/parasite-1000230983", note: "Directed by Bong Joon Ho · IMDb 8.5" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/chaaver-1000253152", note: "Directed by Tinu Pappachan · IMDb 6.2" },
@@ -1275,8 +1277,6 @@ const NEW_ON_OTT = {
     { title: "Tomcats", year: 2001, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60020245", note: "Directed by Gregory Poirier · IMDb 5.3" },
     { title: "Taxi Driver", year: 1976, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/18907685", note: "Directed by Martin Scorsese · IMDb 8.2" },
     { title: "Radio", year: 2003, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60031265", note: "Directed by Michael Tollin · IMDb 6.9" },
-    { title: "Click", year: 2006, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/70041162", note: "Directed by Frank Coraci · IMDb 6.5" },
-    { title: "The Bridge on the River Kwai", year: 1957, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60002970", note: "Directed by David Lean · IMDb 8.1" },
   ],
 };
 
