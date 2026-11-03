@@ -2,8 +2,8 @@
 // sending only the titles that are new or changed, and keeping each title's app history (when it arrived on
 // or left an app). Run after each catalogue build by .github/workflows/weekly-catalog.yml with the
 // ADMIN_PASSWORD repository secret (same value as in Cloudflare). Plain Node 20+, no dependencies.
-// Cloudflare's free D1 plan allows 100,000 row writes a day, so one run sends at most MAX_ROWS titles; the
-// first run (everything is new) simply carries on over the next days.
+// Cloudflare's free D1 plan allows 100,000 row writes a day, shared with the site's reviews, accounts and alerts, so one run
+// sends at most MAX_ROWS titles; a big backlog simply carries on over the next runs.
 import { readdirSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 
@@ -11,7 +11,7 @@ const SITE = process.env.SITE || "https://masalamischief.in";
 const PASSWORD = process.env.ADMIN_PASSWORD;
 const DIR = new URL("../assets/catalog/", import.meta.url);
 const BATCH = 25;
-const MAX_ROWS = 20000;
+const MAX_ROWS = 8000; // each title is about 4 row writes (rows plus their keys); the site's own reviews and accounts share the same 100,000 a day
 const headers = { authorization: `Bearer ${PASSWORD}`, "content-type": "application/json" };
 
 async function call(path, options) {
@@ -54,9 +54,14 @@ async function main() {
 
   const todo = rows.slice(0, MAX_ROWS);
   let sent = 0;
-  for (let i = 0; i < todo.length; i += BATCH) {
-    await call("/api/catalog-sync", { method: "POST", body: JSON.stringify({ rows: todo.slice(i, i + BATCH), seed }) });
-    sent += Math.min(BATCH, todo.length - i);
+  try {
+    for (let i = 0; i < todo.length; i += BATCH) {
+      await call("/api/catalog-sync", { method: "POST", body: JSON.stringify({ rows: todo.slice(i, i + BATCH), seed }) });
+      sent += Math.min(BATCH, todo.length - i);
+    }
+  } catch (e) {
+    // For example out of free writes for today: stop quietly, the rest goes in the next run.
+    console.log(`Catalogue database: stopped early (${e.message.slice(0, 160)}).`);
   }
   console.log(`Catalogue database: ${sent} titles saved${rows.length > sent ? `, ${rows.length - sent} left for the next run` : ""}.`);
 }
