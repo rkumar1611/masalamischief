@@ -60,6 +60,7 @@
         <button class="chip" type="button" data-t="reviews">✍️ Our reviews</button>
         <button class="chip" type="button" data-t="audience">🗣️ Readers' reviews<span class="n" id="n-audience" hidden></span></button>
         <button class="chip" type="button" data-t="reports">🛠️ Wrong-info<span class="n" id="n-reports" hidden></span></button>
+        <button class="chip" type="button" data-t="titles">🎞️ Titles</button>
         <button class="chip" type="button" data-t="alerts">📣 Alerts</button>
         <button class="chip" type="button" data-t="links">🔗 Shortcuts</button>
       </nav>
@@ -112,6 +113,13 @@
         <div id="fix-rows"></div>
       </section>
 
+      <!-- Titles (our own catalogue database) -->
+      <section data-s="titles" hidden>
+        <p class="muted small">Look up any title in our own catalogue database and correct which apps it streams on. Your correction is saved in the database and stays until you remove it.</p>
+        <input class="adm-find" id="t-find" type="search" placeholder="Title (or a key like ml-657644)…" aria-label="Search the catalogue database">
+        <p class="small muted" id="t-msg"></p>
+        <div id="t-rows"></div>
+      </section>
       <!-- Alerts -->
       <section data-s="alerts" hidden>
         <div class="adm-stats" id="push-stats"></div>
@@ -182,7 +190,7 @@
     try { $("keep").checked = Boolean(localStorage.getItem("mm-admin")); } catch {}
 
     // ---- Tabs
-    const TABS = ["home", "reviews", "audience", "reports", "alerts", "links"];
+    const TABS = ["home", "reviews", "audience", "reports", "titles", "alerts", "links"];
     function show(name) {
       tab = TABS.includes(name) ? name : "home";
       document.querySelectorAll("[data-s]").forEach((s) => (s.hidden = s.dataset.s !== tab));
@@ -224,6 +232,40 @@
       ].join(" ");
     }
 
+    // ---- Titles: our own catalogue database (/api/catalog-admin)
+    let titleApps = [];
+    let titleTimer;
+    function titleCard(t) {
+      const now = t.override ? t.override.apps : t.apps;
+      const seen = new Map(t.history.map((h) => [h.app, h]));
+      return `<div class="adm-card" data-key="${esc(t.key)}">
+        <h2>${esc(t.title)} <span class="muted small">${t.year || ""} · ${esc(t.lang)}${t.kind === "tv" ? " · series" : ""} · ${t.rating ? "★ " + t.rating : ""}</span></h2>
+        <p class="small muted">${esc(t.key)} · <a href="film?id=${esc(t.key)}" target="_blank" rel="noopener">open the page</a> · builds find: ${t.apps.length ? esc(t.apps.join(", ")) : "no app"}${t.override ? ` · <strong>corrected ${esc(t.override.updated)}</strong>` : ""}</p>
+        <div class="chips">${titleApps.map((a) => { const h = seen.get(a); return `<label class="chip" style="cursor:pointer"><input type="checkbox" value="${esc(a)}" ${now.includes(a) ? "checked" : ""}> ${esc(a)}${h && h.first_seen ? ` <small class="muted">since ${esc(h.first_seen)}</small>` : ""}</label>`; }).join("")}</div>
+        <input class="adm-find" data-note type="text" maxlength="200" placeholder="Why (optional), e.g. checked on the app" value="${esc(t.override ? t.override.note : "")}">
+        <div class="adm-actions"><button type="button" data-save>Save correction</button>${t.override ? `<button type="button" data-clear>Remove correction</button>` : ""}<span class="small" data-out></span></div>
+      </div>`;
+    }
+    async function findTitles() {
+      const q = $("t-find").value.trim();
+      if (q.length < 2) { $("t-rows").innerHTML = ""; $("t-msg").textContent = ""; return; }
+      const { ok, data } = await api(`/api/catalog-admin?q=${encodeURIComponent(q)}`);
+      if (!ok) { $("t-msg").textContent = data.error || "Couldn't search just now."; return; }
+      titleApps = data.apps || titleApps;
+      $("t-msg").textContent = data.titles.length ? "" : "Nothing found in the database.";
+      $("t-rows").innerHTML = data.titles.map(titleCard).join("");
+    }
+    $("t-find").addEventListener("input", () => { clearTimeout(titleTimer); titleTimer = setTimeout(findTitles, 350); });
+    $("t-rows").addEventListener("click", async (e) => {
+      const card = e.target.closest("[data-key]");
+      const save = e.target.closest("[data-save]"), clear = e.target.closest("[data-clear]");
+      if (!card || (!save && !clear)) return;
+      const out = card.querySelector("[data-out]");
+      const body = { key: card.dataset.key, apps: clear ? null : [...card.querySelectorAll("input[type=checkbox]:checked")].map((c) => c.value), note: card.querySelector("[data-note]").value };
+      const { ok, data } = await api("/api/catalog-admin", "POST", body);
+      out.textContent = ok ? (clear ? "Correction removed." : "Saved.") : (data.error || "Couldn't save.");
+      if (ok) setTimeout(findTitles, 600);
+    });
     // ---- Our reviews (the list of films we've reviewed; Edit opens /write)
     function renderMine() {
       const q = ($("mine-find").value || "").trim().toLowerCase();
