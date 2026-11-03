@@ -3,7 +3,7 @@
 //   GET  ?q=<words or key like "ml-657644">  → { titles: [{ key, title, year, lang, kind, rating, apps, found, override, history }] }
 //   POST { key, apps: [...] | null, note }   → saves the corrected app list (null removes the correction)
 import { json, notReady, isAdmin } from "../../lib/community.js";
-import { ensureCatalogSchema } from "../../lib/catalog-db.js";
+import { ensureCatalogSchema, ensureOverridesSchema } from "../../lib/catalog-db.js";
 
 const KEY = /^[a-z]{2,3}-(tv)?\d+$/;
 // The app names the catalogue uses (APP_RULES in scripts/build-catalog.mjs).
@@ -13,6 +13,7 @@ async function get({ request, env }) {
   if (!env.DB) return notReady();
   if (!isAdmin(request, env)) return json({ error: "Not allowed." }, 401);
   await ensureCatalogSchema(env.DB);
+  await ensureOverridesSchema(env.DB);
   const q = (new URL(request.url).searchParams.get("q") || "").trim().slice(0, 80);
   if (q.length < 2) return json({ titles: [] });
   const { results } = KEY.test(q.toLowerCase())
@@ -47,6 +48,7 @@ async function post({ request, env }) {
   const key = String(body.key || "");
   if (!KEY.test(key)) return json({ error: "Unknown title." }, 400);
   await ensureCatalogSchema(env.DB);
+  await ensureOverridesSchema(env.DB);
   if (!(await env.DB.prepare("SELECT 1 AS ok FROM catalog_titles WHERE key = ?").bind(key).first())) return json({ error: "That title isn't in the database." }, 404);
   if (body.apps === null) {
     await env.DB.prepare("DELETE FROM catalog_overrides WHERE key = ?").bind(key).run();
