@@ -55,18 +55,32 @@ jobs:
         run: node scripts/fetch-extras.mjs
 
       - name: Commit and push if anything changed
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
         run: |
-          # status (not diff) so brand-new files, like assets/catalog/reviewed.json, count too
-          if [ -z "$(git status --porcelain)" ]; then
-            echo "Nothing new today."
-            exit 0
-          fi
           git config user.name "masala-mischief-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Daily update ($(date -u +%Y-%m-%d))"
-          git pull --rebase origin main
-          git push origin main
+          save() {
+            # status (not diff) so brand-new files, like assets/catalog/reviewed.json, count too
+            if [ -z "$(git status --porcelain)" ]; then return 1; fi
+            git add -A
+            git commit -m "Daily update ($(date -u +%Y-%m-%d))"
+          }
+          if ! save; then echo "Nothing new today."; exit 0; fi
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push origin main; then exit 0; fi
+            # A review published, or the catalogue run, changed the same files while this ran. Start again from
+            # the newest main and redo today's refresh on top of it (the scripts only add what is missing).
+            git rebase --abort || true
+            git fetch origin main
+            git reset --hard origin/main
+            node scripts/refresh-new-on-ott.mjs || true
+            node scripts/fetch-images.mjs || true
+            node scripts/fetch-extras.mjs || true
+            if ! save; then echo "Nothing left to add after the update."; exit 0; fi
+          done
+          echo "Could not push after 3 tries."
+          exit 1
 
       # Make sure the live site is serving what's on main. If Cloudflare didn't publish (a failed build,
       # or an older deployment was rolled back to), ask it to rebuild via the CF_DEPLOY_HOOK secret.
