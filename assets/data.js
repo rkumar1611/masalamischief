@@ -1263,6 +1263,9 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-03",
   items: [
+    { title: "Friendship", year: 2025, lang: "English", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/82031089", note: "Directed by Andrew DeYoung · IMDb 6.6" },
+    { title: "Manmarziyaan", year: 2018, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/83192237", note: "Directed by Anurag Kashyap · IMDb 6.8" },
+    { title: "Habji Gabji", year: 2022, lang: "Bengali", app: "JioHotstar", added: "2026-11-03", url: "https://www.hotstar.com/in/movies/habji-gabji/1271718411", note: "Directed by Raj Chakraborty · IMDb 6.8", kids: true },
     { title: "Spider-Man: Far from Home", year: 2019, lang: "English", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/81055822", note: "Directed by Jon Watts · IMDb 7.3" },
     { title: "Rockstar", year: 2011, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70222861", note: "Directed by Imtiaz Ali · IMDb 7.8" },
     { title: "Raanjhanaa", year: 2013, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70286078", note: "Directed by Aanand L. Rai · IMDb 7.6" },
@@ -1274,9 +1277,6 @@ const NEW_ON_OTT = {
     { title: "Heist", year: 2001, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60020557", note: "Directed by David Mamet · IMDb 6.5" },
     { title: "The Crush", year: 1993, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/409583", note: "Directed by Alan Shapiro · IMDb 5.9" },
     { title: "Anger Management", year: 2003, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60027583", note: "Directed by Peter Segal · IMDb 6.3" },
-    { title: "The Quick and the Dead", year: 1995, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/885014", note: "Directed by Sam Raimi · IMDb 6.5" },
-    { title: "Tomcats", year: 2001, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60020245", note: "Directed by Gregory Poirier · IMDb 5.3" },
-    { title: "Taxi Driver", year: 1976, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/18907685", note: "Directed by Martin Scorsese · IMDb 8.2" },
   ],
 };
 
