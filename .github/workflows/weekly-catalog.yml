@@ -71,3 +71,11 @@ jobs:
           git commit -m "$what ($(date -u +%Y-%m-%d))"
           git pull --rebase origin main
           git push origin main
+
+      # Our own copy of the catalogue in D1, with each title's app history (scripts/sync-catalog-db.mjs). A problem here
+      # (the site not deployed yet, the database busy) must not stop the catalogue itself, so it never fails the run.
+      - name: Save to the catalogue database
+        continue-on-error: true
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: node scripts/sync-catalog-db.mjs
