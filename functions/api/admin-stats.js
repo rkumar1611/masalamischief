@@ -21,7 +21,7 @@ export async function onRequestGet({ request, env }) {
     // Our own copy of the catalogue (lib/catalog-db.js): arrivals and departures only count once real dates are recorded.
     one(ensureCatalogSchema, `SELECT (SELECT COUNT(*) FROM catalog_titles) AS titles, (SELECT MAX(updated) FROM catalog_titles) AS updated,
       (SELECT COUNT(*) FROM catalog_apps WHERE first_seen >= '${week}') AS arrived,
-      (SELECT COUNT(*) FROM catalog_apps WHERE active = 0 AND last_seen >= '${week}') AS left`),
+      (SELECT COUNT(*) FROM catalog_apps WHERE active = 0 AND last_seen >= '${week}') AS gone`),
   ]);
   return json({ reviews, fixes, push, users, catalog, secrets: { accounts: accountsOn(env), github: Boolean(env.GITHUB_TOKEN), turnstile: Boolean(env.TURNSTILE_SECRET), reviewsAutoPublish: env.REVIEWS_AUTOPUBLISH === "1" } });
 }
