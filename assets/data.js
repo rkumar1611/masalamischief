@@ -1261,8 +1261,11 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-03",
+  checked: "2026-11-04",
   items: [
+    { title: "Jurassic World: Rebirth", year: 2025, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/81956629", note: "Directed by Gareth Edwards · IMDb 5.8" },
+    { title: "The Disaster Artist", year: 2017, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/80180766", note: "Directed by James Franco · IMDb 7.3" },
+    { title: "Valentine's Day", year: 2010, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/70124804", note: "Directed by Garry Marshall · IMDb 5.8" },
     { title: "Friendship", year: 2025, lang: "English", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/82031089", note: "Directed by Andrew DeYoung · IMDb 6.6" },
     { title: "Manmarziyaan", year: 2018, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/83192237", note: "Directed by Anurag Kashyap · IMDb 6.8" },
     { title: "Habji Gabji", year: 2022, lang: "Bengali", app: "JioHotstar", added: "2026-11-03", url: "https://www.hotstar.com/in/movies/habji-gabji/1271718411", note: "Directed by Raj Chakraborty · IMDb 6.8", kids: true },
@@ -1274,9 +1277,6 @@ const NEW_ON_OTT = {
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/chaaver-1000253152", note: "Directed by Tinu Pappachan · IMDb 6.2" },
     { title: "Creed II", year: 2018, lang: "English", app: "Prime Video", added: "2026-11-02", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.818b1c85-1e1a-4909-a736-e3ef5ccd2ede", note: "Directed by Steven Caple Jr. · IMDb 7.1" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
-    { title: "Heist", year: 2001, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60020557", note: "Directed by David Mamet · IMDb 6.5" },
-    { title: "The Crush", year: 1993, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/409583", note: "Directed by Alan Shapiro · IMDb 5.9" },
-    { title: "Anger Management", year: 2003, lang: "English", app: "Netflix", added: "2026-11-01", url: "https://www.netflix.com/title/60027583", note: "Directed by Peter Segal · IMDb 6.3" },
   ],
 };
 
