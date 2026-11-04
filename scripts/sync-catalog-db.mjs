@@ -52,6 +52,10 @@ async function main() {
   const seed = total < all * 0.9;
   console.log(`Catalogue database: ${total} of ${all} titles saved, ${rows.length} new or changed${seed ? " (filling up: arrival dates left blank)" : ""}.`);
 
+  // Titles the database has never had: the daily build re-adds titles the weekly one trimmed, so only these are really new.
+  const fresh = rows.filter((r) => !saved.has(r.k));
+  if (!seed) console.log(`Catalogue database: ${fresh.length} titles never seen before${fresh.length ? ` (${fresh.slice(0, 12).map((r) => `${r.t}${r.y ? ` ${r.y}` : ""}`).join(", ")}${fresh.length > 12 ? ", …" : ""})` : ""}.`);
+
   const todo = rows.slice(0, MAX_ROWS);
   let sent = 0;
   try {

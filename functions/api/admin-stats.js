@@ -20,6 +20,7 @@ export async function onRequestGet({ request, env }) {
     accountsOn(env) ? one(ensureAccountSchema, "SELECT COUNT(*) AS total FROM users") : null,
     // Our own copy of the catalogue (lib/catalog-db.js): arrivals and departures only count once real dates are recorded.
     one(ensureCatalogSchema, `SELECT (SELECT COUNT(*) FROM catalog_titles) AS titles, (SELECT MAX(updated) FROM catalog_titles) AS updated,
+      (SELECT COUNT(*) FROM catalog_titles WHERE first_seen >= '${week}') AS fresh,
       (SELECT COUNT(*) FROM catalog_apps WHERE first_seen >= '${week}') AS arrived,
       (SELECT COUNT(*) FROM catalog_apps WHERE active = 0 AND last_seen >= '${week}') AS gone`),
   ]);
