@@ -2261,11 +2261,12 @@ const OVERRIDE_DAYS = 90;
 // The correction for one title ("<lang>-<id>" or "r:<review id>"), if there's a current one.
 const correctionFor = async (key) => {
   const ov = ((await loadCatalog("overrides")) || {}).titles?.[key];
-  return ov && ov.date && (Date.now() - Date.parse(ov.date)) / 864e5 <= OVERRIDE_DAYS ? ov : null;
+  return ov && (ov.keep || (ov.date && (Date.now() - Date.parse(ov.date)) / 864e5 <= OVERRIDE_DAYS)) ? ov : null;
 };
-// As lib/fixes.js overrideApps().
+// As lib/fixes.js overrideApps(); our own correction from /admin (set) is the whole list.
 const withCorrection = (apps, ov) => {
   if (!ov) return apps || [];
+  if (Array.isArray(ov.set)) return [...ov.set];
   const out = (apps || []).filter((a) => !(ov.remove || []).includes(a));
   for (const a of ov.add || []) if (!out.includes(a)) out.push(a);
   return out;
@@ -2949,7 +2950,7 @@ async function initFilm() {
               ? `<p class="muted small">🎬 ${out ? "In cinemas now" : `In cinemas from ${fmtDate(f.rd)}`}, not streaming yet. Pick your city for showtimes and tickets:</p><div class="otts">${ticketLinks()}</div>`
               : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
           ${due ? `<p class="small"><strong>⏳ OTT release:</strong> ${esc(ottDueText(f, due))}</p>` : ""}
-          <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}${fix ? `, corrected ${fmtDate(fix.date)} from a reader's report` : ""}. Availability changes, so confirm in the app.</p>
+          <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}${fix ? `, corrected ${fmtDate(fix.date)} ${fix.keep ? "by us" : "from a reader's report"}` : ""}. Availability changes, so confirm in the app.</p>
         </div>
         <div class="side">
           <dl>

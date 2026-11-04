@@ -4,6 +4,8 @@
 //   POST { key, apps: [...] | null, note }   → saves the corrected app list (null removes the correction)
 import { json, notReady, isAdmin } from "../../lib/community.js";
 import { ensureCatalogSchema, ensureOverridesSchema } from "../../lib/catalog-db.js";
+import { OVERRIDES_PATH, withAdminCorrection } from "../../lib/fixes.js";
+import { github } from "../../lib/github.js";
 
 const KEY = /^[a-z]{2,3}-(tv)?\d+$/;
 // The app names the catalogue uses (APP_RULES in scripts/build-catalog.mjs).
@@ -50,18 +52,34 @@ async function post({ request, env }) {
   await ensureCatalogSchema(env.DB);
   await ensureOverridesSchema(env.DB);
   if (!(await env.DB.prepare("SELECT 1 AS ok FROM catalog_titles WHERE key = ?").bind(key).first())) return json({ error: "That title isn't in the database." }, 404);
-  if (body.apps === null) {
-    await env.DB.prepare("DELETE FROM catalog_overrides WHERE key = ?").bind(key).run();
-    return json({ ok: true, override: null });
+  let apps = null;
+  let note = "";
+  if (body.apps !== null) {
+    const allowed = new Set(APPS);
+    if (!Array.isArray(body.apps) || body.apps.some((a) => !allowed.has(a))) return json({ error: "Unknown app." }, 400);
+    apps = [...new Set(body.apps)];
+    note = String(body.note || "").slice(0, 200);
   }
-  const allowed = new Set(APPS);
-  if (!Array.isArray(body.apps) || body.apps.some((a) => !allowed.has(a))) return json({ error: "Unknown app." }, 400);
-  const apps = [...new Set(body.apps)];
-  const note = String(body.note || "").slice(0, 200);
-  await env.DB.prepare(`INSERT INTO catalog_overrides (key, apps, note, updated) VALUES (?, ?, ?, ?)
-    ON CONFLICT(key) DO UPDATE SET apps = excluded.apps, note = excluded.note, updated = excluded.updated`)
-    .bind(key, JSON.stringify(apps), note, new Date().toISOString().slice(0, 10)).run();
-  return json({ ok: true, override: { apps, note } });
+  // Kept in the database (the record), then published to assets/catalog/overrides.json on GitHub, which the film pages and
+  // the daily catalogue build lay over what the apps' data says (lib/fixes.js).
+  if (apps === null) {
+    await env.DB.prepare("DELETE FROM catalog_overrides WHERE key = ?").bind(key).run();
+  } else {
+    await env.DB.prepare(`INSERT INTO catalog_overrides (key, apps, note, updated) VALUES (?, ?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET apps = excluded.apps, note = excluded.note, updated = excluded.updated`)
+      .bind(key, JSON.stringify(apps), note, new Date().toISOString().slice(0, 10)).run();
+  }
+  try {
+    const gh = github(env);
+    const head = await gh.head();
+    const before = await gh.read(OVERRIDES_PATH, head.sha);
+    const title = (await env.DB.prepare("SELECT title FROM catalog_titles WHERE key = ?").bind(key).first())?.title || key;
+    await gh.commit(head, { [OVERRIDES_PATH]: withAdminCorrection(before, key, apps, note) },
+      apps === null ? `Correction removed: ${title}` : `Correction: ${title} streams on ${apps.join(", ") || "no app"} (from /admin)`);
+  } catch (e) {
+    return json({ error: `Saved in the database, but couldn't publish it to the site: ${e.message}. Press Save again in a minute.` }, 502);
+  }
+  return json({ ok: true, override: apps === null ? null : { apps, note } });
 }
 
 // Admin only, so the real error is shown to help fix a problem quickly.

@@ -18,7 +18,9 @@
 // Plain Node 20+, no dependencies.
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { EXTRA_APPEND, VIDEO_LANGS, extrasOf } from "./tmdb-extras.mjs";
+import { overrideApps } from "../lib/fixes.js";
 
 const OUT = new URL("../assets/catalog/", import.meta.url);
 const DATA = new URL("../assets/data.js", import.meta.url);
@@ -453,7 +455,11 @@ const seriesDetails = (picks) => details(picks, "tv", "watch/providers,content_r
 // layout, so unchanged titles don't have to be fetched again.
 function loadExisting() {
   const have = new Map();
-  const add = (films) => Object.values(films).forEach((f) => have.set(keyOf(f), f));
+  // wr / jr hold the apps the builds found, for titles saved with a correction laid over them (withOverrides): back to those here.
+  const add = (films) => Object.values(films).forEach((f) => {
+    if (f.wr) { f.w = f.wr; if (f.jr) f.ja = f.jr; delete f.wr; delete f.jr; }
+    have.set(keyOf(f), f);
+  });
   for (const lang of OUT_LANGS) {
     const dir = new URL(`t/${lang}/`, OUT);
     if (existsSync(dir)) {
@@ -549,9 +555,10 @@ async function main() {
   }
 
   attachLinks([...films, ...keptSeries], await appLinks(), have);
-  writeCatalogue([...films, ...keptSeries], trendIds);
+  const shown = withOverrides([...films, ...keptSeries]);
+  writeCatalogue(shown, trendIds);
   await writeUpcoming(films);
-  await writeTop10([...films, ...keptSeries]);
+  await writeTop10(shown);
   await writePeopleBios();
   console.log(`Catalogue: ${films.length} films and ${keptSeries.length} series.`);
 }
@@ -598,13 +605,35 @@ async function daily() {
   writeLanded(fresh.values(), have);
   for (const [k, f] of fresh) have.set(k, f);
   attachLinks([...have.values()], null, before);
-  writeCatalogue([...have.values()], trendIds);
+  const shown = withOverrides([...have.values()]);
+  writeCatalogue(shown, trendIds);
   await writeUpcoming([...have.values()]);
-  await writeTop10([...have.values()]);
+  await writeTop10(shown);
   await writePeopleBios();
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, od, oa, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, od, oa, wr, jr, ...rest }) => rest;
+
+// Corrections made by hand (/admin → Titles) and from readers' reports (assets/catalog/overrides.json, see lib/fixes.js)
+// laid over the apps the builds found, so lists, the Top 10 and search agree with the film pages. Titles are copied,
+// not changed: a corrected title keeps what the builds found in wr / jr, so removing the correction brings that back.
+let overridesText = "";
+function withOverrides(titles) {
+  let all = {};
+  try { overridesText = readFileSync(new URL("overrides.json", OUT), "utf8"); all = JSON.parse(overridesText).titles || {}; } catch { overridesText = ""; }
+  let changed = 0;
+  const out = titles.map((f) => {
+    const ov = all[keyOf(f)];
+    if (!ov) return f;
+    const w = overrideApps(f.w || [], ov);
+    if (w.length === (f.w || []).length && w.every((a) => (f.w || []).includes(a))) return f;
+    changed++;
+    const hasJa = f.ja && f.ja.length;
+    return { ...f, w, wr: f.w || [], ...(hasJa ? { ja: overrideApps(f.ja, ov), jr: f.ja } : {}) };
+  });
+  if (changed) console.log(`Corrections laid over ${changed} titles.`);
+  return out;
+}
 
 // More like this (ml): six titles for each title page, worked out here so the page doesn't have to
 // download a whole language list: TMDB's recommendations (rc) first, then titles in the same language
@@ -1069,7 +1098,9 @@ async function writePeopleBios() {
 async function writeTop10(all) {
   const file = new URL("top10.json", OUT);
   const old = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : null;
-  if (old && old.v === TOP_VERSION && old.built > day(-6)) { console.log(`Top 10: from ${old.built}, not due yet.`); return; }
+  // Also rebuilt when the corrections changed (overrides.json), so a fix shows in the Top 10 the next day.
+  const sig = createHash("sha1").update(overridesText).digest("hex").slice(0, 12);
+  if (old && old.v === TOP_VERSION && old.o === sig && old.built > day(-6)) { console.log(`Top 10: from ${old.built}, not due yet.`); return; }
   const byId = new Map(all.map((f) => [String(f.id), f]));
   const apps = [];
   const known = new Set(APP_RULES.map((r) => r[1]).filter((n) => n !== "MX Player"));
@@ -1088,7 +1119,7 @@ async function writeTop10(all) {
     console.log(`Top 10: ${e.message}; keeping the last one.`);
     return;
   }
-  writeIfChanged(file, JSON.stringify({ built: day(0), v: TOP_VERSION, apps }));
+  writeIfChanged(file, JSON.stringify({ built: day(0), v: TOP_VERSION, o: sig, apps }));
   console.log(`Top 10: ${apps.length} apps.`);
 }
 
