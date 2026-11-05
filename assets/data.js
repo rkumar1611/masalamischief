@@ -46,7 +46,7 @@ const MOVIES = [
   {
     id: "3-idiots", title: "3 Idiots", year: 2009, lang: "Hindi", audio: ["Hindi"],
     genres: ["Comedy", "Drama"], runtime: 170,
-    moods: ["feel-good", "friends-night", "rainy-sunday", "family-time"], masala: 4, quality: 8.5,
+    moods: ["feel-good", "friends-night", "casual-watch", "family-time"], masala: 4, quality: 8.5,
     tagline: "The engineering-college film every Indian parent should be forced to watch.",
     review: [
       "Three friends, one tyrannical director and an education system that rewards rote over curiosity. It's a comedy first, and the jokes still land fifteen years on, but the reason it became a cultural event is that it said out loud what every hostel already knew.",
@@ -111,7 +111,7 @@ const MOVIES = [
   {
     id: "queen", title: "Queen", year: 2014, lang: "Hindi", audio: ["Hindi"],
     genres: ["Comedy", "Drama"], runtime: 146,
-    moods: ["post-breakup", "feel-good"], masala: 3, quality: 8.5,
+    moods: ["post-breakup", "feel-good", "casual-watch"], masala: 3, quality: 8.5,
     tagline: "Dumped before the wedding? Go on the honeymoon anyway.",
     review: [
       "Rani from Rajouri gets dumped a day before her wedding and takes her honeymoon alone, to Paris and Amsterdam. What follows is the funniest, warmest coming-of-self film Bollywood has made.",
@@ -150,7 +150,7 @@ const MOVIES = [
   {
     id: "jaane-tu", title: "Jaane Tu... Ya Jaane Na", year: 2008, lang: "Hindi", audio: ["Hindi"],
     genres: ["Romance", "Comedy"], runtime: 155,
-    moods: ["first-date", "feel-good", "rainy-sunday"], masala: 3, quality: 7.5,
+    moods: ["first-date", "feel-good", "rainy-sunday", "casual-watch"], masala: 3, quality: 7.5,
     tagline: "Best friends who everyone knows are in love. Except them.",
     review: [
       "Jai and Aditi are the only people who can't see it, and their gang spends an entire film narrating the story at an airport. It's breezy, young and full of AR Rahman songs you forgot you knew.",
@@ -215,7 +215,7 @@ const MOVIES = [
   {
     id: "znmd", title: "Zindagi Na Milegi Dobara", year: 2011, lang: "Hindi", audio: ["Hindi"],
     genres: ["Comedy", "Drama", "Road trip"], runtime: 155,
-    moods: ["friends-night", "feel-good", "first-date"], masala: 3, quality: 8,
+    moods: ["friends-night", "feel-good", "first-date", "casual-watch"], masala: 3, quality: 8,
     tagline: "Three friends, one Spanish road trip, and the urge to book flights immediately.",
     review: [
       "Before a wedding, three school friends take a bachelor trip where each picks one terrifying adventure. It's gorgeous travel porn wrapped around a sharp film about fear and friendship.",
@@ -254,7 +254,7 @@ const MOVIES = [
   {
     id: "stree", title: "Stree", year: 2018, lang: "Hindi", audio: ["Hindi"],
     genres: ["Horror", "Comedy"], runtime: 128,
-    moods: ["friends-night", "edge-of-seat"], masala: 4, quality: 7.5,
+    moods: ["friends-night", "edge-of-seat", "casual-watch"], masala: 4, quality: 7.5,
     tagline: "'O Stree, kal aana.' Write it on your wall.",
     review: [
       "A small town where a ghost abducts men at night during the festival season, and a tailor who is sure he can help. The scares are light and the jokes are many.",
@@ -267,7 +267,7 @@ const MOVIES = [
   {
     id: "bangalore-days", title: "Bangalore Days", year: 2014, lang: "Malayalam", audio: ["Malayalam"],
     genres: ["Comedy", "Drama"], runtime: 171,
-    moods: ["feel-good", "friends-night", "first-date"], masala: 3, quality: 8,
+    moods: ["feel-good", "friends-night", "first-date", "casual-watch"], masala: 3, quality: 8,
     tagline: "Three cousins, one big city, and the feeling that your twenties are a mess for everyone.",
     review: [
       "Cousins Kuttan, Divya and Arjun land in Bangalore with very different dreams. Each gets a love story, a crisis and a moment to grow up.",
@@ -373,7 +373,7 @@ const MOVIES = [
   {
     id: "knives-out", title: "Knives Out", year: 2019, lang: "English", audio: ["English"],
     genres: ["Mystery", "Comedy"], runtime: 130,
-    moods: ["mind-bender", "friends-night", "first-date"], masala: 3, quality: 8.5,
+    moods: ["mind-bender", "friends-night", "first-date", "casual-watch"], masala: 3, quality: 8.5,
     tagline: "A rich family, a dead patriarch, and a detective with a ridiculous accent.",
     review: [
       "A famous crime novelist is found dead after his birthday party, and every relative has a motive. It's a playful whodunit that keeps flipping what kind of mystery it is.",
@@ -453,7 +453,7 @@ const MOVIES = [
   {
     id: "paddington-2", title: "Paddington 2", year: 2017, lang: "English", audio: ["English"],
     genres: ["Comedy", "Family"], runtime: 104,
-    moods: ["family-time", "feel-good", "rainy-sunday"], masala: 3, quality: 9.5,
+    moods: ["family-time", "feel-good", "rainy-sunday", "casual-watch"], masala: 3, quality: 9.5,
     tagline: "A polite bear, a stolen pop-up book, and the kindest film ever made.",
     review: [
       "Paddington wants to buy his aunt a birthday present, gets wrongly sent to prison, and turns the whole jail into a marmalade-loving family. Hugh Grant is hilarious as a vain villain.",
@@ -505,7 +505,7 @@ const MOVIES = [
   {
     id: "laapataa-ladies", title: "Laapataa Ladies", year: 2024, lang: "Hindi", audio: ["Hindi"],
     genres: ["Comedy", "Drama"], runtime: 124,
-    moods: ["feel-good", "first-date", "family-time", "rainy-sunday"], masala: 3, quality: 9,
+    moods: ["feel-good", "first-date", "family-time", "casual-watch"], masala: 3, quality: 9,
     tagline: "Two brides, one train, two veils, and a very wrong turn.",
     review: [
       "On a crowded train, two newly married brides in identical red ghoonghats get swapped. One young husband brings home the wrong wife, and the other bride is left alone on a station platform. Kiran Rao turns that mix-up into a warm village comedy.",
@@ -700,7 +700,7 @@ const MOVIES = [
   {
     id: "jathi-ratnalu", title: "Jathi Ratnalu", year: 2021, lang: "Telugu", audio: ["Telugu"],
     genres: ["Comedy"], runtime: 148,
-    moods: ["friends-night", "feel-good"], masala: 4, quality: 7.5,
+    moods: ["friends-night", "feel-good", "casual-watch"], masala: 4, quality: 7.5,
     tagline: "Three small-town idiots, one big-city frame-up, zero brain cells between them.",
     review: [
       "Srikanth, Shekar and Ravi are lovable goofballs from Jogipet who move to Hyderabad and somehow end up accused of trying to kill a minister. Naveen Polishetty's motor-mouth timing carries the whole thing.",
@@ -726,7 +726,7 @@ const MOVIES = [
   {
     id: "aavesham", title: "Aavesham", year: 2024, lang: "Malayalam", audio: ["Malayalam"],
     genres: ["Comedy", "Action"], runtime: 158,
-    moods: ["friends-night", "go-big"], masala: 5, quality: 8,
+    moods: ["friends-night", "go-big", "casual-watch"], masala: 5, quality: 8,
     tagline: "Three freshers hire a Bengaluru gangster. The gangster adopts them.",
     review: [
       "Three Malayali engineering students in Bengaluru get ragged by seniors and go looking for local muscle. They find Ranga, a white-suited, gold-chained, wildly unpredictable gangster who decides they're his boys now.",
@@ -739,7 +739,7 @@ const MOVIES = [
   {
     id: "premalu", title: "Premalu", year: 2024, lang: "Malayalam", audio: ["Malayalam", "Telugu"],
     genres: ["Romance", "Comedy"], runtime: 156,
-    moods: ["first-date", "feel-good", "post-breakup"], masala: 3, quality: 8,
+    moods: ["first-date", "feel-good", "post-breakup", "casual-watch"], masala: 3, quality: 8,
     tagline: "A Malayali boy in Hyderabad, a girl way out of his league, and a lot of bad decisions.",
     review: [
       "Sachin (Naslen) moves to Hyderabad after a heartbreak and falls hard for Reenu (Mamitha Baiju), a confident IT professional who sees him as a friend. That's the whole plot, and it's plenty.",
@@ -752,7 +752,7 @@ const MOVIES = [
   {
     id: "minnal-murali", title: "Minnal Murali", year: 2021, lang: "Malayalam", audio: ["Malayalam", "Hindi", "Tamil", "Telugu", "Kannada"],
     genres: ["Superhero", "Comedy"], runtime: 158,
-    moods: ["feel-good", "family-time", "go-big"], masala: 4, quality: 8,
+    moods: ["feel-good", "family-time", "go-big", "casual-watch"], masala: 4, quality: 8,
     tagline: "Lightning strikes a village tailor. Kerala gets its own desi superhero.",
     review: [
       "In a small Kerala village in the 1990s, tailor Jaison (Tovino Thomas) is struck by lightning and wakes up with powers. So does someone else, and that's where it gets interesting.",
@@ -830,7 +830,7 @@ const MOVIES = [
   {
     id: "top-gun-maverick", title: "Top Gun: Maverick", year: 2022, lang: "English", audio: ["English", "Hindi"],
     genres: ["Action", "Drama"], runtime: 131,
-    moods: ["go-big", "friends-night", "feel-good"], masala: 5, quality: 8.5,
+    moods: ["go-big", "friends-night", "feel-good", "casual-watch"], masala: 5, quality: 8.5,
     tagline: "Tom Cruise, real fighter jets, and the most fun you'll have with your speakers up.",
     review: [
       "Thirty years after the first film, Maverick is called back to train a squad of young pilots for an impossible mission, including the son of his late best friend Goose.",
