@@ -19,6 +19,7 @@ const MOODS = [
   { id: "go-big", label: "Go big or go home", emoji: "💥", blurb: "Slow-motion, whistles, interval blocks that slap." },
   { id: "mind-bender", label: "Mind-bender", emoji: "🌀", blurb: "You'll be explaining the plot at 2 a.m." },
   { id: "family-time", label: "Family movie night", emoji: "🛋️", blurb: "Something the grandparents and the kids will all enjoy." },
+  { id: "casual-watch", label: "Casual watch", emoji: "🍿", blurb: "Nothing heavy. A normal, easy watch while you scroll or snack." },
 ];
 
 const LANGUAGES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "English"];

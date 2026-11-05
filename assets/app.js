@@ -2601,6 +2601,7 @@ const MOOD_GENRES = {
   "go-big": ["Action", "Adventure", "Fantasy", "Science Fiction", "War", "Action & Adventure", "Sci-Fi & Fantasy"],
   "mind-bender": ["Science Fiction", "Mystery", "Thriller", "Sci-Fi & Fantasy"],
   "family-time": ["Family", "Animation", "Kids"],
+  "casual-watch": ["Comedy", "Drama", "Romance", "Family", "Music", "Animation"],
 };
 const fitsMood = (f, mood) => !mood || (f.g || []).some((g) => (MOOD_GENRES[mood] || []).includes(g));
 // Kid-friendly enough for "Kids are watching": tagged Family or Kids, no adult or 16+ certificate, not
