@@ -28,6 +28,21 @@ const LANG_LABELS = { English: "Hollywood" };
 
 const MOVIES = [
   {
+    id: "akka", title: "Akka", year: 2026, lang: "Tamil", audio: ["Tamil", "Hindi"],
+    genres: ["Drama", "Crime"], runtime: 0, kind: "tv", seasons: 1,
+    moods: ["mind-bender"], masala: 3, quality: 7,
+    tagline: "Power. Ambition. Secrets. A world where women rule.",
+    review: [
+      "Akka brings a refreshing and unconventional concept to the screen, offering something different from the usual crime dramas and predictable storylines.",
+      "What makes it interesting is its unusual premise, strong female characters, and the power dynamics at the heart of the story.",
+      "🔥 It's the kind of series that catches your attention because it dares to explore something different.",
+      "There may be moments where the storytelling takes its time, but the unique concept makes it worth exploring."
+    ],
+    hits: ["A fresh, unconventional concept with strong female characters and intriguing power dynamics."],
+    misses: ["The pacing feels slow at times, and some scenes could have been more engaging."],
+    reviewed: "2026-11-05",
+  },
+  {
     id: "3-idiots", title: "3 Idiots", year: 2009, lang: "Hindi", audio: ["Hindi"],
     genres: ["Comedy", "Drama"], runtime: 170,
     moods: ["feel-good", "friends-night", "rainy-sunday", "family-time"], masala: 4, quality: 8.5,
@@ -856,6 +871,7 @@ const MOVIES = [
 // stream = included with a subscription; rent = rent or buy. Re-check every month or so.
 const WATCH_CHECKED = "2026-10-28";
 const WATCH = {
+  "akka": { stream: ["Netflix"], rent: [] },
   "3-idiots": { stream: [], rent: [] },
   "kumbalangi-nights": { stream: ["Prime Video"], rent: ["Apple TV"] },
   "rrr": { stream: ["Netflix", "ZEE5"], rent: [] },
@@ -924,6 +940,9 @@ const WATCH = {
 // Direct links to each film's page on the streaming app (from JustWatch India, WATCH_CHECKED).
 // A platform missing here falls back to that app's home page (PLATFORM_HOME).
 const WATCH_LINKS = {
+  "akka": {
+    "Netflix": "https://www.netflix.com/title/81772075",
+  },
   "96": {
     "SonyLIV": "https://www.sonyliv.com/movies/96-1000226530",
     "Sun NXT": "https://www.sunnxt.com/movie/detail/82850/96/",
@@ -1285,6 +1304,7 @@ const NEW_ON_OTT = {
 // Film images from TMDB (themoviedb.org): backdrop = wide still for cards, poster = portrait for the review page.
 // Paths only; the site loads them from image.tmdb.org. Films without an entry keep the coloured tile.
 const IMAGES = {
+  "akka": { tmdb: "tv243555", poster: "/tdnHaR0vlKMQbjmaCs2V3LDmzSd.jpg", backdrop: "/cVUKFfws4upCB4ytz5uGIONIiRc.jpg", match: "Akka (2026)", imdb: "tt29625288" },
   "3-idiots": { tmdb: 20453, poster: "/66A9MqXOyVFCssoloscw79z8Tew.jpg", backdrop: "/u7kuUaySqXBVAtqEl9vkTkAzHV9.jpg", match: "3 Idiots (2009)", imdb: "tt1187043" },
   "kumbalangi-nights": { tmdb: 575351, poster: "/lJ3RvIirE2C7gdBKvPRaoQ3iCo2.jpg", backdrop: "/8i8ml0LRdFT6LSaTMUG3gLzJfEq.jpg", match: "Kumbalangi Nights (2019)", imdb: "tt8413338" },
   "rrr": { tmdb: 579974, poster: "/wE0I6efAW4cDDmZQWtwZMOW44EJ.jpg", backdrop: "/i0Y0wP8H6SRgjr6QmuwbtQbS24D.jpg", match: "RRR (2022)", imdb: "tt8178634" },
