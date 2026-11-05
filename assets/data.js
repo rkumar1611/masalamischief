@@ -28,7 +28,7 @@ const LANG_LABELS = { English: "Hollywood" };
 
 const MOVIES = [
   {
-    id: "akka", title: "Akka", year: 2026, lang: "Tamil", audio: ["Tamil", "Hindi"],
+    id: "akka", title: "Akka", year: 2026, lang: "Tamil", audio: ["Tamil", "Hindi", "Telugu", "Malayalam", "Kannada"],
     genres: ["Drama", "Crime"], runtime: 0, kind: "tv", seasons: 1,
     moods: ["mind-bender"], masala: 3, quality: 7,
     tagline: "Power. Ambition. Secrets. A world where women rule.",
