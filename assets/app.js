@@ -2934,7 +2934,8 @@ async function initFilm() {
   // Same wording as the server's (lib/seo.js filmSearchTitle): how people search, "<film> OTT".
   document.title = `${f.t}${years ? ` (${years})` : ""} ${filmSearchWhat(f, due)} · ${f.l === "en" ? "Hollywood" : lang} ${tv ? "Web Series" : "Movie"}`;
   // Dubbed versions on the apps that list them (f.au, from the weekly JustWatch check; not Netflix).
-  const dubs = f.w.length ? (f.au || []).map((c) => langLabel(CAT_LANGS[c] || "")).filter(Boolean) : [];
+  // Audio languages by their own names ("Japanese", "English"), not the catalogue's buckets ("Anime", "Hollywood").
+  const dubs = f.w.length ? (f.au || []).map((c) => (c === "en" ? "English" : c === "ja" ? "Japanese" : CAT_LANGS[c])).filter(Boolean) : [];
   const cinemas = inCinemas(f);
   const out = cinemas && f.rd <= new Date().toISOString().slice(0, 10);
   const pageUrl = location.href;
