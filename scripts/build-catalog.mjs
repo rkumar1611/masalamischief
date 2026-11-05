@@ -501,7 +501,7 @@ function loadExisting() {
 
 // Recent titles every week; older ones when it's their turn (a quarter each week, by id).
 let backfilled = 0;
-const BACKFILL_MAX = 8000; // titles with no app in India are fetched once more for buy/rent and abroad (elsewhere()), this many a run
+const BACKFILL_MAX = 30000; // titles with no app in India are fetched once more for buy/rent and abroad (elsewhere()), this many a run (8000 normally; raised once to catch up in a single run)
 function dueForRefresh(f) {
   if (!("rd" in f) && f.y) return true; // saved by an older build without release dates
   if (f.x !== X_VERSION && !(f.w || []).length && backfilled < BACKFILL_MAX) { backfilled++; return true; }
