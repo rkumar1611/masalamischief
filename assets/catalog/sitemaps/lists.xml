@@ -371,6 +371,7 @@
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=apple-tv&amp;g=romance</loc></url>
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=apple-tv&amp;g=action</loc></url>
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=apple-tv&amp;g=family</loc></url>
+<url><loc>https://masalamischief.in/best?l=ml&amp;app=apple-tv&amp;g=thriller</loc></url>
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=netflix</loc></url>
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=netflix&amp;g=drama</loc></url>
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=netflix&amp;g=thriller</loc></url>
@@ -391,8 +392,8 @@
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=jiohotstar&amp;g=thriller</loc></url>
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=jiohotstar&amp;g=comedy</loc></url>
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=aha</loc></url>
-<url><loc>https://masalamischief.in/best?l=ml&amp;app=aha&amp;g=drama</loc></url>
 <url><loc>https://masalamischief.in/best?l=ml&amp;app=aha&amp;g=thriller</loc></url>
+<url><loc>https://masalamischief.in/best?l=ml&amp;app=aha&amp;g=drama</loc></url>
 <url><loc>https://masalamischief.in/best?l=kn</loc></url>
 <url><loc>https://masalamischief.in/best?l=kn&amp;g=drama</loc></url>
 <url><loc>https://masalamischief.in/best?l=kn&amp;g=action</loc></url>
@@ -425,6 +426,7 @@
 <url><loc>https://masalamischief.in/best?l=kn&amp;app=prime-video&amp;g=comedy</loc></url>
 <url><loc>https://masalamischief.in/best?l=kn&amp;app=prime-video&amp;g=crime</loc></url>
 <url><loc>https://masalamischief.in/best?l=kn&amp;app=zee5</loc></url>
+<url><loc>https://masalamischief.in/best?l=kn&amp;app=apple-tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=mr</loc></url>
 <url><loc>https://masalamischief.in/best?l=mr&amp;g=drama</loc></url>
 <url><loc>https://masalamischief.in/best?l=mr&amp;g=comedy</loc></url>
@@ -555,9 +557,9 @@
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=animation</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=animation&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=science-fiction</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=thriller</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=crime</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=crime&amp;k=tv</loc></url>
-<url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=thriller</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=fantasy</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=sci-fi-fantasy&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=romance</loc></url>
@@ -579,8 +581,8 @@
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=comedy&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=crime</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=crime&amp;k=tv</loc></url>
-<url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=action</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=thriller</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=action</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=mystery</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=mystery&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=adventure</loc></url>
@@ -601,6 +603,7 @@
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=kids&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=war</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=war-politics&amp;k=tv</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=western</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=drama</loc></url>
@@ -609,9 +612,9 @@
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=action</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=comedy</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=comedy&amp;k=tv</loc></url>
-<url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=adventure</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=crime</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=crime&amp;k=tv</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=adventure</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=horror</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=mystery</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=mystery&amp;k=tv</loc></url>
@@ -659,9 +662,10 @@
 <url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;g=drama</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;g=drama&amp;k=tv</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;g=comedy</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;g=comedy&amp;k=tv</loc></url>
-<url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;g=sci-fi-fantasy&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;g=mystery&amp;k=tv</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;g=sci-fi-fantasy&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=apple-tv&amp;g=crime&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=ko</loc></url>
 <url><loc>https://masalamischief.in/best?l=ko&amp;k=tv</loc></url>
