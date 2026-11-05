@@ -1261,8 +1261,11 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-04",
+  checked: "2026-11-05",
   items: [
+    { title: "Kick-Ass 2", year: 2013, lang: "English", app: "Netflix", added: "2026-11-05", url: "https://www.netflix.com/title/70264802", note: "Directed by Jeff Wadlow · IMDb 6.5" },
+    { title: "Angus, Thongs and Perfect Snogging", year: 2008, lang: "English", app: "Netflix", added: "2026-11-05", url: "https://www.netflix.com/title/70111324", note: "Directed by Gurinder Chadha · IMDb 6.3", kids: true },
+    { title: "Wonder Woman 1984", year: 2020, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/81198904", note: "Directed by Patty Jenkins · IMDb 5.4" },
     { title: "Jurassic World: Rebirth", year: 2025, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/81956629", note: "Directed by Gareth Edwards · IMDb 5.8" },
     { title: "The Disaster Artist", year: 2017, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/80180766", note: "Directed by James Franco · IMDb 7.3" },
     { title: "Valentine's Day", year: 2010, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/70124804", note: "Directed by Garry Marshall · IMDb 5.8" },
@@ -1274,9 +1277,6 @@ const NEW_ON_OTT = {
     { title: "Raanjhanaa", year: 2013, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70286078", note: "Directed by Aanand L. Rai · IMDb 7.6" },
     { title: "Enemy", year: 2021, lang: "Tamil", app: "SonyLIV", added: "2026-11-03", url: "https://www.sonyliv.com/movies/enemy-1000161148", note: "Directed by Anand Shankar · IMDb 6.1" },
     { title: "Parasite", year: 2019, lang: "Korean", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/parasite-1000230983", note: "Directed by Bong Joon Ho · IMDb 8.5" },
-    { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/chaaver-1000253152", note: "Directed by Tinu Pappachan · IMDb 6.2" },
-    { title: "Creed II", year: 2018, lang: "English", app: "Prime Video", added: "2026-11-02", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.818b1c85-1e1a-4909-a736-e3ef5ccd2ede", note: "Directed by Steven Caple Jr. · IMDb 7.1" },
-    { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
   ],
 };
 
