@@ -827,8 +827,6 @@ function quickAnswers(f) {
   const qa = [[`Where can I watch ${f.t}?`, `${f.t} is ${where}`]];
   if (due) qa.push([`When will ${f.t} release on OTT?`, ottDueText(f, due, today)]);
   qa.push(...buyQuick(f));
-  const dubs = (f.au || []).map((c) => (c === "en" ? "English" : c === "ja" ? "Japanese" : CAT_LANGS[c])).filter(Boolean);
-  if (dubs.length && apps.length) qa.push([`Is ${f.t} dubbed?`, `Yes, it's also available in ${dubs.join(", ")} on the apps that list audio languages.`]);
   const certSays = CERT_MEANS[f.c] || (/^U\/A (\d+)\+$/.exec(f.c || "") ? `parental guidance for under-${/^U\/A (\d+)\+$/.exec(f.c)[1]}s` : "");
   if (f.c) qa.push([`What is ${f.t}'s certificate?`, `${f.c}${certSays ? `: ${certSays}` : ""}.`]);
   if (!tv && f.r) qa.push([`How long is ${f.t}?`, `${Math.floor(f.r / 60) ? `${Math.floor(f.r / 60)} h ` : ""}${f.r % 60} min.`]);
@@ -2933,9 +2931,6 @@ async function initFilm() {
     <button class="btn small" id="land-bell" type="button" hidden>🔔 Tell me when it's on OTT</button><p class="small muted" id="land-help"></p></div>` : "";
   // Same wording as the server's (lib/seo.js filmSearchTitle): how people search, "<film> OTT".
   document.title = `${f.t}${years ? ` (${years})` : ""} ${filmSearchWhat(f, due)} · ${f.l === "en" ? "Hollywood" : lang} ${tv ? "Web Series" : "Movie"}`;
-  // Dubbed versions on the apps that list them (f.au, from the weekly JustWatch check; not Netflix).
-  // Audio languages by their own names ("Japanese", "English"), not the catalogue's buckets ("Anime", "Hollywood").
-  const dubs = f.w.length ? (f.au || []).map((c) => (c === "en" ? "English" : c === "ja" ? "Japanese" : CAT_LANGS[c])).filter(Boolean) : [];
   const cinemas = inCinemas(f);
   const out = cinemas && f.rd <= new Date().toISOString().slice(0, 10);
   const pageUrl = location.href;
@@ -2954,7 +2949,6 @@ async function initFilm() {
       <article>
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
-        ${dubs.length ? `<p class="muted small dub-line">🗣️ Also in ${esc(dubs.join(", "))} (dubbed)</p>` : ""}
         ${leavingLine(f.lv)}
         ${cinemas ? `<div class="stream-line"><span class="muted small">🎬 ${out ? "In cinemas · book on" : `In cinemas ${fmtDate(f.rd)} · book on`}</span>${ticketLinks()}</div>` : ""}
         ${dueLine}
@@ -2989,7 +2983,6 @@ async function initFilm() {
         <div class="side">
           <dl>
             <dt>Language</dt><dd>${esc(lang)}</dd>
-            ${dubs.length ? `<dt>Dubbed in</dt><dd>${esc(dubs.join(", "))}</dd>` : ""}
             ${f.o ? `<dt>Original title</dt><dd>${esc(f.o)}</dd>` : ""}
             ${years ? `<dt>${tv ? "Years" : "Year"}</dt><dd>${years}${tv && !f.end ? " (still running)" : ""}</dd>` : ""}
             ${seasons ? `<dt>Seasons</dt><dd>${seasons}</dd>` : ""}
