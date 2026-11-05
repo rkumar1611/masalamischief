@@ -21,6 +21,9 @@ const NOTE_KINDS = [["violence", "⚔️ Violence"], ["romance", "💋 Romance"]
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const moodById = (id) => MOODS.find((m) => m.id === id);
 const movieById = (id) => MOVIES.find((m) => m.id === id);
+// The language a catalogue title was made in, by its own name: "English", "Hindi", "Japanese" ("Hollywood" and "Anime" are our
+// catalogue's groupings). As lib/seo.js origLang().
+const origLang = (code) => (code === "en" ? "English" : code === "ja" ? "Japanese" : (CAT_LANGS[code] || ""));
 const fmtRuntime = (min) => `${Math.floor(min / 60)}h ${min % 60}m`;
 // TMDB's own page for a review's film ("tv<id>" in IMAGES means a series).
 const tmdbPage = (id) => (/^tv\d+$/.test(String(id)) ? `https://www.themoviedb.org/tv/${String(id).slice(2)}` : `https://www.themoviedb.org/movie/${id}`);
@@ -828,6 +831,7 @@ function quickAnswers(f) {
   if (due) qa.push([`When will ${f.t} release on OTT?`, ottDueText(f, due, today)]);
   qa.push(...buyQuick(f));
   const certSays = CERT_MEANS[f.c] || (/^U\/A (\d+)\+$/.exec(f.c || "") ? `parental guidance for under-${/^U\/A (\d+)\+$/.exec(f.c)[1]}s` : "");
+  if (origLang(f.l)) qa.push([`What language is ${f.t} in?`, `${origLang(f.l)}${f.o && f.o !== f.t ? ` (original title: ${f.o})` : ""}.`]);
   if (f.c) qa.push([`What is ${f.t}'s certificate?`, `${f.c}${certSays ? `: ${certSays}` : ""}.`]);
   if (!tv && f.r) qa.push([`How long is ${f.t}?`, `${Math.floor(f.r / 60) ? `${Math.floor(f.r / 60)} h ` : ""}${f.r % 60} min.`]);
   if (tv && f.s) qa.push([`How many seasons does ${f.t} have?`, `${f.s} season${f.s === 1 ? "" : "s"}${f.end ? "; it has ended" : " so far"}.`]);
@@ -2923,6 +2927,7 @@ async function initFilm() {
   if (fix) { f.w = withCorrection(f.w, fix); if (f.ja) f.ja = withCorrection(f.ja, fix); }
   const tv = f.k === "tv";
   const lang = langLabel(CAT_LANGS[f.l]);
+  const spoken = origLang(f.l); // the language it was made in, e.g. "English" (not the catalogue's "Hollywood" or "Anime")
   const years = yearsOf(f);
   const seasons = tv && f.s ? `${f.s} season${f.s === 1 ? "" : "s"}` : "";
   // When it should reach OTT, for films in (or just out of) cinemas.
@@ -2949,6 +2954,7 @@ async function initFilm() {
       <article>
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
+        ${spoken ? `<p class="muted small lang-line">🗣️ Language: ${esc(spoken)}</p>` : ""}
         ${leavingLine(f.lv)}
         ${cinemas ? `<div class="stream-line"><span class="muted small">🎬 ${out ? "In cinemas · book on" : `In cinemas ${fmtDate(f.rd)} · book on`}</span>${ticketLinks()}</div>` : ""}
         ${dueLine}
@@ -2982,7 +2988,7 @@ async function initFilm() {
         </div>
         <div class="side">
           <dl>
-            <dt>Language</dt><dd>${esc(lang)}</dd>
+            <dt>Language</dt><dd>${esc(spoken || lang)}</dd>
             ${f.o ? `<dt>Original title</dt><dd>${esc(f.o)}</dd>` : ""}
             ${years ? `<dt>${tv ? "Years" : "Year"}</dt><dd>${years}${tv && !f.end ? " (still running)" : ""}</dd>` : ""}
             ${seasons ? `<dt>Seasons</dt><dd>${seasons}</dd>` : ""}
