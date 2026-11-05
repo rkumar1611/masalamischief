@@ -5,6 +5,8 @@
 //   moods   – ids from MOODS below; these drive the Suggest page
 //   audio   – languages you can watch it in (original + dubs).
 //             Dub availability changes by platform, so check before publishing.
+//   kind    – "tv" for a series (with seasons: N, and runtime = one episode's minutes); films leave it out.
+//             A series' IMAGES entry has tmdb: "tv<id>", the same id the catalogue uses for it.
 // The reviews below are starter copy in the house voice. Rewrite them as your own.
 
 const MOODS = [

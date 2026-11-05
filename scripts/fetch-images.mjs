@@ -59,7 +59,7 @@ async function main() {
   const images = { ...IMAGES };
   let added = 0;
   for (const m of MOVIES) {
-    if (images[m.id]) continue;
+    if (images[m.id] || m.kind === "tv") continue; // a series is always published with its TMDB id and images
     try {
       const hit = await findMovie(m);
       if (!hit || (!hit.poster_path && !hit.backdrop_path)) { console.log(`no match: ${m.title} (${m.year})`); continue; }
@@ -84,7 +84,8 @@ async function main() {
     const img = images[m.id];
     if (!img || !img.tmdb || "imdb" in img) continue;
     try {
-      const ids = await tmdb(`/movie/${img.tmdb}/external_ids`);
+      // A series' tmdb is "tv<id>" (see lib/review-publish.js).
+      const ids = await tmdb(/^tv/.test(String(img.tmdb)) ? `/tv/${String(img.tmdb).slice(2)}/external_ids` : `/movie/${img.tmdb}/external_ids`);
       img.imdb = ids.imdb_id || "";
       linked++;
     } catch (e) {

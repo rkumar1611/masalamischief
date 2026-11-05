@@ -33,8 +33,10 @@ async function main() {
     const id = IMAGES[m.id] && IMAGES[m.id].tmdb;
     if (!id) continue;
     try {
-      const d = await tmdb(`/movie/${id}`, { append_to_response: EXTRA_APPEND, include_video_language: VIDEO_LANGS });
-      out[m.id] = extrasOf(d, "movie");
+      // A series' tmdb is "tv<id>" (see lib/review-publish.js).
+      const tv = /^tv/.test(String(id));
+      const d = await tmdb(tv ? `/tv/${String(id).slice(2)}` : `/movie/${id}`, { append_to_response: EXTRA_APPEND, include_video_language: VIDEO_LANGS });
+      out[m.id] = extrasOf(d, tv ? "tv" : "movie");
     } catch (e) {
       if (/rejected the token/.test(e.message)) throw e;
       console.log(`skip ${m.title}: ${e.message}`);

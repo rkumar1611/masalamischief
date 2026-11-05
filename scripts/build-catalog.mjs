@@ -815,7 +815,7 @@ function writeCatalogue(titles, trendIds) {
   // keep the hand-made list in data.js.
   const reviewedWatch = {};
   for (const f of all) {
-    const rid = f.k !== "tv" && reviewedFilms().get(f.id);
+    const rid = reviewedFilms().get(f.id); // a series' id is "tv<id>", as in IMAGES
     if (rid && f.ja && !reviewedWatch[rid]) reviewedWatch[rid] = { w: f.ja, ...(f.u ? { u: f.u } : {}), ...(f.lv ? { lv: f.lv } : {}), ...(f.au ? { au: f.au } : {}) };
   }
   const watchFile = new URL("reviewed-watch.json", OUT);
@@ -976,7 +976,7 @@ function writeSitemaps(all, people) {
   // Our reviewed films have review pages (in main.xml), not film pages.
   const reviewed = new Set(reviewedFilms().keys());
   for (const lang of OUT_LANGS) {
-    const paths = all.filter((f) => f.l === lang && !(f.k !== "tv" && reviewed.has(f.id))).map((f) => `/film?id=${keyOf(f)}`);
+    const paths = all.filter((f) => f.l === lang && !reviewed.has(f.id)).map((f) => `/film?id=${keyOf(f)}`);
     if (paths.length) writeIfChanged(new URL(`${lang}.xml`, dir), xml(paths.slice(0, 50000)));
   }
   // Actor and director pages, for people with at least 3 titles (fewer makes a thin page).

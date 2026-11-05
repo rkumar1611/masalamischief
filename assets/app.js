@@ -22,6 +22,12 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 const moodById = (id) => MOODS.find((m) => m.id === id);
 const movieById = (id) => MOVIES.find((m) => m.id === id);
 const fmtRuntime = (min) => `${Math.floor(min / 60)}h ${min % 60}m`;
+// TMDB's own page for a review's film ("tv<id>" in IMAGES means a series).
+const tmdbPage = (id) => (/^tv\d+$/.test(String(id)) ? `https://www.themoviedb.org/tv/${String(id).slice(2)}` : `https://www.themoviedb.org/movie/${id}`);
+// A review's length: a film's runtime, or a series' seasons and episode length (kind: "tv" in data.js).
+const runLabel = (m) => (m.kind === "tv"
+  ? `${m.seasons ? `${m.seasons} season${m.seasons === 1 ? "" : "s"}` : "Series"}${m.runtime ? ` · ~${m.runtime} min episodes` : ""}`
+  : m.runtime ? fmtRuntime(m.runtime) : "");
 const langLabel = (l) => LANG_LABELS[l] || l;
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 // Catalogue titles (see catToMovie) carry their apps; reviewed films use WATCH.
@@ -696,7 +702,7 @@ function initSiteSearch() {
       const [found, people] = await Promise.all([searchCatalog(term), searchPeople(term, 3)]);
       if (searchNorm(q.value) !== term) return; // a newer search is on its way
       const mineIds = new Set();
-      const theirs = found.filter((f) => !(f.k !== "tv" && byTmdb[f.id] && mineIds.add(byTmdb[f.id].id)));
+      const theirs = found.filter((f) => !(byTmdb[f.id] && mineIds.add(byTmdb[f.id].id)));
       // Best match first (our reviews win a tie), then the better-known title. Short forms ("ddlj")
       // are scored as the full title.
       const tq = nickname("titles", term) || term;
@@ -865,7 +871,7 @@ async function reviewsLeaving() {
   const out = {};
   data.items.filter((f) => stillLeaving(f.lv)).forEach((f) => {
     out[catSaveId(f)] = f.lv;
-    if (f.k !== "tv" && byTmdb[f.id]) out[byTmdb[f.id].id] = f.lv;
+    if (byTmdb[f.id]) out[byTmdb[f.id].id] = f.lv;
   });
   return out;
 }
@@ -936,7 +942,7 @@ function poster(m, big = false) {
   const still = m.still || (IMAGES[m.id] && IMAGES[m.id].backdrop);
   return `<div class="poster lang-${m.lang}${big ? " big" : ""}${still ? " has-img" : ""}">
       ${still ? `<img class="poster-img" src="${tmdb(still, big ? "w1280" : "w780")}" ${big ? `srcset="${tmdb(still, "w780")} 780w, ${tmdb(still, "w1280")} 1280w" sizes="(max-width: 700px) 100vw, 1100px"` : ""} alt="" loading="${big ? "eager" : "lazy"}" decoding="async">` : ""}
-      <span class="lang-pill">${langLabel(m.lang)} · ${m.year}</span>
+      <span class="lang-pill">${langLabel(m.lang)}${m.kind === "tv" ? " · Series" : ""} · ${m.year}</span>
       ${PARENT_NOTES[m.id] ? `<span class="age-pill" title="Family Pick">👪 ${PARENT_NOTES[m.id].age}+</span>` : m.cert ? `<span class="age-pill" title="Indian certificate">${esc(m.cert)}</span>` : ""}
       <span class="poster-icon" aria-hidden="true">${icon}</span>
       <div class="poster-foot">
@@ -1156,7 +1162,7 @@ function renderTonight(featured) {
       <div class="tonight-body">
         ${mood ? `<p class="eyebrow">${mood.emoji} Perfect for: ${esc(mood.label)}</p>` : ""}
         <h3>${esc(m.title)}</h3>
-        <p class="muted">${esc(langLabel(m.lang))} · ${m.year} · ${fmtRuntime(m.runtime)} · ${esc(m.genres.join(", "))}</p>
+        <p class="muted">${esc(langLabel(m.lang))} · ${m.year} · ${runLabel(m)} · ${esc(m.genres.join(", "))}</p>
         <div class="card-meta">${meter(m.masala)}${score(m.quality)}</div>
         <p class="muted small">Watch it now:</p>
         ${platformLinks(m, streamsOn(m))}
@@ -1321,7 +1327,7 @@ function initReviews() {
     catSaved = want.length ? await savedTitles(want) : [];
     const byTmdb = reviewedByTmdb();
     catBox.hidden = !catSaved.length;
-    document.getElementById("saved-cat-grid").innerHTML = catSaved.map((f) => filmCard({ ...f, mine: f.k !== "tv" && byTmdb[f.id] })).join("");
+    document.getElementById("saved-cat-grid").innerHTML = catSaved.map((f) => filmCard({ ...f, mine: byTmdb[f.id] })).join("");
     document.getElementById("saved-cat-head").textContent = `🎬 ${shared ? "Movies & series on this list" : "Movies & series you saved"} (${catSaved.length})`;
     return catSaved.length;
   }
@@ -1346,7 +1352,7 @@ function initReviews() {
       masala: (a, b) => b.masala - a.masala || b.quality - a.quality,
       quality: (a, b) => b.quality - a.quality || b.masala - a.masala,
       year: (a, b) => b.year - a.year,
-      short: (a, b) => a.runtime - b.runtime,
+      short: (a, b) => (a.kind === "tv" ? 1e4 : a.runtime) - (b.kind === "tv" ? 1e4 : b.runtime), // series have no film runtime, so they come last
     };
     list.sort(sorters[sort.value]);
     paintBar(saved);
@@ -1498,7 +1504,7 @@ async function reviewCard(m) {
   let y = py + ph + 110;
   titleLines.forEach((l) => { g.fillText(l, W / 2, y); y += 78; });
   g.fillStyle = "#c9b8ad"; g.font = "600 36px Inter, sans-serif";
-  g.fillText(`${langLabel(m.lang)} · ${m.year}${m.runtime ? ` · ${fmtRuntime(m.runtime)}` : ""}`, W / 2, y + 2);
+  g.fillText(`${langLabel(m.lang)} · ${m.year}${runLabel(m) ? ` · ${runLabel(m)}` : ""}`, W / 2, y + 2);
   // Masala Meter and score, side by side.
   y += 100;
   g.font = "64px sans-serif";
@@ -1606,7 +1612,7 @@ function initReview() {
           <span><strong>Liked this review?</strong><span>Follow us on WhatsApp for every new one.</span></span>
           <span class="wa-go">Follow</span>
         </a>
-        <div id="ext-slot">${extLinks({ im: IMAGES[m.id] && IMAGES[m.id].imdb, tmdbUrl: IMAGES[m.id] && IMAGES[m.id].tmdb ? `https://www.themoviedb.org/movie/${IMAGES[m.id].tmdb}` : "" })}</div>
+        <div id="ext-slot">${extLinks({ im: IMAGES[m.id] && IMAGES[m.id].imdb, tmdbUrl: IMAGES[m.id] && IMAGES[m.id].tmdb ? tmdbPage(IMAGES[m.id].tmdb) : "" })}</div>
       </article>
       <aside>
         ${IMAGES[m.id] && IMAGES[m.id].poster ? `<img class="side-poster" src="${tmdb(IMAGES[m.id].poster, "w342")}" alt="${esc(m.title)} poster" loading="lazy" decoding="async">` : ""}
@@ -1616,7 +1622,7 @@ function initReview() {
             <dt>Language</dt><dd>${m.lang}${LANG_LABELS[m.lang] ? ` (${LANG_LABELS[m.lang]})` : ""}</dd>
             <dt>Dubbed in</dt><dd>${dubs.length ? dubs.join(", ") : "Original only"}</dd>
             <dt>Year</dt><dd>${m.year}</dd>
-            <dt>Runtime</dt><dd>${fmtRuntime(m.runtime)}</dd>
+            <dt>${m.kind === "tv" ? "Length" : "Runtime"}</dt><dd>${runLabel(m)}</dd>
             <dt>Genre</dt><dd>${m.genres.join(", ")}</dd>
             <dt>Watch when</dt><dd>${m.moods.map((mid) => `<a href="suggest?mood=${mid}">${moodById(mid).label}</a>`).join(", ")}</dd>
             <dt>Reviewed</dt><dd>${fmtDate(m.reviewed)}</dd>
@@ -1665,7 +1671,7 @@ function initReview() {
     if (x.tr) document.getElementById("trailer-slot").innerHTML = trailerBtn(x.tr, m.title);
     document.getElementById("cast-slot").innerHTML = castRow(x);
     const img = IMAGES[m.id] || {};
-    document.getElementById("ext-slot").innerHTML = extLinks({ im: img.imdb, wd: x.wd, tmdbUrl: img.tmdb ? `https://www.themoviedb.org/movie/${img.tmdb}` : "" });
+    document.getElementById("ext-slot").innerHTML = extLinks({ im: img.imdb, wd: x.wd, tmdbUrl: img.tmdb ? tmdbPage(img.tmdb) : "" });
   });
 
   reviewsLeaving().then((lv) => { if (lv[m.id]) document.getElementById("leave-slot").innerHTML = leavingLine(lv[m.id]); });
@@ -1769,7 +1775,7 @@ function initSuggest() {
   function matches() {
     return MOVIES
       .filter((m) => !state.mood || m.moods.includes(state.mood))
-      .filter((m) => !state.maxTime || m.runtime <= state.maxTime)
+      .filter((m) => !state.maxTime || (m.kind !== "tv" && m.runtime <= state.maxTime)) // a time limit is for films, not series
       .filter((m) => !state.family || PARENT_NOTES[m.id])
       .filter((m) => !state.apps.size || streamsOn(m).some((p) => state.apps.has(p)))
       .map((m) => ({ m, via: watchableIn(m) }))
@@ -2007,7 +2013,7 @@ function groupSwipe($, deck, done) {
       ${poster(m, true)}
       <div class="gp-card-body">
         <p>${esc(m.tagline)}</p>
-        <p class="muted small">${m.genres.map(esc).join(" · ")}${m.runtime ? ` · ${fmtRuntime(m.runtime)}` : ""}${m.catalog ? " · not reviewed yet" : ""}${m.audio.length > 1 ? ` · Also in ${m.audio.filter((a) => a !== m.lang).map(esc).join(", ")}` : ""}</p>
+        <p class="muted small">${m.genres.map(esc).join(" · ")}${runLabel(m) ? ` · ${runLabel(m)}` : ""}${m.catalog ? " · not reviewed yet" : ""}${m.audio.length > 1 ? ` · Also in ${m.audio.filter((a) => a !== m.lang).map(esc).join(", ")}` : ""}</p>
         ${platformChips(streamsOn(m), 5)}
       </div>`;
   };
@@ -2669,7 +2675,7 @@ async function renderMoreLike(slot, f, heading, now) {
   if (!list.length) return;
   const byTmdb = reviewedByTmdb();
   slot.innerHTML = `<section class="more-like"><div class="section-head"><h2>${esc(heading)}</h2></div>
-    <div class="fgrid">${list.map((x) => filmCard({ ...x, mine: x.k !== "tv" && byTmdb[x.id] })).join("")}</div></section>`;
+    <div class="fgrid">${list.map((x) => filmCard({ ...x, mine: byTmdb[x.id] })).join("")}</div></section>`;
 }
 
 // One of our reviews shaped like a catalogue entry, for filmCard (it links to the review).
@@ -2741,7 +2747,7 @@ async function initFilms() {
       films = cat && cat.films;
       popular = !!(cat && cat.popular);
     }
-    const list = (films || []).map((f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }));
+    const list = (films || []).map((f) => ({ ...f, mine: byTmdb[f.id] }));
     const have = new Set(list.map((f) => f.id));
     MOVIES.forEach((m) => {
       const img = IMAGES[m.id] || {};
@@ -2759,7 +2765,7 @@ async function initFilms() {
     if (layout < 2 || key.startsWith("q:") || cache[key]) return false;
     const head = await Promise.race([loadCatalog(`head-${key || "all"}`), full.then(() => null)]);
     if (!head || !head.films || !isCurrent()) return false;
-    $("fgrid").innerHTML = head.films.map((f) => filmCard({ ...f, mine: f.k !== "tv" && byTmdb[f.id] })).join("");
+    $("fgrid").innerHTML = head.films.map((f) => filmCard({ ...f, mine: byTmdb[f.id] })).join("");
     $("fcount").textContent = "Loading all titles…";
     $("fmore").hidden = true;
     return true;
@@ -2907,7 +2913,7 @@ async function initFilm() {
   const [code, rawId] = (new URLSearchParams(location.search).get("id") || "").split("-");
   // Movies are "<lang>-<tmdb id>", series "<lang>-tv<tmdb id>".
   const id = /^\d+$/.test(rawId || "") ? +rawId : /^tv\d+$/.test(rawId || "") ? rawId : null;
-  const mine = typeof id === "number" && reviewedByTmdb()[id];
+  const mine = id && reviewedByTmdb()[id];
   if (mine) { location.replace(`review?id=${encodeURIComponent(mine.id)}`); return; }
   const [f, man, fix] = await Promise.all([id ? loadTitle(code, String(id)) : null, loadCatalog("manifest"), correctionFor(`${code}-${rawId}`)]);
   if (!f) {
@@ -3056,7 +3062,7 @@ async function initPerson() {
     found = keys.map((k) => byKey[k]).filter(Boolean);
   }
   const byTmdb = reviewedByTmdb();
-  const titles = found.map((f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }));
+  const titles = found.map((f) => ({ ...f, mine: byTmdb[f.id] }));
   // Add reviewed films the catalogue doesn't have.
   const have = new Set(titles.filter((f) => f.mine).map((f) => f.mine.id));
   ours.filter((o) => !have.has(o.m.id)).forEach(({ m }) => {
@@ -3080,7 +3086,7 @@ async function initPerson() {
   const knownFor = found.slice(0, 4);
   const thisYear = new Date().getFullYear();
   const latest = found.filter((f) => f.y && f.y <= thisYear + 1).sort((a, b) => b.y - a.y)[0];
-  const titleLink = (f) => `<a href="${filmHref({ ...f, mine: f.k !== "tv" && byTmdb[f.id] })}">${esc(f.t)}</a>${f.y ? ` (${f.y})` : ""}`;
+  const titleLink = (f) => `<a href="${filmHref({ ...f, mine: byTmdb[f.id] })}">${esc(f.t)}</a>${f.y ? ` (${f.y})` : ""}`;
   const about = `
     ${facts ? `<p class="person-facts">${esc(facts)}</p>` : ""}
     ${bio ? `<p class="person-bio${bio.length > 320 ? " clamp" : ""}" id="pbio">${esc(bio)}</p>${bio.length > 320 ? `<button class="btn small" type="button" id="pbio-more">Read more</button>` : ""}` : ""}
@@ -3150,7 +3156,7 @@ async function initOtt() {
   const [lists, index, leaving, top] = await Promise.all([loadCatalog("lists/ott"), loadCatalog("lists/index"), loadCatalog("leaving"), loadCatalog("top10")]);
   if (!lists || !index) return notReadyYet(root);
   const byTmdb = reviewedByTmdb();
-  const withMine = (f) => ({ ...f, mine: f.k !== "tv" && byTmdb[f.id] });
+  const withMine = (f) => ({ ...f, mine: byTmdb[f.id] });
   // 🔥 Top 10 this week (top10.json, weekly from JustWatch India's popularity): movies or series, on one
   // app, or on the overview page any app picked from chips. Drawn into #top10 after the page is.
   const topSection = (app) => {
@@ -3333,7 +3339,7 @@ async function initBest() {
     <div class="page-head"><p class="eyebrow">🏆 ${esc(lang)}${appRow ? ` · ${esc(appRow[1])}` : ""} · top ${list.length}</p><h1>${esc(heading)}</h1>
       <p class="lead">${appRow ? `The best ${esc(lang)} ${k === "tv" ? "series" : "movies"} you can stream on ${esc(appRow[1])} in India right now. ` : ""}Ranked by a weighted TMDB rating, so a film with a handful of perfect votes can't beat a well-loved classic.
         Tap any title for the trailer, cast and where to stream it in India.</p></div>
-    <div class="fgrid">${list.map((f, i) => filmCard({ ...f, mine: f.k !== "tv" && byTmdb[f.id] }, i + 1)).join("")}</div>
+    <div class="fgrid">${list.map((f, i) => filmCard({ ...f, mine: byTmdb[f.id] }, i + 1)).join("")}</div>
     <section class="more-lists">
       ${appMore}
       ${otherApps ? `<h2>${appRow ? "On other apps" : "By streaming app"}</h2><p class="hub-links">${otherApps}</p>` : ""}

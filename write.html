@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="assets/style.css?v=129">
+  <link rel="stylesheet" href="assets/style.css?v=130">
   <style>
     .wr { max-width: 860px; }
     .wr-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin: 14px 0; box-shadow: var(--shadow); display: grid; gap: 12px; }
@@ -49,7 +49,7 @@
     <div id="form" hidden>
       <section class="wr-box">
         <h2>1. The film</h2>
-        <label>Search for a new film <small>Title, year, language, runtime, genres, posters and where to watch fill in by themselves.</small>
+        <label>Search for a new film or series <small>Title, year, language, runtime, seasons, genres, posters and where to watch fill in by themselves.</small>
           <input type="search" id="find" placeholder="e.g. Manjummel Boys" autocomplete="off"></label>
         <div class="chips" id="found"></div>
         <label>…or edit one of our reviews <select id="existing"><option value="">Choose a review to edit</option></select></label>
@@ -64,7 +64,8 @@
         </div>
         <div class="wr-row">
           <label>Year <input type="number" id="year" min="1900" max="2100"></label>
-          <label>Runtime <small>minutes</small><input type="number" id="runtime" min="0" max="400"></label>
+          <label><span id="runtime-label">Runtime</span> <small>minutes</small><input type="number" id="runtime" min="0" max="400"></label>
+          <label id="seasons-wrap" hidden>Seasons <small>so far</small><input type="number" id="seasons" min="1" max="60"></label>
           <label>Language <select id="lang"></select></label>
         </div>
         <label>Genres <small>comma-separated</small><input type="text" id="genres"></label>
@@ -106,8 +107,8 @@
       </section>
     </div>
   </main>
-  <script src="assets/data.js?v=129"></script>
-  <script src="assets/app.js?v=129"></script>
+  <script src="assets/data.js?v=130"></script>
+  <script src="assets/app.js?v=130"></script>
   <script>
     // The page uses the site's own helpers (app.js): search, title files, cards. The password stays in
     // this tab (sessionStorage) and is only sent to our /api/publish-review. Wrapped so its names
@@ -118,7 +119,13 @@
     const LANG_CHOICES = ["Hindi", "Tamil", "Telugu", "Malayalam", "Kannada", "English", "Marathi", "Bengali", "Punjabi", "Korean"];
     const APP_CHOICES = [...PLATFORMS, "MX Player", "Lionsgate Play", "Amazon", "YouTube"];
     const LEVELS = ["violence", "romance", "language", "scary"];
-    const state = { edit: false, tmdb: 0, poster: "", backdrop: "", imdb: "", links: {}, masala: 0, moods: [], audio: [], stream: [], rent: [] };
+    const state = { edit: false, kind: "movie", tmdb: 0, poster: "", backdrop: "", imdb: "", links: {}, masala: 0, moods: [], audio: [], stream: [], rent: [] };
+    // A series has seasons and an episode length instead of a runtime.
+    const setKind = (kind) => {
+      state.kind = kind === "tv" ? "tv" : "movie";
+      $("seasons-wrap").hidden = state.kind !== "tv";
+      $("runtime-label").textContent = state.kind === "tv" ? "Episode length" : "Runtime";
+    };
 
     // Chip groups: one choice (masala) or several (moods, apps, dubs).
     function chipGroup(el, values, key, { single = false, label = (v) => v, max = 99 } = {}) {
@@ -148,7 +155,7 @@
 
     const paintAll = () => { paintMasala(); paintMoods(); paintAudio(); paintStream(); paintRent(); };
     const showPicked = () => {
-      $("picked").innerHTML = state.poster ? `<img src="${tmdb(state.poster, "w92")}" alt=""><span><strong>${esc($("title").value)}</strong><br><span class="muted small">${state.edit ? "Editing our review" : "New review"} · TMDB ${state.tmdb || "–"}</span></span>` : "";
+      $("picked").innerHTML = state.poster ? `<img src="${tmdb(state.poster, "w92")}" alt=""><span><strong>${esc($("title").value)}</strong><br><span class="muted small">${state.edit ? "Editing our review" : "New review"}${state.kind === "tv" ? " · series" : ""} · TMDB ${state.tmdb || "–"}</span></span>` : "";
     };
 
     // A new film from the catalogue: everything we know fills in.
@@ -157,8 +164,8 @@
       clearTimeout(findTimer);
       findTimer = setTimeout(async () => {
         const term = $("find").value.trim();
-        const hits = term.length < 2 ? [] : (await searchCatalog(term)).filter((f) => f.k !== "tv").slice(0, 6);
-        $("found").innerHTML = hits.map((f) => `<button class="chip" type="button" data-l="${f.l}" data-id="${f.id}">${esc(f.t)}${f.y ? ` (${f.y})` : ""} · ${esc(langLabel(CAT_LANGS[f.l] || ""))}</button>`).join("");
+        const hits = term.length < 2 ? [] : (await searchCatalog(term)).slice(0, 8);
+        $("found").innerHTML = hits.map((f) => `<button class="chip" type="button" data-l="${f.l}" data-id="${f.id}">${esc(f.t)}${f.y ? ` (${f.y})` : ""}${f.k === "tv" ? " · series" : ""} · ${esc(langLabel(CAT_LANGS[f.l] || ""))}</button>`).join("");
       }, 250);
     });
     $("found").addEventListener("click", async (e) => {
@@ -168,9 +175,11 @@
       if (!f) return;
       const mine = reviewedByTmdb()[f.id];
       if (mine) { $("existing").value = mine.id; return loadExisting(mine.id); }
+      setKind(f.k);
+      // A series' id is already "tv<id>" in the catalogue, which keeps it apart from a film with the same TMDB number.
       Object.assign(state, { edit: false, idTouched: false, tmdb: f.id, poster: f.p || "", backdrop: f.b || "", imdb: f.im || "", links: f.u || {},
-        audio: (f.au || []).map((c) => CAT_LANGS[c]).filter((l) => LANG_CHOICES.includes(l)), stream: (f.ja || f.w || []).filter((a) => APP_CHOICES.includes(a)), rent: [] });
-      $("title").value = f.t; $("id").value = slugify(f.t); $("year").value = f.y || ""; $("runtime").value = f.r || "";
+        audio: (f.au || []).map((c) => CAT_LANGS[c]).filter((l) => LANG_CHOICES.includes(l)), stream: (f.ja && f.ja.length ? f.ja : f.w || []).filter((a) => APP_CHOICES.includes(a)), rent: [] });
+      $("title").value = f.t; $("id").value = slugify(f.t); $("year").value = f.y || ""; $("runtime").value = f.r || ""; $("seasons").value = f.k === "tv" ? f.sa || f.s || "" : "";
       $("lang").value = LANG_CHOICES.includes(CAT_LANGS[f.l]) ? CAT_LANGS[f.l] : "Hindi"; $("genres").value = (f.g || []).join(", ");
       $("existing").value = ""; $("found").innerHTML = ""; $("id").disabled = false;
       paintAll(); showPicked(); preview();
@@ -180,6 +189,8 @@
       const m = movieById(id);
       if (!m) return;
       const img = IMAGES[m.id] || {}, w = WATCH[m.id] || { stream: [], rent: [] }, p = PARENT_NOTES[m.id];
+      setKind(m.kind);
+      $("seasons").value = m.seasons || "";
       Object.assign(state, { edit: true, tmdb: img.tmdb || 0, poster: img.poster || "", backdrop: img.backdrop || "", imdb: img.imdb || "", links: { ...(WATCH_LINKS[m.id] || {}) },
         masala: m.masala, moods: [...m.moods], audio: m.audio.filter((l) => l !== m.lang), stream: [...w.stream], rent: [...w.rent] });
       $("title").value = m.title; $("id").value = m.id; $("id").disabled = true; $("year").value = m.year; $("runtime").value = m.runtime;
@@ -196,6 +207,7 @@
       const lines = (s) => s.split("\n").map((x) => x.trim()).filter(Boolean);
       return {
         edit: state.edit, id: $("id").value.trim(), title: $("title").value.trim(), year: +$("year").value, runtime: +$("runtime").value,
+        kind: state.kind, seasons: state.kind === "tv" ? +$("seasons").value : undefined,
         lang: $("lang").value, audio: [$("lang").value, ...state.audio], genres: $("genres").value.split(",").map((g) => g.trim()).filter(Boolean),
         moods: state.moods, masala: state.masala, quality: +$("quality").value, tagline: $("tagline").value.trim(),
         review: $("review").value.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean), hits: lines($("hits").value), misses: lines($("misses").value),
@@ -207,7 +219,7 @@
     // Preview: the card as it appears in lists, and the review text.
     function preview() {
       const r = collect();
-      const m = { id: "__preview", title: r.title || "Title", year: r.year, lang: r.lang, audio: r.audio, genres: r.genres.length ? r.genres : ["Drama"], runtime: r.runtime,
+      const m = { id: "__preview", title: r.title || "Title", year: r.year, lang: r.lang, audio: r.audio, genres: r.genres.length ? r.genres : ["Drama"], runtime: r.runtime, kind: r.kind, seasons: r.seasons,
         moods: r.moods, masala: r.masala || 1, quality: r.quality || 0, tagline: r.tagline || "Your tagline", still: state.backdrop, apps: r.stream };
       IMAGES.__preview = { poster: state.poster, backdrop: state.backdrop };
       $("preview").innerHTML = `<div class="wr-preview"><div>${card(m)}</div><div>

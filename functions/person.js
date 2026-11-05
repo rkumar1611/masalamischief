@@ -54,7 +54,7 @@ export async function onRequestGet(context) {
     const reviewedIds = new Set(ours.map((o) => o.tmdb));
     const titles = [
       ...ours,
-      ...found.filter((f) => !(f.k !== "tv" && reviewedIds.has(f.id)))
+      ...found.filter((f) => !reviewedIds.has(f.id))
         .map((f) => ({ t: f.t, y: f.y, tv: f.k === "tv", lang: LANGS[f.l], href: `/film?id=${f.l}-${f.id}` })),
     ].sort((a, b) => (b.y || 0) - (a.y || 0));
     if (!titles.length) return page;

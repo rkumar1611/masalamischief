@@ -30,6 +30,7 @@ export async function onRequestGet(context) {
 
     const img = (IMAGES && IMAGES[m.id]) || {};
     const lang = LANG_LABELS[m.lang] || m.lang;
+    const tv = m.kind === "tv"; // a series review (see lib/review-publish.js)
     const stream = overrideApps(fresh ? fresh.w || [] : (WATCH[m.id] && WATCH[m.id].stream) || [], fix);
     const links = { ...((WATCH_LINKS && WATCH_LINKS[m.id]) || {}), ...((fresh && fresh.u) || {}) };
     const notes = PARENT_NOTES[m.id];
@@ -41,7 +42,7 @@ export async function onRequestGet(context) {
     const desc = [
       `${m.title} review: ${m.quality}/10, Masala Meter ${m.masala}/5. ${m.tagline}`,
       stream.length ? `OTT: streaming on ${stream.join(", ")} in India.` : "OTT: not on a subscription app in India right now.",
-      `${lang} film, ${m.year}${leads.length ? `, with ${leads.join(", ")}` : ""}.`,
+      `${lang} ${tv ? `series${m.seasons ? `, ${m.seasons} season${m.seasons === 1 ? "" : "s"}` : ""}` : "film"}, ${m.year}${leads.length ? `, with ${leads.join(", ")}` : ""}.`,
       notes ? `Family Pick, ${notes.age}+.` : "",
     ].filter(Boolean).join(" ");
 
@@ -52,20 +53,21 @@ export async function onRequestGet(context) {
         <p><strong>Masala Meter ${m.masala}/5 · Quality ${m.quality}/10</strong> · ${esc(lang)} · ${esc(m.genres.join(", "))}</p>
         <p><em>${esc(m.tagline)}</em></p>
         ${m.review.map((p) => `<p>${esc(p)}</p>`).join("")}
-        ${castLine(extras, "movie")}
+        ${castLine(extras, tv ? "tv" : "movie")}
         ${stream.length ? `<p>Where to watch in India: ${esc(stream.join(", "))}.</p>` : ""}
       </article>`;
 
     const movie = {
-      "@type": "Movie",
+      "@type": tv ? "TVSeries" : "Movie",
       name: m.title,
       url,
       image: tmdbImg(img.poster, "w500"),
-      dateCreated: String(m.year),
+      [tv ? "startDate" : "dateCreated"]: String(m.year),
       inLanguage: m.lang,
       genre: m.genres,
-      duration: m.runtime ? `PT${Math.floor(m.runtime / 60)}H${m.runtime % 60}M` : undefined,
-      director: people(extras.dir),
+      ...(tv && m.seasons ? { numberOfSeasons: m.seasons } : {}),
+      duration: !tv && m.runtime ? `PT${Math.floor(m.runtime / 60)}H${m.runtime % 60}M` : undefined,
+      [tv ? "creator" : "director"]: people(extras.dir),
       actor: people(extras.cast),
       sameAs: sameAs(img.imdb, extras.wd),
       aggregateRating: aggregate(audience),
