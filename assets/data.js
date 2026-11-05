@@ -1285,6 +1285,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-05",
   items: [
+    { title: "Interstellar", year: 2014, lang: "English", app: "Netflix", added: "2026-11-05", url: "https://www.netflix.com/title/70305903", note: "Directed by Christopher Nolan · IMDb 8.7" },
     { title: "Kick-Ass 2", year: 2013, lang: "English", app: "Netflix", added: "2026-11-05", url: "https://www.netflix.com/title/70264802", note: "Directed by Jeff Wadlow · IMDb 6.5" },
     { title: "Angus, Thongs and Perfect Snogging", year: 2008, lang: "English", app: "Netflix", added: "2026-11-05", url: "https://www.netflix.com/title/70111324", note: "Directed by Gurinder Chadha · IMDb 6.3", kids: true },
     { title: "Wonder Woman 1984", year: 2020, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/81198904", note: "Directed by Patty Jenkins · IMDb 5.4" },
@@ -1298,7 +1299,6 @@ const NEW_ON_OTT = {
     { title: "Rockstar", year: 2011, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70222861", note: "Directed by Imtiaz Ali · IMDb 7.8" },
     { title: "Raanjhanaa", year: 2013, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70286078", note: "Directed by Aanand L. Rai · IMDb 7.6" },
     { title: "Enemy", year: 2021, lang: "Tamil", app: "SonyLIV", added: "2026-11-03", url: "https://www.sonyliv.com/movies/enemy-1000161148", note: "Directed by Anand Shankar · IMDb 6.1" },
-    { title: "Parasite", year: 2019, lang: "Korean", app: "SonyLIV", added: "2026-11-02", url: "https://www.sonyliv.com/movies/parasite-1000230983", note: "Directed by Bong Joon Ho · IMDb 8.5" },
   ],
 };
 
