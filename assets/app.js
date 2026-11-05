@@ -783,6 +783,30 @@ function filmSearchWhat(f, due) {
   return `OTT Release Date: Not Announced, ${when}`;
 }
 
+// Buy or rent in India (f.bu) and other countries (f.ab = { US: [subscription apps, buy or rent apps] }) for titles no
+// subscription app in India has, as lib/seo.js buyQuick(). Also drawn as a box under Where to watch (buyBox).
+const COUNTRY_NAMES = { US: "the US", GB: "the UK", CA: "Canada", AU: "Australia", AE: "the UAE" };
+const abroadLines = (f) => Object.entries(f.ab || {}).map(([c, [s, b]]) => `${COUNTRY_NAMES[c] || c}: ${[s.length ? `streaming on ${s.join(", ")}` : "", b.length ? `buy or rent on ${b.join(", ")}` : ""].filter(Boolean).join("; ")}`);
+function buyQuick(f) {
+  if ((f.w && f.w.length) || (f.ja && f.ja.length)) return [];
+  const qa = [];
+  if ((f.bu || []).length) qa.push([`Can I buy or rent ${f.t} in India?`, `Yes, on ${f.bu.join(", ")}.`]);
+  const abroad = abroadLines(f);
+  if (abroad.length) qa.push([`Where can I watch ${f.t} outside India?`, `In ${abroad.join(". In ")}.`]);
+  return qa;
+}
+function buyBox(f) {
+  if ((f.w && f.w.length) || (f.ja && f.ja.length)) return "";
+  const abroad = abroadLines(f);
+  if (!(f.bu || []).length && !abroad.length) return "";
+  const tv = f.k === "tv";
+  return `<div class="buy-box">
+    ${(f.bu || []).length ? `<p class="small"><strong>💳 Buy or rent in India:</strong> ${esc(f.bu.join(", "))}</p>` : ""}
+    ${abroad.length ? `<p class="small"><strong>🌍 Outside India:</strong></p><ul class="small">${abroad.map((l) => `<li>${esc(l[0].toUpperCase() + l.slice(1))}</li>`).join("")}</ul>` : ""}
+    <p class="fine">From <a href="https://www.justwatch.com" target="_blank" rel="noopener">JustWatch</a> via <a href="https://www.themoviedb.org/${tv ? "tv" : "movie"}/${String(f.id).replace(/^tv/, "")}/watch" target="_blank" rel="noopener">TMDB</a>. Stores differ by country and may need an account there.</p>
+  </div>`;
+}
+
 // Quick answers on film pages, as lib/seo.js quickAnswers() puts them in the HTML for search engines.
 const CERT_MEANS = { U: "suitable for all ages", UA: "parental guidance for under-12s", A: "adults only", S: "for specialised audiences" };
 function quickAnswers(f) {
@@ -796,6 +820,7 @@ function quickAnswers(f) {
     : due ? "not on any OTT app in India yet." : "not on any OTT app in India right now.";
   const qa = [[`Where can I watch ${f.t}?`, `${f.t} is ${where}`]];
   if (due) qa.push([`When will ${f.t} release on OTT?`, ottDueText(f, due, today)]);
+  qa.push(...buyQuick(f));
   const dubs = (f.au || []).map((c) => (c === "en" ? "English" : c === "ja" ? "Japanese" : CAT_LANGS[c])).filter(Boolean);
   if (dubs.length && apps.length) qa.push([`Is ${f.t} dubbed?`, `Yes, it's also available in ${dubs.join(", ")} on the apps that list audio languages.`]);
   const certSays = CERT_MEANS[f.c] || (/^U\/A (\d+)\+$/.exec(f.c || "") ? `parental guidance for under-${/^U\/A (\d+)\+$/.exec(f.c)[1]}s` : "");
@@ -2950,6 +2975,7 @@ async function initFilm() {
               ? `<p class="muted small">🎬 ${out ? "In cinemas now" : `In cinemas from ${fmtDate(f.rd)}`}, not streaming yet. Pick your city for showtimes and tickets:</p><div class="otts">${ticketLinks()}</div>`
               : `<p class="muted small">Not on a subscription app in India right now, as far as we know.</p>`}
           ${due ? `<p class="small"><strong>⏳ OTT release:</strong> ${esc(ottDueText(f, due))}</p>` : ""}
+          ${buyBox(f)}
           <p class="fine">From TMDB, updated ${fmtDate((man && man.built) || "")}${fix ? `, corrected ${fmtDate(fix.date)} ${fix.keep ? "by us" : "from a reader's report"}` : ""}. Availability changes, so confirm in the app.</p>
         </div>
         <div class="side">

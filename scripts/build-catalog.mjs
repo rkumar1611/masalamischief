@@ -139,6 +139,30 @@ const votes = (n) => (n < 100 ? n : Number(n.toPrecision(2)));
 const appsOf = (d) => [...new Set((d["watch/providers"]?.results?.IN?.flatrate || [])
   .map((p) => (APP_RULES.find(([re]) => re.test(p.provider_name)) || [])[1]).filter(Boolean))];
 
+// Where else a title can be had when no subscription app in India has it: bought or rented in India (bu), and in a few
+// other countries (ab = { US: [subscription apps, buy or rent apps] }). From the provider data already in each TMDB
+// response (TMDB gets it from JustWatch), so no extra requests. x says this title has been looked at, so the weekly
+// refresh doesn't fetch it again just for this.
+const X_VERSION = 1;
+const ABROAD = ["US", "GB", "CA", "AU", "AE"];
+const storeName = (n) => (/amazon/i.test(n) ? "Prime Video" : /apple/i.test(n) ? "Apple TV" : /google play/i.test(n) ? "Google Play" : /youtube/i.test(n) ? "YouTube" : n);
+const storeNames = (list) => [...new Set((list || []).map((p) => storeName(p.provider_name)))].slice(0, 5);
+function elsewhere(d, apps) {
+  const out = { x: X_VERSION };
+  if (apps.length) return out;
+  const res = d["watch/providers"]?.results || {};
+  const bu = storeNames([...(res.IN?.buy || []), ...(res.IN?.rent || [])]);
+  if (bu.length) out.bu = bu;
+  const ab = {};
+  for (const c of ABROAD) {
+    const s = storeNames(res[c]?.flatrate);
+    const b = storeNames([...(res[c]?.buy || []), ...(res[c]?.rent || [])]);
+    if (s.length || b.length) ab[c] = [s, b];
+  }
+  if (Object.keys(ab).length) out.ab = ab;
+  return out;
+}
+
 // Direct links to each title on the apps, from JustWatch India (TMDB only says which app has it).
 // JustWatch package code → our app name. The Sunday run sweeps each app's whole list, a slice of release
 // years at a time (a query stops at 2,000 results): about 400 requests, one at a time with a pause
@@ -379,6 +403,7 @@ function toFilm(d, lang) {
     ...(cert ? { c: cert } : {}),
     ...(d.external_ids?.imdb_id ? { im: d.external_ids.imdb_id } : {}),
     w: apps,
+    ...elsewhere(d, apps),
     ov: shorten(d.overview),
     ...extrasOf(d, "movie"),
     ...recsOf(d, ""),
@@ -395,6 +420,7 @@ function recsOf(d, prefix) {
 
 // Series get id "tv<tmdb id>" (TMDB film and series ids can clash) and k: "tv".
 function toSeries(d, lang) {
+  const apps = appsOf(d);
   const cert = (d.content_ratings?.results || []).find((r) => r.iso_3166_1 === "IN")?.rating || "";
   const first = +(d.first_air_date || "").slice(0, 4) || null;
   const last = +(d.last_air_date || "").slice(0, 4) || null;
@@ -418,7 +444,8 @@ function toSeries(d, lang) {
     ...(d.backdrop_path ? { b: d.backdrop_path } : {}),
     ...(cert ? { c: cert } : {}),
     ...(d.external_ids?.imdb_id ? { im: d.external_ids.imdb_id } : {}),
-    w: appsOf(d),
+    w: apps,
+    ...elsewhere(d, apps),
     // Latest season that has started airing (for new-season alerts).
     ...(d.last_episode_to_air?.season_number ? { sa: d.last_episode_to_air.season_number } : {}),
     ov: shorten(d.overview),
@@ -472,8 +499,11 @@ function loadExisting() {
 }
 
 // Recent titles every week; older ones when it's their turn (a quarter each week, by id).
+let backfilled = 0;
+const BACKFILL_MAX = 8000; // titles with no app in India are fetched once more for buy/rent and abroad (elsewhere()), this many a run
 function dueForRefresh(f) {
   if (!("rd" in f) && f.y) return true; // saved by an older build without release dates
+  if (f.x !== X_VERSION && !(f.w || []).length && backfilled < BACKFILL_MAX) { backfilled++; return true; }
   if (f.rd && f.rd >= day(-RECENT_DAYS)) return true;
   const week = Math.floor(Date.now() / (7 * 864e5));
   return numId(f.id) % REFRESH_WEEKS === week % REFRESH_WEEKS;
@@ -612,7 +642,7 @@ async function daily() {
   await writePeopleBios();
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, od, oa, wr, jr, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, od, oa, wr, jr, bu, ab, x, ...rest }) => rest;
 
 // Corrections made by hand (/admin → Titles) and from readers' reports (assets/catalog/overrides.json, see lib/fixes.js)
 // laid over the apps the builds found, so lists, the Top 10 and search agree with the film pages. Titles are copied,
