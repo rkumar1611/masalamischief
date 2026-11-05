@@ -2715,7 +2715,7 @@ function filmCard(f, rank, note) {
       <div class="fbody">
         <strong>${esc(f.t)}</strong>
         <span class="muted small">${esc(langLabel(CAT_LANGS[f.l] || ""))}${f.k === "tv" ? " · Series" : ""}${yearsOf(f) ? ` · ${yearsOf(f)}` : ""}</span>
-        ${f.w && f.w.length ? `<span class="fapps">${f.w.slice(0, 2).map((a) => `<span class="ott ott-${slug(a)}">${esc(a)}</span>`).join("")}${f.w.length > 2 ? `<span class="ott more">+${f.w.length - 2}</span>` : ""}</span>` : ""}
+        ${f.w && f.w.length ? `<span class="fapps">${f.w.slice(0, 2).map((a) => `<span class="ott ott-${slug(a)}">${esc(a)}</span>`).join("")}${f.w.length > 2 ? `<span class="ott more">+${f.w.length - 2}</span>` : ""}</span>` : f.bx ? `<span class="fapps"><span class="ott more" title="No subscription app in India has it. Open it to see where to buy or rent it, and where it streams abroad.">💳 Buy / abroad</span></span>` : ""}
         ${note ? `<span class="leave-chip">${esc(note)}</span>` : ""}
       </div>
     </a>`;

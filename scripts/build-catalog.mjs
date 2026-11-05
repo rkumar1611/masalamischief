@@ -160,6 +160,7 @@ function elsewhere(d, apps) {
     if (s.length || b.length) ab[c] = [s, b];
   }
   if (Object.keys(ab).length) out.ab = ab;
+  if (out.bu || out.ab) out.bx = 1; // the only part that goes into the lists (a "Buy / abroad" tag on the card); the rest stays in the title's own file
   return out;
 }
 
