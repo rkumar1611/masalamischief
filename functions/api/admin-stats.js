@@ -24,5 +24,12 @@ export async function onRequestGet({ request, env }) {
       (SELECT COUNT(*) FROM catalog_apps WHERE first_seen >= '${week}') AS arrived,
       (SELECT COUNT(*) FROM catalog_apps WHERE active = 0 AND last_seen >= '${week}') AS gone`),
   ]);
-  return json({ reviews, fixes, push, users, catalog, secrets: { accounts: accountsOn(env), github: Boolean(env.GITHUB_TOKEN), turnstile: Boolean(env.TURNSTILE_SECRET), reviewsAutoPublish: env.REVIEWS_AUTOPUBLISH === "1" } });
+  // The last roundup and "now on OTT" runs (lib/push.js logAlertRun), for the Alerts tab.
+  let alerts = null;
+  try {
+    const { results } = await env.DB.prepare(`SELECT p.kind, p.day, p.sent, p.removed, p.skipped, p.note, p.at FROM push_runs p
+      JOIN (SELECT kind, MAX(at) AS at FROM push_runs GROUP BY kind) m ON m.kind = p.kind AND m.at = p.at`).all();
+    alerts = Object.fromEntries(results.map((r) => [r.kind, r]));
+  } catch { alerts = {}; }
+  return json({ reviews, fixes, push, users, catalog, alerts, secrets: { accounts: accountsOn(env), github: Boolean(env.GITHUB_TOKEN), turnstile: Boolean(env.TURNSTILE_SECRET), reviewsAutoPublish: env.REVIEWS_AUTOPUBLISH === "1" } });
 }

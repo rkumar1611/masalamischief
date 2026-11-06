@@ -4,7 +4,7 @@
 // each call fits Cloudflare's free-plan limits.
 import "../../../assets/data.js";
 import { json, notReady, isAdmin } from "../../../lib/community.js";
-import { ensurePushSchema, vapidKeys, sendPush, weeklyMessage, seasonMessage, landedMessage } from "../../../lib/push.js";
+import { ensurePushSchema, vapidKeys, sendPush, weeklyMessage, seasonMessage, landedMessage, logAlertRun } from "../../../lib/push.js";
 import { asset } from "../../../lib/lists.js";
 
 const BATCH = 20;
@@ -14,7 +14,7 @@ const BATCH = 20;
 async function sendLanded(context, after) {
   const { env } = context;
   const landed = await asset(context, "/assets/catalog/landed.json");
-  if (!landed || !landed.items.length) return json({ sent: 0, removed: 0, next: null, note: "Nothing landed." });
+  if (!landed || !landed.items.length) { await logAlertRun(env.DB, "landed", { note: "No film landed on an app" }); return json({ sent: 0, removed: 0, next: null, note: "Nothing landed." }); }
   await ensurePushSchema(env.DB);
   const { results } = await env.DB.prepare("SELECT rowid AS id, endpoint, p256dh, auth, titles FROM push_subs WHERE titles <> '' AND rowid > ? ORDER BY rowid LIMIT ?")
     .bind(after, BATCH).all();
@@ -37,6 +37,7 @@ async function sendLanded(context, after) {
   }
   const last = results.length === BATCH ? results[results.length - 1].id : null;
   if (last === null) await env.DB.prepare("DELETE FROM push_landed_sent WHERE sent < ?").bind(Date.now() - 60 * 864e5).run(); // tidy up
+  await logAlertRun(env.DB, "landed", { sent, removed, note: sent ? "" : "Nobody was waiting for these films" });
   return json({ sent, removed, next: last });
 }
 
@@ -50,7 +51,10 @@ export async function onRequestPost(context) {
   const newOnOtt = globalThis.MM_DATA.NEW_ON_OTT;
   // Series that got a new season in the last few weeks (built by scripts/build-catalog.mjs).
   const newSeasons = await asset(context, "/assets/catalog/new-seasons.json");
-  if (!weeklyMessage(newOnOtt) && !(newSeasons && newSeasons.items.length)) return json({ sent: 0, removed: 0, next: null, note: "Nothing new this week." });
+  if (!weeklyMessage(newOnOtt) && !(newSeasons && newSeasons.items.length)) {
+    await logAlertRun(env.DB, "weekly", { note: "Nothing new this week to send" });
+    return json({ sent: 0, removed: 0, next: null, note: "Nothing new this week." });
+  }
 
   await ensurePushSchema(env.DB);
   const after = Math.max(0, Math.round(+new URL(request.url).searchParams.get("after") || 0));
@@ -73,5 +77,6 @@ export async function onRequestPost(context) {
       removed++;
     }
   }
+  await logAlertRun(env.DB, "weekly", { sent, removed, skipped });
   return json({ sent, removed, skipped, next: results.length === BATCH ? results[results.length - 1].id : null });
 }
