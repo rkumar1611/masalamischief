@@ -1283,8 +1283,13 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-05",
+  checked: "2026-11-06",
   items: [
+    { title: "The House", year: 2017, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/80166315", note: "Directed by Andrew J. Cohen · IMDb 5.6" },
+    { title: "The Boss", year: 2016, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/80084090", note: "Directed by Ben Falcone · IMDb 5.4" },
+    { title: "The Ant Bully", year: 2006, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/70043812", note: "Directed by John A. Davis · IMDb 5.8", kids: true },
+    { title: "Disclosure Day", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/disclosure-day/0-0-1z51012564", note: "Directed by Steven Spielberg · IMDb 6.4" },
+    { title: "Oh..! Sukumari", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-06", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.c03cc31a-49dc-45d3-90e5-8cdf18270b02", note: "IMDb 4.6" },
     { title: "Interstellar", year: 2014, lang: "English", app: "Netflix", added: "2026-11-05", url: "https://www.netflix.com/title/70305903", note: "Directed by Christopher Nolan · IMDb 8.7" },
     { title: "Kick-Ass 2", year: 2013, lang: "English", app: "Netflix", added: "2026-11-05", url: "https://www.netflix.com/title/70264802", note: "Directed by Jeff Wadlow · IMDb 6.5" },
     { title: "Angus, Thongs and Perfect Snogging", year: 2008, lang: "English", app: "Netflix", added: "2026-11-05", url: "https://www.netflix.com/title/70111324", note: "Directed by Gurinder Chadha · IMDb 6.3", kids: true },
@@ -1294,11 +1299,6 @@ const NEW_ON_OTT = {
     { title: "Valentine's Day", year: 2010, lang: "English", app: "Netflix", added: "2026-11-04", url: "https://www.netflix.com/title/70124804", note: "Directed by Garry Marshall · IMDb 5.8" },
     { title: "Friendship", year: 2025, lang: "English", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/82031089", note: "Directed by Andrew DeYoung · IMDb 6.6" },
     { title: "Manmarziyaan", year: 2018, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/83192237", note: "Directed by Anurag Kashyap · IMDb 6.8" },
-    { title: "Habji Gabji", year: 2022, lang: "Bengali", app: "JioHotstar", added: "2026-11-03", url: "https://www.hotstar.com/in/movies/habji-gabji/1271718411", note: "Directed by Raj Chakraborty · IMDb 6.8", kids: true },
-    { title: "Spider-Man: Far from Home", year: 2019, lang: "English", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/81055822", note: "Directed by Jon Watts · IMDb 7.3" },
-    { title: "Rockstar", year: 2011, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70222861", note: "Directed by Imtiaz Ali · IMDb 7.8" },
-    { title: "Raanjhanaa", year: 2013, lang: "Hindi", app: "Netflix", added: "2026-11-03", url: "https://www.netflix.com/title/70286078", note: "Directed by Aanand L. Rai · IMDb 7.6" },
-    { title: "Enemy", year: 2021, lang: "Tamil", app: "SonyLIV", added: "2026-11-03", url: "https://www.sonyliv.com/movies/enemy-1000161148", note: "Directed by Anand Shankar · IMDb 6.1" },
   ],
 };
 
