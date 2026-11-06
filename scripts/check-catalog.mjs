@@ -15,7 +15,7 @@ const HOSTS = {
   Netflix: /(^|\.)netflix\.com$/, "Prime Video": /(^|\.)(primevideo\.com|amazon\.[a-z.]+)$/, JioHotstar: /(^|\.)(hotstar|jiohotstar)\.com$/,
   ZEE5: /(^|\.)zee5\.com$/, SonyLIV: /(^|\.)sonyliv\.com$/, "Sun NXT": /(^|\.)sunnxt\.com$/, aha: /(^|\.)aha\.video$/,
   ManoramaMAX: /(^|\.)manoramamax\.com$/, "MX Player": /(^|\.)mxplayer\.in$/, "Lionsgate Play": /(^|\.)lionsgateplay\.com$/,
-  Crunchyroll: /(^|\.)crunchyroll\.com$/, "Apple TV": /(^|\.)tv\.apple\.com$/,
+  Crunchyroll: /(^|\.)crunchyroll\.com$/, "Apple TV": /(^|\.)tv\.apple\.com$/, YouTube: /(^|\.)(youtube\.com|youtu\.be)$/,
 };
 const LANGS = readdirSync(DIR).map((f) => /^list-([a-z]{2,3})\.json$/.exec(f)?.[1]).filter(Boolean);
 const year = new Date().getUTCFullYear();

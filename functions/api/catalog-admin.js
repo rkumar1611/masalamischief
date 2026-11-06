@@ -9,7 +9,17 @@ import { github } from "../../lib/github.js";
 
 const KEY = /^[a-z]{2,3}-(tv)?\d+$/;
 // The app names the catalogue uses (APP_RULES in scripts/build-catalog.mjs).
-const APPS = ["Netflix", "Prime Video", "JioHotstar", "ZEE5", "SonyLIV", "Sun NXT", "aha", "ManoramaMAX", "MX Player", "Lionsgate Play", "Crunchyroll", "Apple TV"];
+const APPS = ["Netflix", "Prime Video", "JioHotstar", "ZEE5", "SonyLIV", "Sun NXT", "aha", "ManoramaMAX", "MX Player", "Lionsgate Play", "Crunchyroll", "Apple TV", "YouTube"];
+
+// A YouTube link in any usual form (watch, youtu.be, shorts, embed) as https://www.youtube.com/watch?v=<id>, or "" if it isn't one.
+function youtubeLink(url) {
+  try {
+    const u = new URL(String(url).trim());
+    const host = u.hostname.replace(/^(www|m)\./, "");
+    const id = host === "youtu.be" ? u.pathname.slice(1) : host === "youtube.com" ? (u.searchParams.get("v") || (/^\/(shorts|embed|live)\/([^/?]+)/.exec(u.pathname) || [])[2] || "") : "";
+    return /^[A-Za-z0-9_-]{11}$/.test(id) ? `https://www.youtube.com/watch?v=${id}` : "";
+  } catch { return ""; }
+}
 
 async function get({ request, env }) {
   if (!env.DB) return notReady();
@@ -26,7 +36,7 @@ async function get({ request, env }) {
   const keys = results.map((r) => r.key);
   const marks = keys.map(() => "?").join(",");
   const [{ results: over }, { results: hist }] = await Promise.all([
-    env.DB.prepare(`SELECT key, apps, note, updated FROM catalog_overrides WHERE key IN (${marks})`).bind(...keys).all(),
+    env.DB.prepare(`SELECT key, apps, note, links, updated FROM catalog_overrides WHERE key IN (${marks})`).bind(...keys).all(),
     env.DB.prepare(`SELECT key, app, first_seen, last_seen, active FROM catalog_apps WHERE key IN (${marks})`).bind(...keys).all(),
   ]);
   return json({
@@ -35,7 +45,7 @@ async function get({ request, env }) {
       const o = over.find((x) => x.key === r.key);
       return {
         key: r.key, title: r.title, year: r.year, lang: r.lang, kind: r.kind, rating: r.rating, apps: JSON.parse(r.apps || "[]"),
-        override: o ? { apps: JSON.parse(o.apps), note: o.note, updated: o.updated } : null,
+        override: o ? { apps: JSON.parse(o.apps), note: o.note, links: JSON.parse(o.links || "{}"), updated: o.updated } : null,
         history: hist.filter((h) => h.key === r.key).map(({ app, first_seen, last_seen, active }) => ({ app, first_seen, last_seen, active })),
       };
     }),
@@ -54,32 +64,39 @@ async function post({ request, env }) {
   if (!(await env.DB.prepare("SELECT 1 AS ok FROM catalog_titles WHERE key = ?").bind(key).first())) return json({ error: "That title isn't in the database." }, 404);
   let apps = null;
   let note = "";
+  const links = {};
   if (body.apps !== null) {
     const allowed = new Set(APPS);
     if (!Array.isArray(body.apps) || body.apps.some((a) => !allowed.has(a))) return json({ error: "Unknown app." }, 400);
     apps = [...new Set(body.apps)];
     note = String(body.note || "").slice(0, 200);
+    // A link for YouTube (a free full film or episodes): only with YouTube ticked, and it has to be a real video link.
+    const yt = String(body.links?.YouTube || "").trim();
+    if (yt && apps.includes("YouTube")) {
+      links.YouTube = youtubeLink(yt);
+      if (!links.YouTube) return json({ error: "That doesn't look like a YouTube video link (youtube.com/watch?v=… or youtu.be/…)." }, 400);
+    }
   }
   // Kept in the database (the record), then published to assets/catalog/overrides.json on GitHub, which the film pages and
   // the daily catalogue build lay over what the apps' data says (lib/fixes.js).
   if (apps === null) {
     await env.DB.prepare("DELETE FROM catalog_overrides WHERE key = ?").bind(key).run();
   } else {
-    await env.DB.prepare(`INSERT INTO catalog_overrides (key, apps, note, updated) VALUES (?, ?, ?, ?)
-      ON CONFLICT(key) DO UPDATE SET apps = excluded.apps, note = excluded.note, updated = excluded.updated`)
-      .bind(key, JSON.stringify(apps), note, new Date().toISOString().slice(0, 10)).run();
+    await env.DB.prepare(`INSERT INTO catalog_overrides (key, apps, note, links, updated) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET apps = excluded.apps, note = excluded.note, links = excluded.links, updated = excluded.updated`)
+      .bind(key, JSON.stringify(apps), note, JSON.stringify(links), new Date().toISOString().slice(0, 10)).run();
   }
   try {
     const gh = github(env);
     const head = await gh.head();
     const before = await gh.read(OVERRIDES_PATH, head.sha);
     const title = (await env.DB.prepare("SELECT title FROM catalog_titles WHERE key = ?").bind(key).first())?.title || key;
-    await gh.commit(head, { [OVERRIDES_PATH]: withAdminCorrection(before, key, apps, note) },
+    await gh.commit(head, { [OVERRIDES_PATH]: withAdminCorrection(before, key, apps, note, links) },
       apps === null ? `Correction removed: ${title}` : `Correction: ${title} streams on ${apps.join(", ") || "no app"} (from /admin)`);
   } catch (e) {
     return json({ error: `Saved in the database, but couldn't publish it to the site: ${e.message}. Press Save again in a minute.` }, 502);
   }
-  return json({ ok: true, override: apps === null ? null : { apps, note } });
+  return json({ ok: true, override: apps === null ? null : { apps, note, links } });
 }
 
 // Admin only, so the real error is shown to help fix a problem quickly.

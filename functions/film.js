@@ -32,7 +32,10 @@ export async function onRequestGet(context) {
     if (!res.ok) return page;
     const f = (await res.json()).films[rawId];
     if (!f) return page;
-    if (fix) { f.w = overrideApps(f.w, fix); if (f.ja) f.ja = overrideApps(f.ja, fix); }
+    if (fix) {
+      f.w = overrideApps(f.w, fix); if (f.ja) f.ja = overrideApps(f.ja, fix);
+      if (fix.links) f.u = { ...(f.u || {}), ...fix.links }; // e.g. a YouTube video link added in /admin
+    }
     f.l = code;
 
     const tv = f.k === "tv";

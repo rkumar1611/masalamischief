@@ -7,7 +7,7 @@
   <title>Admin · Masala Mischief</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/assets/icons/icon-192.png" sizes="192x192" type="image/png">
-  <link rel="stylesheet" href="assets/style.css?v=137">
+  <link rel="stylesheet" href="assets/style.css?v=138">
   <style>
     .adm { max-width: 960px; margin: 24px auto; padding: 0 16px 80px; }
     .adm h1 { margin: 0 0 4px; }
@@ -149,7 +149,7 @@
       </section>
     </div>
   </main>
-  <script src="assets/data.js?v=137"></script>
+  <script src="assets/data.js?v=138"></script>
   <script>
     // The password is kept for this tab (sessionStorage), or on this device if you tick "keep me signed in"
     // (localStorage), and is only ever sent to our own /api/ endpoints, never put in the page.
@@ -242,6 +242,7 @@
         <h2>${esc(t.title)} <span class="muted small">${t.year || ""} · ${esc(t.lang)}${t.kind === "tv" ? " · series" : ""} · ${t.rating ? "★ " + t.rating : ""}</span></h2>
         <p class="small muted">${esc(t.key)} · <a href="film?id=${esc(t.key)}" target="_blank" rel="noopener">open the page</a> · builds find: ${t.apps.length ? esc(t.apps.join(", ")) : "no app"}${t.override ? ` · <strong>corrected ${esc(t.override.updated)}</strong>` : ""}</p>
         <div class="chips">${titleApps.map((a) => { const h = seen.get(a); return `<label class="chip" style="cursor:pointer"><input type="checkbox" value="${esc(a)}" ${now.includes(a) ? "checked" : ""}> ${esc(a)}${h && h.first_seen ? ` <small class="muted">since ${esc(h.first_seen)}</small>` : ""}</label>`; }).join("")}</div>
+        <input class="adm-find" data-yt type="url" maxlength="300" placeholder="YouTube video link (used when YouTube is ticked), e.g. https://www.youtube.com/watch?v=…" value="${esc((t.override && t.override.links && t.override.links.YouTube) || "")}">
         <input class="adm-find" data-note type="text" maxlength="200" placeholder="Why (optional), e.g. checked on the app" value="${esc(t.override ? t.override.note : "")}">
         <div class="adm-actions"><button type="button" data-save>Save correction</button>${t.override ? `<button type="button" data-clear>Remove correction</button>` : ""}<span class="small" data-out></span></div>
       </div>`;
@@ -261,7 +262,8 @@
       const save = e.target.closest("[data-save]"), clear = e.target.closest("[data-clear]");
       if (!card || (!save && !clear)) return;
       const out = card.querySelector("[data-out]");
-      const body = { key: card.dataset.key, apps: clear ? null : [...card.querySelectorAll("input[type=checkbox]:checked")].map((c) => c.value), note: card.querySelector("[data-note]").value };
+      const body = { key: card.dataset.key, apps: clear ? null : [...card.querySelectorAll("input[type=checkbox]:checked")].map((c) => c.value), note: card.querySelector("[data-note]").value,
+        links: { YouTube: card.querySelector("[data-yt]").value.trim() } };
       const { ok, data } = await api("/api/catalog-admin", "POST", body);
       out.textContent = ok ? (clear ? "Correction removed." : "Saved.") : (data.error || "Couldn't save.");
       if (ok) setTimeout(findTitles, 600);

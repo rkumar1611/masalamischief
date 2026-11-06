@@ -2266,6 +2266,7 @@ const APP_SEARCH = {
   "Apple TV": "https://tv.apple.com/in/search?term=",
   "SonyLIV": "https://www.sonyliv.com/search",
   "Crunchyroll": "https://www.crunchyroll.com/search?q=",
+  "YouTube": "https://www.youtube.com/results?search_query=",
 };
 const appSearchUrl = (app, title) =>
   APP_SEARCH[app] ? (APP_SEARCH[app].endsWith("=") ? APP_SEARCH[app] + encodeURIComponent(title) : APP_SEARCH[app]) : PLATFORM_HOME[app];
@@ -2924,7 +2925,10 @@ async function initFilm() {
     return;
   }
   // A reader's report we've checked and applied (overrides.json).
-  if (fix) { f.w = withCorrection(f.w, fix); if (f.ja) f.ja = withCorrection(f.ja, fix); }
+  if (fix) {
+    f.w = withCorrection(f.w, fix); if (f.ja) f.ja = withCorrection(f.ja, fix);
+    if (fix.links) f.u = { ...(f.u || {}), ...fix.links }; // e.g. a YouTube video link added in /admin
+  }
   const tv = f.k === "tv";
   const lang = langLabel(CAT_LANGS[f.l]);
   const spoken = origLang(f.l); // the language it was made in, e.g. "English" (not the catalogue's "Hollywood" or "Anime")
