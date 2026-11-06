@@ -330,7 +330,10 @@
       document.querySelectorAll("#fix-filters [data-ff]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.ff === fixFilter));
       document.querySelector('#fix-filters [data-ff="open"]').textContent = `📬 Open${data.open ? ` (${data.open})` : ""}`;
       if (!ok) { $("fix-rows").innerHTML = `<p class="muted">${esc(data.error || "Couldn't load reports.")}</p>`; return; }
-      $("fix-rows").innerHTML = data.fixes.map((f) => {
+      // In the Done and Ignored lists, one button clears the whole list so it doesn't grow for ever.
+      const clearAll = fixFilter !== "open" && data.fixes.length > 1
+        ? `<div class="adm-actions"><button type="button" data-fa="clear" data-status="${fixFilter}">🗑️ Delete all ${data.fixes.length} ${fixFilter === "done" ? "done" : "ignored"} reports</button><span class="small" data-msg="clear"></span></div>` : "";
+      $("fix-rows").innerHTML = clearAll + data.fixes.map((f) => {
         const appFix = f.kind === "gone" || f.kind === "also";
         return `
         <div class="adm-row${f.status === "open" ? " pending" : ""}">
@@ -340,7 +343,7 @@
           <div class="adm-actions">
             ${f.status === "open" ? `
               ${appFix ? `<button data-fa="apply" data-id="${f.id}">✅ Apply: ${f.kind === "gone" ? "remove" : "add"} ${esc(f.app)}</button>` : `<button data-fa="done" data-id="${f.id}">✅ Mark done</button>`}
-              <button data-fa="ignore" data-id="${f.id}">Ignore</button>` : `<button data-fa="reopen" data-id="${f.id}">Reopen</button>`}
+              <button data-fa="ignore" data-id="${f.id}">Ignore</button>` : `<button data-fa="reopen" data-id="${f.id}">Reopen</button><button data-fa="delete" data-id="${f.id}">🗑️ Delete</button>`}
           </div>
           <p class="small" data-msg="${f.id}"></p>
         </div>`;
@@ -350,9 +353,12 @@
     $("fix-rows").addEventListener("click", async (e) => {
       const b = e.target.closest("[data-fa]");
       if (!b) return;
-      const msg = document.querySelector(`[data-msg="${b.dataset.id}"]`);
+      const msg = document.querySelector(`[data-msg="${b.dataset.id || "clear"}"]`);
+      // Deleting is for good, so it asks first.
+      if (b.dataset.fa === "delete" && !confirm("Delete this report for good?")) return;
+      if (b.dataset.fa === "clear" && !confirm(`Delete every ${b.dataset.status === "done" ? "done" : "ignored"} report for good? Open reports are not touched.`)) return;
       b.disabled = true; msg.textContent = b.dataset.fa === "apply" ? "Saving to the site…" : "";
-      const { ok, data } = await api("/api/fixes", "POST", { action: b.dataset.fa, id: +b.dataset.id });
+      const { ok, data } = await api("/api/fixes", "POST", b.dataset.fa === "clear" ? { action: "clear", status: b.dataset.status } : { action: b.dataset.fa, id: +b.dataset.id });
       if (!ok) { b.disabled = false; msg.textContent = data.error || "Something went wrong."; return; }
       if (b.dataset.fa === "apply") alert("Saved. The page shows the fix in a minute or two.");
       loadFixes(); refreshStats();

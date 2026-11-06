@@ -1,5 +1,6 @@
 // Wrong-info reports for /admin ("Authorization: Bearer <ADMIN_PASSWORD>").
 // GET ?filter=open|done|ignored → the reports, most-reported first.
+// POST {action: "delete", id} / {action: "clear", status: "done"|"ignored"} remove finished reports for good.
 // POST {action: "apply"|"done"|"ignore"|"reopen", id}: "apply" saves the app correction to
 // assets/catalog/overrides.json on GitHub (needs GITHUB_TOKEN, as /write) and marks it done; the site
 // shows it within a couple of minutes. "done" marks it fixed without changing anything (details, other).
@@ -26,6 +27,20 @@ export async function onRequestPost({ request, env }) {
   if (!env.DB) return json({ error: "The database isn't connected." }, 503);
   let input;
   try { input = await request.json(); } catch { return json({ error: "Bad request." }, 400); }
+  // Tidying up: "delete" removes one finished report, "clear" removes every report in the Done or Ignored list. Open reports are never deleted.
+  if (input.action === "clear") {
+    if (!["done", "ignored"].includes(input.status)) return json({ error: "Bad request." }, 400);
+    await ensureFixesSchema(env.DB);
+    const res = await env.DB.prepare("DELETE FROM fixes WHERE status = ?").bind(input.status).run();
+    return json({ ok: true, deleted: res.meta ? res.meta.changes : 0 });
+  }
+  if (input.action === "delete") {
+    const del = Math.round(+input.id);
+    if (!(del > 0)) return json({ error: "Bad request." }, 400);
+    await ensureFixesSchema(env.DB);
+    const res = await env.DB.prepare("DELETE FROM fixes WHERE id = ? AND status <> 'open'").bind(del).run();
+    return (res.meta ? res.meta.changes : 1) ? json({ ok: true }) : json({ error: "Only Done or Ignored reports can be deleted." }, 400);
+  }
   const id = Math.round(+input.id);
   const status = { apply: "done", done: "done", ignore: "ignored", reopen: "open" }[input.action];
   if (!(id > 0) || !status) return json({ error: "Bad request." }, 400);
