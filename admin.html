@@ -257,14 +257,31 @@
         <div class="adm-actions"><button type="button" data-save>Save correction</button>${t.override ? `<button type="button" data-clear>Remove correction</button>` : ""}<span class="small" data-out></span></div>
       </div>`;
     }
+    // Titles are found in the site's own search files (the same ones the public search uses: free, no database), then only the
+    // chosen few are looked up in the database by key. Searching the database itself would read every title each time.
+    const normTitle = (s) => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[.'’]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+    const STOP_WORDS = new Set(["the", "a", "an", "of", "and"]);
+    async function searchKeys(q) {
+      if (/^[a-z]{2,3}-(tv)?\d+$/i.test(q)) return [q.toLowerCase()];
+      const words = normTitle(q).split(" ").filter(Boolean);
+      const first = words.find((w) => w.length >= 2 && !STOP_WORDS.has(w));
+      if (!first) return [];
+      const rows = await fetch(`/assets/catalog/s/${first.slice(0, 2)}.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []);
+      const need = words.join(" ");
+      return rows.filter((r) => normTitle(r[2]).includes(need)).sort((a, b) => b[6] - a[6]).slice(0, 15).map((r) => `${r[0]}-${r[1]}`);
+    }
     async function findTitles() {
       const q = $("t-find").value.trim();
       if (q.length < 2) { $("t-rows").innerHTML = ""; $("t-msg").textContent = ""; return; }
-      const { ok, data } = await api(`/api/catalog-admin?q=${encodeURIComponent(q)}`);
+      const keys = await searchKeys(q);
+      if (!keys.length) { $("t-rows").innerHTML = ""; $("t-msg").textContent = "Nothing found."; return; }
+      const { ok, data } = await api(`/api/catalog-admin?keys=${encodeURIComponent(keys.join(","))}`);
       if (!ok) { $("t-msg").textContent = data.error || "Couldn't search just now."; return; }
       titleApps = data.apps || titleApps;
-      $("t-msg").textContent = data.titles.length ? "" : "Nothing found in the database.";
-      $("t-rows").innerHTML = data.titles.map(titleCard).join("");
+      const order = new Map(keys.map((k, i) => [k, i]));
+      const titles = data.titles.slice().sort((a, b) => order.get(a.key) - order.get(b.key));
+      $("t-msg").textContent = titles.length ? "" : "Found, but not in the database yet (the next catalogue run adds it).";
+      $("t-rows").innerHTML = titles.map(titleCard).join("");
     }
     $("t-find").addEventListener("input", () => { clearTimeout(titleTimer); titleTimer = setTimeout(findTitles, 350); });
     $("t-rows").addEventListener("click", async (e) => {

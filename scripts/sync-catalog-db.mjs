@@ -68,6 +68,8 @@ async function main() {
     console.log(`Catalogue database: stopped early (${e.message.slice(0, 160)}).`);
   }
   console.log(`Catalogue database: ${sent} titles saved${rows.length > sent ? `, ${rows.length - sent} left for the next run` : ""}.`);
+  // Tells /admin the run finished, even when there was nothing to save ("database updated").
+  await call("/api/catalog-sync", { method: "POST", body: JSON.stringify({ done: true }) }).catch((e) => console.log(`Catalogue database: couldn't note the run (${e.message.slice(0, 120)}).`));
 }
 
 main().catch((e) => { console.error(`Catalogue database: ${e.message}`); process.exit(1); });

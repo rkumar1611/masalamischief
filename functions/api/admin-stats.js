@@ -19,10 +19,12 @@ export async function onRequestGet({ request, env }) {
       SUM(CASE WHEN titles <> '' THEN 1 ELSE 0 END) AS waiting FROM push_subs`),
     accountsOn(env) ? one(ensureAccountSchema, "SELECT COUNT(*) AS total FROM users") : null,
     // Our own copy of the catalogue (lib/catalog-db.js): arrivals and departures only count once real dates are recorded.
-    one(ensureCatalogSchema, `SELECT (SELECT COUNT(*) FROM catalog_titles) AS titles, (SELECT MAX(updated) FROM catalog_titles) AS updated,
-      (SELECT COUNT(*) FROM catalog_titles WHERE first_seen >= '${week}') AS fresh,
-      (SELECT COUNT(*) FROM catalog_apps WHERE first_seen >= '${week}') AS arrived,
-      (SELECT COUNT(*) FROM catalog_apps WHERE active = 0 AND last_seen >= '${week}') AS gone`),
+    // Cheap on purpose (D1's free plan allows 5 million rows read a day, and a count over the whole catalogue reads every row):
+    // MAX(rowid) is the number of titles (they're never deleted), and the rest comes from the few daily rows catalogue syncs keep.
+    one(ensureCatalogSchema, `SELECT (SELECT MAX(rowid) FROM catalog_titles) AS titles, (SELECT MAX(day) FROM catalog_daily) AS updated,
+      (SELECT COALESCE(SUM(fresh), 0) FROM catalog_daily WHERE day >= '${week}') AS fresh,
+      (SELECT COALESCE(SUM(arrived), 0) FROM catalog_daily WHERE day >= '${week}') AS arrived,
+      (SELECT COALESCE(SUM(gone), 0) FROM catalog_daily WHERE day >= '${week}') AS gone`),
   ]);
   // The last roundup and "now on OTT" runs (lib/push.js logAlertRun), for the Alerts tab.
   let alerts = null;

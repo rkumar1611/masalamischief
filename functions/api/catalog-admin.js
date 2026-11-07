@@ -1,6 +1,6 @@
 // /api/catalog-admin (admin only), behind /admin → Titles: look a title up in our own catalogue database and
 // correct which apps it streams on.
-//   GET  ?q=<words or key like "ml-657644">  → { titles: [{ key, title, year, lang, kind, rating, apps, found, override, history }] }
+//   GET  ?keys=<key>,<key>… (or ?q=<key> like "ml-657644")  → { titles: [{ key, title, year, lang, kind, rating, apps, found, override, history }] }
 //   POST { key, apps: [...] | null, note }   → saves the corrected app list (null removes the correction)
 import { json, notReady, isAdmin } from "../../lib/community.js";
 import { ensureCatalogSchema, ensureOverridesSchema } from "../../lib/catalog-db.js";
@@ -26,12 +26,12 @@ async function get({ request, env }) {
   if (!isAdmin(request, env)) return json({ error: "Not allowed." }, 401);
   await ensureCatalogSchema(env.DB);
   await ensureOverridesSchema(env.DB);
-  const q = (new URL(request.url).searchParams.get("q") || "").trim().slice(0, 80);
-  if (q.length < 2) return json({ titles: [] });
-  const { results } = KEY.test(q.toLowerCase())
-    ? await env.DB.prepare("SELECT * FROM catalog_titles WHERE key = ?").bind(q.toLowerCase()).all()
-    : await env.DB.prepare("SELECT * FROM catalog_titles WHERE instr(lower(title), ?) > 0 ORDER BY votes DESC LIMIT 15")
-      .bind(q.toLowerCase()).all();
+  // ?keys=<key>,<key>… (up to 20): the page finds titles in the site's search files (free, no database) and asks only about those
+  // by key. Searching titles here would read every row of the catalogue each time (D1's free plan allows 5 million rows read a day).
+  const wanted = (new URL(request.url).searchParams.get("keys") || new URL(request.url).searchParams.get("q") || "")
+    .split(",").map((k) => k.trim().toLowerCase()).filter((k) => KEY.test(k)).slice(0, 20);
+  if (!wanted.length) return json({ titles: [] });
+  const { results } = await env.DB.prepare(`SELECT * FROM catalog_titles WHERE key IN (${wanted.map(() => "?").join(",")})`).bind(...wanted).all();
   if (!results.length) return json({ titles: [] });
   const keys = results.map((r) => r.key);
   const marks = keys.map(() => "?").join(",");
