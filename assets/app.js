@@ -2127,6 +2127,7 @@ function loadTurnstile() {
 // It's only ever sent to our own /api/ endpoints.
 const adminPw = () => { try { return sessionStorage.getItem("mm-admin") || localStorage.getItem("mm-admin") || ""; } catch { return ""; } };
 
+let reviewsStamp = ""; // set after posting or moderating, see load() in initCommunity
 async function initCommunity(titleKey, el, label) {
   el.innerHTML = `<div class="section-head"><h2>🗣️ Audience reviews</h2></div><p class="muted">Loading…</p>`;
   const cfg = await getCommunityConfig();
@@ -2185,8 +2186,9 @@ async function initCommunity(titleKey, el, label) {
   }).catch(() => { $("cm-msg").textContent = "Couldn't load the spam check. Please refresh."; });
 
   async function load() {
-    const res = await fetch(`/api/reviews?t=${encodeURIComponent(titleKey)}`).then((r) => r.json()).catch(() => null);
-    if (!res || !res.summary) { $("cm-summary").textContent = ""; return; }
+    // After you post or moderate, the list is asked for with a fresh stamp so a cached copy (if the site caches it) isn't shown.
+    const res = await fetch(`/api/reviews?t=${encodeURIComponent(titleKey)}${reviewsStamp ? `&_=${reviewsStamp}` : ""}`).then((r) => r.json()).catch(() => null);
+    if (!res || !res.summary) { $("cm-summary").innerHTML = `<span class="muted">Reviews are taking a short break. Please try again later.</span>`; return; }
     const s = res.summary;
     $("cm-summary").innerHTML = s.count
       ? `<strong>Audience:</strong> ${s.masalaCount ? `🌶️ ${(+s.masala).toFixed(1)}<small>/5</small>` : ""}${s.masalaCount && s.scoreCount ? " · " : ""}${s.scoreCount ? `★ ${(+s.score).toFixed(1)}<small>/10</small>` : ""}
@@ -2210,6 +2212,7 @@ async function initCommunity(titleKey, el, label) {
       if (b.dataset.a === "delete" && !confirm("Delete this review for good?")) return;
       b.disabled = true;
       await fetch("/api/admin", { method: "POST", headers: { authorization: `Bearer ${admin}`, "content-type": "application/json" }, body: JSON.stringify({ action: b.dataset.a, id: +b.dataset.id }) }).catch(() => {});
+      reviewsStamp = String(Date.now());
       load();
       return;
     }
@@ -2239,6 +2242,7 @@ async function initCommunity(titleKey, el, label) {
     if (!admin) store.set("reviewName", payload.name.trim());
     msg.textContent = res.published ? (admin ? "✓ Posted as Masala Mischief team." : "Thanks! Your review is up.") : "Thanks! Your review will appear once we've checked it.";
     $("cm-body").value = ""; $("cm-score").value = ""; masala = 0; paintChillies();
+    reviewsStamp = String(Date.now());
     load();
   });
   load();

@@ -7,7 +7,7 @@
   <title>Admin · Masala Mischief</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/assets/icons/icon-192.png" sizes="192x192" type="image/png">
-  <link rel="stylesheet" href="assets/style.css?v=143">
+  <link rel="stylesheet" href="assets/style.css?v=144">
   <style>
     .adm { max-width: 960px; margin: 24px auto; padding: 0 16px 80px; }
     .adm h1 { margin: 0 0 4px; }
@@ -150,7 +150,7 @@
       </section>
     </div>
   </main>
-  <script src="assets/data.js?v=143"></script>
+  <script src="assets/data.js?v=144"></script>
   <script>
     // The password is kept for this tab (sessionStorage), or on this device if you tick "keep me signed in"
     // (localStorage), and is only ever sent to our own /api/ endpoints, never put in the page.
@@ -167,7 +167,15 @@
 
     async function api(path, method = "GET", body) {
       const res = await fetch(path, { method, headers: auth(), body: body ? JSON.stringify(body) : undefined });
-      return { status: res.status, ok: res.ok, data: await res.json().catch(() => ({})) };
+      const data = await res.json().catch(() => ({}));
+      if (data && data.error) data.error = plainLimit(data.error);
+      return { status: res.status, ok: res.ok, data };
+    }
+    // Cloudflare's free database stops answering once a daily limit is used up; say so in plain words.
+    function plainLimit(text) {
+      return /exceeded D1|free tier daily row/i.test(String(text))
+        ? "The database has used its free allowance for today. It starts working again at midnight UTC (5:30 am India time). Nothing is lost."
+        : text;
     }
 
     // ---- Sign in / out
@@ -231,7 +239,7 @@
       const one = (a, label) => (a ? `${label} ${when(a.at)}, ${a.sent} phone${a.sent === 1 ? "" : "s"}${a.note ? ` (${esc(a.note.toLowerCase())})` : ""}` : `${label} none yet`);
       const dbDate = d.catalog && d.catalog.updated;
       $("statusline").innerHTML = al.error
-        ? `<span class="adm-bad">Couldn't read the alert log: ${esc(al.error)}</span>`
+        ? `<span class="adm-bad">Couldn't read the alert log: ${esc(plainLimit(al.error))}</span>`
         : `🕒 Last runs (India time) · 📣 ${one(al.weekly, "roundup")} · 🎬 ${one(al.landed, "now on OTT")}${dbDate ? ` · 🗄️ database updated ${esc(dbDate)}` : ""}`;
       const s = d.secrets || {};
       $("setup").innerHTML = [
@@ -398,7 +406,7 @@
           sent += out.sent; removed += out.removed; after = out.next;
         }
         if (!msg.textContent.startsWith("Nothing")) msg.textContent = `Done: ${sent} sent${removed ? `, ${removed} removed (alerts turned off)` : ""}.`;
-      } catch (err) { msg.textContent = `Stopped: ${err.message}`; }
+      } catch (err) { msg.textContent = `Stopped: ${plainLimit(err.message)}`; }
       b.disabled = false; refreshStats();
     });
 
