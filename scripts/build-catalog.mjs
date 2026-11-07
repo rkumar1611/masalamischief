@@ -67,7 +67,7 @@ const DAILY_TV_PAGES = 3;    // and of new series
 // The daily run also sweeps the same "recent popular" lists the Sunday run keeps (RECENT films and 50 series per language from
 // the last RECENT_DAYS), so those titles arrive every day instead of waiting for Sunday. To keep the site small and quick:
 const MAX_NEW_PER_DAY = 1500; // at most this many new titles a day (growth is gradual, runs stay short), shared out between languages
-const MAX_TITLES = 52000;     // no sweeping once the catalogue is this big (the per-language caps in PLAN add up to about 51,000)
+const MAX_TITLES = 52000;     // no sweeping once the catalogue is this big (the per-language caps in PLAN add up to about 51,000; each language also stops at its own cap)
 // Upcoming releases page: next few months, most-awaited first in each language.
 const UPCOMING_LANGS = ["hi", "ta", "te", "ml", "kn", "mr", "bn", "pa", "en", "ko"];
 const UPCOMING_DAYS = 120;
@@ -646,8 +646,17 @@ async function daily() {
       sweepFilms[lang] = (await discover("movie", lang, { ...(plan.noAnimation ? { without_genres: ANIMATION } : {}), sort_by: "popularity.desc", "primary_release_date.gte": since, "primary_release_date.lte": today, "vote_count.gte": votesMin }, Math.ceil(RECENT / 20))).slice(0, RECENT);
       sweepSeries[lang] = (await discover("tv", lang, { without_genres: TV_SKIP_GENRES + (plan.noAnimation ? `,${ANIMATION}` : ""), sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": votesMin }, 3)).slice(0, 50);
     }
-    for (let i = 0; i < RECENT; i++) for (const lang of LANGS) if (sweepFilms[lang][i] !== undefined) queue([sweepFilms[lang][i]], moviePicks, lang);
-    for (let i = 0; i < 50; i++) for (const lang of LANGS) if (sweepSeries[lang][i] !== undefined) queue([sweepSeries[lang][i]], tvPicks, lang);
+    // A language that already holds as many titles as its cap in PLAN takes no more until Sunday trims it, so the lists can't outgrow their caps.
+    const held = {};
+    for (const f of have.values()) held[f.l] = (held[f.l] || 0) + 1;
+    const add = (id, picks, lang) => {
+      if ((held[lang] || 0) >= PLAN[lang].movies + PLAN[lang].tv) return;
+      const before = newQueued;
+      queue([id], picks, lang);
+      if (newQueued > before) held[lang] = (held[lang] || 0) + 1;
+    };
+    for (let i = 0; i < RECENT; i++) for (const lang of LANGS) if (sweepFilms[lang][i] !== undefined) add(sweepFilms[lang][i], moviePicks, lang);
+    for (let i = 0; i < 50; i++) for (const lang of LANGS) if (sweepSeries[lang][i] !== undefined) add(sweepSeries[lang][i], tvPicks, lang);
   }
   // Films still in cinemas (out in the last IN_CINEMAS_DAYS, on no app yet) are checked every day, so
   // "Tell me when it's on OTT" alerts go out the day they arrive. The best-known first, up to a cap.

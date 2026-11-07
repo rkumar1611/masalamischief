@@ -56,11 +56,14 @@ for (const lang of LANGS) {
 const total = films.length;
 // The site keeps each language's whole list in the browser when someone picks it, so a list that grows too big slows phones down.
 const listKb = Object.fromEntries(LANGS.map((l) => [l, Math.round(statSync(new URL(`list-${l}.json`, DIR)).size / 1024)]));
+// Size is kept down by the build itself (the per-language caps and the daily growth limit in scripts/build-catalog.mjs), so
+// this only warns. It stops a run only for something that can't be real growth, like a list several times its usual size.
 for (const [l, kb] of Object.entries(listKb)) {
-  if (kb > 4096) stop.push(`The ${l} list is ${kb} KB: too big for phones (limit 4096 KB). Lower the caps in scripts/build-catalog.mjs.`);
-  else if (kb > 2560) warn.push(`The ${l} list is ${kb} KB (it was set to be warned above 2560 KB).`);
+  if (kb > 8192) stop.push(`The ${l} list is ${kb} KB, far beyond any normal size: something is wrong with the build.`);
+  else if (kb > 3072) warn.push(`The ${l} list is ${kb} KB: getting big for phones. Lower that language's cap in scripts/build-catalog.mjs.`);
 }
-if (total > 60000) stop.push(`The catalogue has ${total} titles (limit 60,000).`);
+if (total > 100000) stop.push(`The catalogue has ${total} titles, far beyond any normal size: something is wrong with the build.`);
+else if (total > 60000) warn.push(`The catalogue has ${total} titles (more than the 51,000 the caps allow).`);
 if (bad.noTitle.length) warn.push(`${bad.noTitle.length} titles with no name: ${eg(bad.noTitle)}`);
 if (bad.year.length) warn.push(`${bad.year.length} titles with an impossible year: ${eg(bad.year)}`);
 if (bad.rating.length) warn.push(`${bad.rating.length} titles with a rating outside 0 to 10: ${eg(bad.rating)}`);
