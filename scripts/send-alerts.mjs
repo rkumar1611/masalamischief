@@ -18,6 +18,7 @@ async function main() {
     if (!res.ok) throw new Error(`${res.status}: ${(await res.text()).slice(0, 200)}`);
     const out = await res.json();
     if (out.note) console.log(out.note);
+    if (out.log) console.log(`Not logged for /admin: ${out.log}`);
     sent += out.sent;
     removed += out.removed;
     after = out.next;

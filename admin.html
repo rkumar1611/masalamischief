@@ -222,12 +222,13 @@
         stat(MOVIES.length, "our own reviews", "reviews") +
         stat(r.live || 0, "readers' reviews live") +
         (d.secrets && d.secrets.accounts ? stat(d.users ? d.users.total : 0, "visitors signed in with Google") : "") +
-        (d.catalog ? stat((d.catalog.titles || 0).toLocaleString("en-IN"), "titles in our own database") + stat(d.catalog.fresh || 0, "new titles this week") + stat(d.catalog.arrived || 0, "arrivals on apps this week") + stat(d.catalog.gone || 0, "titles left an app this week") : "");
+        (d.catalog ? stat((d.catalog.titles || 0).toLocaleString("en-IN"), "titles in our own database") + stat(d.catalog.updated || "–", "database last updated") + stat(d.catalog.fresh || 0, "new titles this week") + stat(d.catalog.arrived || 0, "arrivals on apps this week") + stat(d.catalog.gone || 0, "titles left an app this week") : "");
       $("push-stats").innerHTML =
         stat(p.total, "phones with alerts on") + stat(p.weekly, "get the Friday roundup") + stat(p.waiting, "waiting for a film to land");
       // When each alert last went out (from the run log; it starts filling with the next run).
       const when = (at) => new Date(at).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" });
       const lastRun = (a, name) => {
+        if (d.alerts && d.alerts.error) return `<span class="adm-bad">Couldn't read the ${name} log: ${esc(d.alerts.error)}</span>`;
         if (!a) return `<span class="muted">No ${name} recorded yet. The next one will show here.</span>`;
         const parts = [`${a.sent} phone${a.sent === 1 ? "" : "s"} notified`, a.removed ? `${a.removed} removed (alerts turned off)` : "", a.skipped ? `${a.skipped} skipped (nothing that fit their choices)` : "", a.note].filter(Boolean);
         return `<span class="${a.sent ? "adm-ok" : "muted"}">${a.sent ? "✓" : "•"} Last ${name}: ${when(a.at)} (India time) · ${esc(parts.join(" · "))}</span>`;
