@@ -4,7 +4,7 @@
 //   Everything else is a warning, listed in the run's summary: wrong app names, links that point at another
 //   site, Top 10 titles that aren't on their app, titles with impossible years or ratings, duplicates.
 // Plain Node 20+, no dependencies. Offline: it only reads the files and, for the comparison, the last commit (git).
-import { readdirSync, readFileSync, existsSync, appendFileSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync, appendFileSync, statSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
 const DIR = new URL("../assets/catalog/", import.meta.url);
@@ -54,6 +54,13 @@ for (const lang of LANGS) {
   }
 }
 const total = films.length;
+// The site keeps each language's whole list in the browser when someone picks it, so a list that grows too big slows phones down.
+const listKb = Object.fromEntries(LANGS.map((l) => [l, Math.round(statSync(new URL(`list-${l}.json`, DIR)).size / 1024)]));
+for (const [l, kb] of Object.entries(listKb)) {
+  if (kb > 4096) stop.push(`The ${l} list is ${kb} KB: too big for phones (limit 4096 KB). Lower the caps in scripts/build-catalog.mjs.`);
+  else if (kb > 2560) warn.push(`The ${l} list is ${kb} KB (it was set to be warned above 2560 KB).`);
+}
+if (total > 60000) stop.push(`The catalogue has ${total} titles (limit 60,000).`);
 if (bad.noTitle.length) warn.push(`${bad.noTitle.length} titles with no name: ${eg(bad.noTitle)}`);
 if (bad.year.length) warn.push(`${bad.year.length} titles with an impossible year: ${eg(bad.year)}`);
 if (bad.rating.length) warn.push(`${bad.rating.length} titles with a rating outside 0 to 10: ${eg(bad.rating)}`);

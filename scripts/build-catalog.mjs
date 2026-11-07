@@ -29,14 +29,14 @@ const TOKEN = process.env.TMDB_TOKEN;
 // How many films and series to take per language (best-known first, plus recent hits).
 // Korean skips animation so it's dramas and films; anime is handled separately below.
 const PLAN = {
-  hi: { movies: 6000, tv: 600 }, ta: { movies: 5000, tv: 300 }, te: { movies: 5000, tv: 300 },
-  ml: { movies: 5000, tv: 250 }, kn: { movies: 3000, tv: 150 },
-  mr: { movies: 1500, tv: 100 }, bn: { movies: 2000, tv: 150 }, pa: { movies: 1000, tv: 60 },
-  en: { movies: 8000, tv: 2000 },
-  ko: { movies: 1500, tv: 1000, noAnimation: true },
+  hi: { movies: 7000, tv: 800 }, ta: { movies: 5500, tv: 300 }, te: { movies: 5500, tv: 300 },
+  ml: { movies: 5500, tv: 250 }, kn: { movies: 3200, tv: 150 },
+  mr: { movies: 1700, tv: 100 }, bn: { movies: 2200, tv: 150 }, pa: { movies: 1100, tv: 60 },
+  en: { movies: 9500, tv: 2500 },
+  ko: { movies: 1500, tv: 1200, noAnimation: true },
 };
 const LANGS = Object.keys(PLAN);
-const RECENT = 300;        // of each language's films, up to this many recent popular ones
+const RECENT = 800;        // of each language's films, up to this many recent popular ones (the daily run sweeps the same list)
 const TV_SKIP_GENRES = "10763,10764,10766,10767"; // News, Reality, Soap, Talk
 const MAX_EPISODES = 300;  // longer than this is almost always a daily soap (not applied to anime)
 // Anime: Japanese-language animation, stored under the code "ja" and shown as "Anime".
@@ -64,6 +64,10 @@ const TREND_PER_LANG = 4;
 const DAILY_DAYS = 45;     // the daily run looks for titles released in this many days
 const DAILY_MOVIE_PAGES = 5; // TMDB pages (20 each) of new films per language the daily run looks through
 const DAILY_TV_PAGES = 3;    // and of new series
+// The daily run also sweeps the same "recent popular" lists the Sunday run keeps (RECENT films and 50 series per language from
+// the last RECENT_DAYS), so those titles arrive every day instead of waiting for Sunday. To keep the site small and quick:
+const MAX_NEW_PER_DAY = 1500; // at most this many new titles a day (growth is gradual, runs stay short), shared out between languages
+const MAX_TITLES = 52000;     // no sweeping once the catalogue is this big (the per-language caps in PLAN add up to about 51,000)
 // Upcoming releases page: next few months, most-awaited first in each language.
 const UPCOMING_LANGS = ["hi", "ta", "te", "ml", "kn", "mr", "bn", "pa", "en", "ko"];
 const UPCOMING_DAYS = 120;
@@ -609,9 +613,14 @@ async function daily() {
   const moviePicks = [];
   const tvPicks = [];
   const trendIds = {};
+  let newQueued = 0; // new titles queued so far, against MAX_NEW_PER_DAY
   const queue = (list, picks, lang, refresh = false) => list.forEach((id) => {
     const key = `${lang}-${picks === tvPicks ? `tv${id}` : id}`;
-    if ((refresh || !have.has(key)) && !picks.some(([x, l]) => x === id && l === lang)) picks.push([id, lang]);
+    if (picks.some(([x, l]) => x === id && l === lang)) return;
+    if (refresh) { picks.push([id, lang]); return; }
+    if (have.has(key) || newQueued >= MAX_NEW_PER_DAY) return;
+    newQueued++;
+    picks.push([id, lang]);
   });
   for (const lang of [...LANGS, ANIME]) {
     const plan = PLAN[lang] || {};
@@ -625,12 +634,27 @@ async function daily() {
     queue(await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, DAILY_MOVIE_PAGES), moviePicks, lang);
     queue(await discover("tv", lang, { ...tvBase, sort_by: "popularity.desc", "first_air_date.gte": newSince, "first_air_date.lte": today }, DAILY_TV_PAGES), tvPicks, lang);
   }
+  // The recent-years sweep (same queries as the Sunday run, so what it adds is what Sunday would keep). Languages take turns, so
+  // the daily cap is shared out and no language is left until last.
+  if (have.size < MAX_TITLES) {
+    const since = day(-RECENT_DAYS);
+    const sweepFilms = {};
+    const sweepSeries = {};
+    for (const lang of LANGS) {
+      const plan = PLAN[lang];
+      const votesMin = lang === "en" ? 50 : 2;
+      sweepFilms[lang] = (await discover("movie", lang, { ...(plan.noAnimation ? { without_genres: ANIMATION } : {}), sort_by: "popularity.desc", "primary_release_date.gte": since, "primary_release_date.lte": today, "vote_count.gte": votesMin }, Math.ceil(RECENT / 20))).slice(0, RECENT);
+      sweepSeries[lang] = (await discover("tv", lang, { without_genres: TV_SKIP_GENRES + (plan.noAnimation ? `,${ANIMATION}` : ""), sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": votesMin }, 3)).slice(0, 50);
+    }
+    for (let i = 0; i < RECENT; i++) for (const lang of LANGS) if (sweepFilms[lang][i] !== undefined) queue([sweepFilms[lang][i]], moviePicks, lang);
+    for (let i = 0; i < 50; i++) for (const lang of LANGS) if (sweepSeries[lang][i] !== undefined) queue([sweepSeries[lang][i]], tvPicks, lang);
+  }
   // Films still in cinemas (out in the last IN_CINEMAS_DAYS, on no app yet) are checked every day, so
   // "Tell me when it's on OTT" alerts go out the day they arrive. The best-known first, up to a cap.
   const watching = [...have.values()].filter((f) => f.k !== "tv" && f.rd && f.rd >= day(-IN_CINEMAS_DAYS) && f.rd <= today && !(f.w || []).length)
     .sort((a, b) => b.n - a.n).slice(0, IN_CINEMAS_MAX);
   for (const f of watching) queue([f.id], moviePicks, f.l, true);
-  console.log(`Daily: ${moviePicks.length} films (${watching.length} in cinemas) and ${tvPicks.length} series to fetch.`);
+  console.log(`Daily: ${moviePicks.length} films (${watching.length} in cinemas) and ${tvPicks.length} series to fetch; ${newQueued} of them new (up to ${MAX_NEW_PER_DAY} a day).`);
 
   const fresh = new Map([...(await movieDetails(moviePicks)), ...(await seriesDetails(tvPicks))].map((f) => [keyOf(f), f]));
   const added = [...fresh.keys()].filter((k) => !have.has(k));
