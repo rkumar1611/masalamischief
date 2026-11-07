@@ -1283,8 +1283,11 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-06",
+  checked: "2026-11-07",
   items: [
+    { title: "Pacific Rim: Uprising", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/80203059", note: "Directed by Steven S. DeKnight · IMDb 5.6" },
+    { title: "Gargi", year: 2022, lang: "Tamil", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/gargi-1000183689", note: "Directed by Gautham Ramachandran · IMDb 8.1" },
+    { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278179", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
     { title: "17 Again", year: 2009, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/70107406", note: "Directed by Burr Steers · IMDb 6.4" },
     { title: "Mission: Impossible - Rogue Nation", year: 2015, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/80038359", note: "Directed by Christopher McQuarrie · IMDb 7.4" },
     { title: "Atharintiki Daaredi", year: 2013, lang: "Telugu", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/81643752", note: "Directed by Trivikram Srinivas · IMDb 7.3" },
@@ -1296,9 +1299,6 @@ const NEW_ON_OTT = {
     { title: "Obsession", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/obsession/0-0-1z51012609", note: "Directed by Curry Barker · IMDb 7.8" },
     { title: "Resident Evil", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/resident-evil/0-0-1z51105420", note: "Directed by Zach Cregger · IMDb 7.5" },
     { title: "Heart of the Beast", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/heart-of-the-beast/0-0-1z51106653", note: "Directed by David Ayer · IMDb 7.2" },
-    { title: "Jurassic World: Rebirth", year: 2025, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/jurassic-world-rebirth/0-0-1z5800926", note: "Directed by Gareth Edwards · IMDb 5.8" },
-    { title: "Scream VI", year: 2023, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/scream-vi/0-0-1z5781909", note: "Directed by Tyler Gillett  · IMDb 6.4" },
-    { title: "The House", year: 2017, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/80166315", note: "Directed by Andrew J. Cohen · IMDb 5.6" },
   ],
 };
 
