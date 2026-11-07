@@ -2366,7 +2366,7 @@ const catLayout = async () => ((await loadCatalog("manifest")) || {}).layout || 
 // The browse list for some languages (codes like "ta"). With no languages: every language on the older
 // layout, or the best-known titles across all languages (popular.json, marked popular: true) on layout 2,
 // since the full catalogue is too big to load at once.
-async function loadIndex(codes) {
+async function loadIndex(codes, full = false) {
   const man = await loadCatalog("manifest");
   if (!man) return loadCatalog("index");
   const asked = (codes || []).filter(Boolean);
@@ -2375,9 +2375,12 @@ async function loadIndex(codes) {
     return pop && { built: man.built, films: pop.films, popular: true };
   }
   const want = (asked.length ? asked : Object.keys(man.langs)).filter((c) => man.langs[c]);
-  const parts = await Promise.all(want.map((c) => loadCatalog(`list-${c}`)));
+  // By default a language's "top" list: every title on an app in India plus the best-known others (build-catalog.mjs TOP_EXTRA).
+  // It stays about the same size however big the catalogue grows. full = the whole language list (search, "load all").
+  const useTop = !full && Boolean(man.top);
+  const parts = await Promise.all(want.map((c) => (useTop ? loadCatalog(`top-${c}`).then((p) => p || loadCatalog(`list-${c}`)) : loadCatalog(`list-${c}`))));
   // Newer builds leave the language out of each entry (the file is per language).
-  return { built: man.built, films: parts.flatMap((p, i) => (p ? p.films.map((f) => (f.l ? f : { ...f, l: want[i] })) : [])) };
+  return { built: man.built, partial: useTop, films: parts.flatMap((p, i) => (p ? p.films.map((f) => (f.l ? f : { ...f, l: want[i] })) : [])) };
 }
 
 // One title's full details (raw id like "12345" or "tv12345"), or null.
@@ -2745,11 +2748,16 @@ async function initFilms() {
     if (cache[key]) return cache[key];
     let films = null;
     let popular = false;
+    let partial = false;
     if (key.startsWith("q:")) films = await searchCatalog(key.slice(2));
     else {
-      const cat = await loadIndex(key === "*" ? Object.keys(CAT_LANGS) : key ? [key] : []);
+      // "full:<code>" is the whole language list (a search, or "load all"); a plain code is its top list.
+      const full = key.startsWith("full:");
+      const code = full ? key.slice(5) : key;
+      const cat = await loadIndex(key === "*" ? Object.keys(CAT_LANGS) : code ? [code] : [], full);
       films = cat && cat.films;
       popular = !!(cat && cat.popular);
+      partial = !!(cat && cat.partial);
     }
     const list = (films || []).map((f) => ({ ...f, mine: byTmdb[f.id] }));
     const have = new Set(list.map((f) => f.id));
@@ -2759,14 +2767,14 @@ async function initFilms() {
       list.push({ id: img.tmdb || m.id, l: LANG_CODE[m.lang], t: m.title, y: m.year, g: m.genres, r: m.runtime,
         v: m.quality, n: 0, p: img.poster, w: streamsOn(m), c: PARENT_NOTES[m.id] && PARENT_NOTES[m.id].age <= 6 ? "U" : "", mine: m });
     });
-    return (cache[key] = { list, popular, ok: !!films });
+    return (cache[key] = { list, popular, partial, ok: !!films });
   }
   // While a big list downloads, the first page of it (head-<key>.json, most popular first) is shown,
   // when nothing but the language is chosen. Returns true if it painted.
   const plainView = (p) => !["q", "t", "g", "a", "view"].some((k) => p.get(k)) && !["r", "k", "w"].some((k) => p.get(k) === "1")
     && (p.get("s") || "popular") === "popular";
   async function quickPaint(key, full, isCurrent) {
-    if (layout < 2 || key.startsWith("q:") || cache[key]) return false;
+    if (layout < 2 || key.startsWith("q:") || key.startsWith("full:") || cache[key]) return false;
     const head = await Promise.race([loadCatalog(`head-${key || "all"}`), full.then(() => null)]);
     if (!head || !head.films || !isCurrent()) return false;
     $("fgrid").innerHTML = head.films.map((f) => filmCard({ ...f, mine: byTmdb[f.id] })).join("");
@@ -2805,7 +2813,13 @@ async function initFilms() {
   fillOptions(first.list);
   let list = first.list;
   let listIsPopular = first.popular;
+  let listPartial = first.partial; // the list is a language's top list, not the whole language
   let listKey = null;
+  let showAll = false; // "Load all" was pressed for the language
+  let lastLang = "";
+  const langTotals = ((await loadCatalog("manifest")) || {}).langs || {};
+  $("fcount").insertAdjacentHTML("afterend", `<button class="btn small" id="fall" type="button" hidden></button>`);
+  $("fall").addEventListener("click", () => { showAll = true; $("fall").hidden = true; apply(); });
   $("fq").value = state.q; $("ft").value = state.t; $("fl").value = state.l; $("fg").value = state.g; $("fa").value = state.a; $("fs").value = state.s;
   $("fr").checked = state.r; $("fk").checked = state.k; $("fw").checked = state.w;
 
@@ -2849,8 +2863,10 @@ async function initFilms() {
     $("ft").disabled = $("fs").disabled = isTop();
     $("fl").disabled = animeTop;
     paintView();
-    // An app choice looks through every language ("*"), not just the best-known titles.
-    const key = layout < 2 ? "" : lang || (q.length >= 2 && !isTop() ? `q:${q}` : state.a && !isTop() ? "*" : "");
+    if (lang !== lastLang) { showAll = false; lastLang = lang; }
+    // An app choice looks through every language ("*"), not just the best-known titles. A language gets its top list
+    // (every title on an app plus the best-known others); a search in it, or "load all", gets the whole language list.
+    const key = layout < 2 ? "" : lang ? (q.length >= 2 || showAll ? `full:${lang}` : lang) : (q.length >= 2 && !isTop() ? `q:${q}` : state.a && !isTop() ? "*" : "");
     if (key !== listKey) {
       const mine = ++run;
       if (listKey !== null) $("fcount").textContent = "Loading…";
@@ -2861,6 +2877,7 @@ async function initFilms() {
       if (mine !== run) return; // a newer choice is loading
       list = got.list;
       listIsPopular = got.popular;
+      listPartial = got.partial;
       listKey = key;
       fillOptions(list);
     }
@@ -2894,6 +2911,10 @@ async function initFilms() {
       : `${results.length.toLocaleString("en-IN")} ${results.length === 1 ? noun[0] : noun[1]}`;
     // "All languages" shows the best-known titles only; a language (or a search) covers everything.
     if (listIsPopular && !q) $("fcount").textContent += isTop() ? " · from the best-known titles" : " · the best-known across all languages. Pick a language to see every title.";
+    // A language's top list leaves out the lesser-known titles that aren't on an app; one button loads them all.
+    const partialNow = Boolean(listPartial && lang && langTotals[lang] && !showAll);
+    $("fall").hidden = !partialNow;
+    if (partialNow) $("fall").textContent = `Showing every title on an app plus the best-known others. Load all ${langTotals[lang].toLocaleString("en-IN")}`;
     paint();
     try {
       const p = new URLSearchParams();

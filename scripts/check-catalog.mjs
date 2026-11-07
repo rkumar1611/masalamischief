@@ -55,7 +55,9 @@ for (const lang of LANGS) {
 }
 const total = films.length;
 // The site keeps each language's whole list in the browser when someone picks it, so a list that grows too big slows phones down.
-const listKb = Object.fromEntries(LANGS.map((l) => [l, Math.round(statSync(new URL(`list-${l}.json`, DIR)).size / 1024)]));
+// What a visitor downloads for a language is its top list (top-<lang>.json: every title on an app plus the best-known others),
+// so that is what is measured; builds without top lists are measured on the full list.
+const listKb = Object.fromEntries(LANGS.map((l) => [l, Math.round(statSync(new URL(existsSync(new URL(`top-${l}.json`, DIR)) ? `top-${l}.json` : `list-${l}.json`, DIR)).size / 1024)]));
 // Size is kept down by the build itself (the per-language caps and the daily growth limit in scripts/build-catalog.mjs), so
 // this only warns. It stops a run only for something that can't be real growth, like a list several times its usual size.
 for (const [l, kb] of Object.entries(listKb)) {

@@ -53,6 +53,7 @@ const TITLE_SHARDS = 128;
 const PEOPLE_SHARDS = 512;
 const POPULAR_SIZE = 2500;
 const HEAD_SIZE = 60;        // head-<lang>.json / head-all.json: one page of the Movies & series grid
+const TOP_EXTRA = 1000;      // top-<lang>.json: every title on an app in India plus this many of the best-known others
 // Weekly refresh: titles from the last RECENT_DAYS every week, older ones once every REFRESH_WEEKS.
 const RECENT_DAYS = 730;
 const REFRESH_WEEKS = 4;
@@ -774,7 +775,11 @@ function writeCatalogue(titles, trendIds) {
     counts[lang] = mine.length;
     // Without the language (the file says it) and release date (not used by the site), to keep it small.
     writeIfChanged(new URL(`list-${lang}.json`, OUT), JSON.stringify({ films: mine.map((f) => { const { l, rd, ...rest } = compact(f); return rest; }) }));
-    // The first page of the Movies & series page (most popular first), shown while the full list loads.
+    // What the Movies & series page, Suggest and Group Pick load for a language: every title streaming on an app in India
+    // plus the TOP_EXTRA best-known others, in the same order. It stays about the same size however many titles the
+    // catalogue holds. The full list above is for "load all", search and the scripts.
+    writeIfChanged(new URL(`top-${lang}.json`, OUT), JSON.stringify({ films: mine.filter((f, i) => (f.w && f.w.length) || i < TOP_EXTRA).map((f) => { const { l, rd, ...rest } = compact(f); return rest; }) }));
+    // The first page of the Movies & series page (most popular first), shown while the list loads.
     writeIfChanged(new URL(`head-${lang}.json`, OUT), JSON.stringify({ films: mine.slice(0, HEAD_SIZE).map(compact) }));
     // Full details in TITLE_SHARDS small files per language.
     const shards = Array.from({ length: TITLE_SHARDS }, () => ({}));
@@ -869,7 +874,7 @@ function writeCatalogue(titles, trendIds) {
 
   writeLists(all);
   writeSitemaps(all, people);
-  writeIfChanged(new URL("manifest.json", OUT), JSON.stringify({ layout: LAYOUT, built, count: all.length, langs: counts, shards: { t: TITLE_SHARDS, p: PEOPLE_SHARDS }, links: linkCount, ...(jwProblem ? { linksNote: jwProblem } : {}) }));
+  writeIfChanged(new URL("manifest.json", OUT), JSON.stringify({ layout: LAYOUT, built, count: all.length, langs: counts, top: TOP_EXTRA, shards: { t: TITLE_SHARDS, p: PEOPLE_SHARDS }, links: linkCount, ...(jwProblem ? { linksNote: jwProblem } : {}) }));
   rmSync(new URL("index.json", OUT), { force: true }); // replaced by the per-language lists
   console.log(`Total: ${all.length} titles.`, counts);
 }
