@@ -1285,6 +1285,11 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-07",
   items: [
+    { title: "Christmas in Love", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/81636794", note: "Directed by Don McBrearty · IMDb 6.3", kids: true },
+    { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278568", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
+    { title: "Mahendragiri Varahi", year: 2026, app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/mahendragiri-varahi/1271721971", note: "Directed by Santosh Jagarlapudi · IMDb 7.7" },
+    { title: "Saawariya", year: 2007, lang: "Hindi", app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/saawariya/1271721647", note: "Directed by Sanjay Leela Bhansali · IMDb 5.2", kids: true },
+    { title: "Curious George", year: 2006, lang: "English", app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/curious-george/1271721329", note: "Directed by Matthew O'Callaghan · IMDb 6.5", kids: true },
     { title: "Pacific Rim: Uprising", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/80203059", note: "Directed by Steven S. DeKnight · IMDb 5.6" },
     { title: "Gargi", year: 2022, lang: "Tamil", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/gargi-1000183689", note: "Directed by Gautham Ramachandran · IMDb 8.1" },
     { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278179", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
@@ -1294,11 +1299,6 @@ const NEW_ON_OTT = {
     { title: "Khushi", year: 2001, lang: "Telugu", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/81644560", note: "Directed by S. J. Suryah · IMDb 8.1" },
     { title: "Meesaya Murukku 2", year: 2026, lang: "Tamil", app: "SonyLIV", added: "2026-11-06", url: "https://www.sonyliv.com/movies/meesaya-murukku-2-1090552539", note: "Directed by HipHop Tamizha Adhi · IMDb 6.3" },
     { title: "I'm Game", year: 2026, lang: "Malayalam", app: "JioHotstar", added: "2026-11-06", url: "https://www.hotstar.com/in/movies/im-game/1271720887", note: "Directed by Nahas Hidayath · IMDb 6.3" },
-    { title: "The Dark Tower", year: 2017, lang: "English", app: "JioHotstar", added: "2026-11-06", url: "https://www.hotstar.com/in/movies/the-dark-tower/1271721412", note: "Directed by Nikolaj Arcel · IMDb 5.6" },
-    { title: "Chance Pe Dance", year: 2010, lang: "Hindi", app: "JioHotstar", added: "2026-11-06", url: "https://www.hotstar.com/in/movies/chance-pe-dance/1271720984", note: "Directed by Ken Ghosh · IMDb 4.8" },
-    { title: "Obsession", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/obsession/0-0-1z51012609", note: "Directed by Curry Barker · IMDb 7.8" },
-    { title: "Resident Evil", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/resident-evil/0-0-1z51105420", note: "Directed by Zach Cregger · IMDb 7.5" },
-    { title: "Heart of the Beast", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-06", url: "https://www.zee5.com/movies/details/heart-of-the-beast/0-0-1z51106653", note: "Directed by David Ayer · IMDb 7.2" },
   ],
 };
 
