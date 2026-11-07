@@ -64,6 +64,7 @@
         <button class="chip" type="button" data-t="alerts">📣 Alerts</button>
         <button class="chip" type="button" data-t="links">🔗 Shortcuts</button>
       </nav>
+      <p class="small muted" id="statusline" aria-live="polite"></p>
 
       <!-- Home -->
       <section data-s="home">
@@ -126,13 +127,11 @@
         <div class="adm-card">
           <h2>📣 Friday roundup</h2>
           <p class="muted small">Goes out by itself every Friday at 7 pm. Send it now only if it failed or you want it early; people get it again, so use it sparingly.</p>
-          <p class="small" id="last-weekly" aria-live="polite"></p>
           <div class="adm-actions"><button type="button" data-send="weekly">Send this week's roundup now</button><span class="small" id="send-weekly-msg"></span></div>
         </div>
         <div class="adm-card">
           <h2>🎬 "Now on OTT" alerts</h2>
           <p class="muted small">Goes out by itself every day at 9 am, for films people asked to be told about. Each film is announced to a phone only once, so sending now is safe.</p>
-          <p class="small" id="last-landed" aria-live="polite"></p>
           <div class="adm-actions"><button type="button" data-send="landed">Send "now on OTT" alerts now</button><span class="small" id="send-landed-msg"></span></div>
         </div>
       </section>
@@ -227,15 +226,13 @@
         stat(p.total, "phones with alerts on") + stat(p.weekly, "get the Friday roundup") + stat(p.waiting, "waiting for a film to land");
       // When each alert last went out (from the run log; it starts filling with the next run).
       const when = (at) => new Date(at).toLocaleString("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" });
-      const lastRun = (a, name) => {
-        if (d.alerts && d.alerts.error) return `<span class="adm-bad">Couldn't read the ${name} log: ${esc(d.alerts.error)}</span>`;
-        if (!a) return `<span class="muted">No ${name} recorded yet. The next one will show here.</span>`;
-        const parts = [`${a.sent} phone${a.sent === 1 ? "" : "s"} notified`, a.removed ? `${a.removed} removed (alerts turned off)` : "", a.skipped ? `${a.skipped} skipped (nothing that fit their choices)` : "", a.note].filter(Boolean);
-        return `<span class="${a.sent ? "adm-ok" : "muted"}">${a.sent ? "✓" : "•"} Last ${name}: ${when(a.at)} (India time) · ${esc(parts.join(" · "))}</span>`;
-      };
+      // One line under the tabs, on every page of /admin: when the roundup, the "now on OTT" check and the catalogue database last ran.
       const al = d.alerts || {};
-      $("last-weekly").innerHTML = lastRun(al.weekly, "roundup");
-      $("last-landed").innerHTML = lastRun(al.landed, "check");
+      const one = (a, label) => (a ? `${label} ${when(a.at)}, ${a.sent} phone${a.sent === 1 ? "" : "s"}${a.note ? ` (${esc(a.note.toLowerCase())})` : ""}` : `${label} none yet`);
+      const dbDate = d.catalog && d.catalog.updated;
+      $("statusline").innerHTML = al.error
+        ? `<span class="adm-bad">Couldn't read the alert log: ${esc(al.error)}</span>`
+        : `🕒 Last runs (India time) · 📣 ${one(al.weekly, "roundup")} · 🎬 ${one(al.landed, "now on OTT")}${dbDate ? ` · 🗄️ database updated ${esc(dbDate)}` : ""}`;
       const s = d.secrets || {};
       $("setup").innerHTML = [
         s.github ? `<span class="adm-ok">✓ Publishing from the site is set up.</span>` : `<span class="adm-bad">✗ GITHUB_TOKEN isn't set in Cloudflare, so publishing and applying corrections won't work.</span>`,
