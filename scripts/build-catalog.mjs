@@ -62,6 +62,8 @@ const TREND_LANGS = ["hi", "ta", "te", "ml", "kn", "en"];
 const TREND_DAYS = 120;
 const TREND_PER_LANG = 4;
 const DAILY_DAYS = 45;     // the daily run looks for titles released in this many days
+const DAILY_MOVIE_PAGES = 5; // TMDB pages (20 each) of new films per language the daily run looks through
+const DAILY_TV_PAGES = 3;    // and of new series
 // Upcoming releases page: next few months, most-awaited first in each language.
 const UPCOMING_LANGS = ["hi", "ta", "te", "ml", "kn", "mr", "bn", "pa", "en", "ko"];
 const UPCOMING_DAYS = 120;
@@ -501,7 +503,7 @@ function loadExisting() {
 
 // Recent titles every week; older ones when it's their turn (a quarter each week, by id).
 let backfilled = 0;
-const BACKFILL_MAX = 30000; // titles with no app in India are fetched once more for buy/rent and abroad (elsewhere()), this many a run (8000 normally; raised once to catch up in a single run)
+const BACKFILL_MAX = 8000; // titles with no app in India are fetched once more for buy/rent and abroad (elsewhere()), this many a run (all were caught up on 5 Nov)
 function dueForRefresh(f) {
   if (!("rd" in f) && f.y) return true; // saved by an older build without release dates
   if (f.x !== X_VERSION && !(f.w || []).length && backfilled < BACKFILL_MAX) { backfilled++; return true; }
@@ -619,8 +621,9 @@ async function daily() {
       trendIds[lang] = (await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": trendSince, "primary_release_date.lte": today, "vote_count.gte": 3 }, 1)).slice(0, TREND_PER_LANG + 2);
       queue(trendIds[lang], moviePicks, lang, true);
     }
-    queue(await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, 3), moviePicks, lang);
-    queue(await discover("tv", lang, { ...tvBase, sort_by: "popularity.desc", "first_air_date.gte": newSince, "first_air_date.lte": today }, 1), tvPicks, lang);
+    // 5 pages of films (100) and 3 of series (60) per language, most popular first; only the ones not in the catalogue yet are fetched.
+    queue(await discover("movie", lang, { ...base, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, DAILY_MOVIE_PAGES), moviePicks, lang);
+    queue(await discover("tv", lang, { ...tvBase, sort_by: "popularity.desc", "first_air_date.gte": newSince, "first_air_date.lte": today }, DAILY_TV_PAGES), tvPicks, lang);
   }
   // Films still in cinemas (out in the last IN_CINEMAS_DAYS, on no app yet) are checked every day, so
   // "Tell me when it's on OTT" alerts go out the day they arrive. The best-known first, up to a cap.
