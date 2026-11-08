@@ -197,6 +197,8 @@ function renderChrome() {
 function initUpdates() {
   const mine = +((document.querySelector('script[src*="app.js?v="]') || {}).src || "").replace(/.*\?v=/, "");
   if (!mine || location.protocol === "file:") return;
+  // Tidy the address after an update reload (see the Update button below).
+  if (/[?&]_u=/.test(location.search)) { const u = new URL(location.href); u.searchParams.delete("_u"); history.replaceState(null, "", u.pathname + u.search + u.hash); }
   let last = 0;
   const check = async () => {
     if (document.hidden || Date.now() - last < 10 * 60e3 || document.getElementById("update-bar")) return;
@@ -205,6 +207,8 @@ function initUpdates() {
       const html = await fetch(`/?update-check=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.text() : ""));
       const live = +((html.match(/app\.js\?v=(\d+)/) || [])[1] || 0);
       let tried = 0;
+      try { tried = +sessionStorage.getItem("mm-update-tried") || 0; } catch {}
+      if (live > mine && live !== tried) showUpdate(live);
     } catch {}
   };
   const showUpdate = (live) => {
@@ -217,7 +221,11 @@ function initUpdates() {
     document.getElementById("update-now").addEventListener("click", async () => {
       const reg = "serviceWorker" in navigator && (await navigator.serviceWorker.getRegistration().catch(() => null));
       if (reg) await reg.update().catch(() => {});
-      location.reload();
+      // Some pages (a film, the lists) are kept for a while at Cloudflare, so a plain reload can bring back the same old copy
+      // and the bar again. A one-off extra word in the address gets the fresh page; it is removed again on load.
+      try { sessionStorage.setItem("mm-update-tried", String(live)); } catch {}
+      const u = new URL(location.href); u.searchParams.set("_u", Date.now());
+      location.replace(u.href);
     });
     document.querySelector("#update-bar .update-x").addEventListener("click", () => document.getElementById("update-bar").remove());
   };
