@@ -1283,8 +1283,12 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-07",
+  checked: "2026-11-08",
   items: [
+    { title: "Leap Year", year: 2010, lang: "English", app: "JioHotstar", added: "2026-11-08", url: "https://www.hotstar.com/in/movies/leap-year/1271721977", note: "Directed by Anand Tucker · IMDb 6.5" },
+    { title: "Batman: Knightfall - Part 1: Knightfall", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-08", url: "https://www.hotstar.com/in/movies/batman-knightfall-part-1-knightfall/1271721229", note: "Directed by Jeff Wamester · IMDb 7.8" },
+    { title: "The Five-Year Engagement", year: 2012, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/70208103", note: "Directed by Nicholas Stoller · IMDb 6.2" },
+    { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278579", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
     { title: "Rachel Getting Married", year: 2008, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/70105368", note: "Directed by Jonathan Demme · IMDb 6.6" },
     { title: "Saaho", year: 2019, lang: "Telugu", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/81157385", note: "Directed by Sujeeth · IMDb 5.2" },
     { title: "Christmas in Love", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/81636794", note: "Directed by Don McBrearty · IMDb 6.3", kids: true },
@@ -1295,10 +1299,6 @@ const NEW_ON_OTT = {
     { title: "Pacific Rim: Uprising", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/80203059", note: "Directed by Steven S. DeKnight · IMDb 5.6" },
     { title: "Gargi", year: 2022, lang: "Tamil", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/gargi-1000183689", note: "Directed by Gautham Ramachandran · IMDb 8.1" },
     { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278179", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
-    { title: "17 Again", year: 2009, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/70107406", note: "Directed by Burr Steers · IMDb 6.4" },
-    { title: "Mission: Impossible - Rogue Nation", year: 2015, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/80038359", note: "Directed by Christopher McQuarrie · IMDb 7.4" },
-    { title: "Atharintiki Daaredi", year: 2013, lang: "Telugu", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/81643752", note: "Directed by Trivikram Srinivas · IMDb 7.3" },
-    { title: "Khushi", year: 2001, lang: "Telugu", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/81644560", note: "Directed by S. J. Suryah · IMDb 8.1" },
   ],
 };
 
