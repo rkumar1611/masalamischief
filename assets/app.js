@@ -56,6 +56,7 @@ const store = {
 // kept in "watchlistInfo" so the list can be drawn without loading each title's file.
 // Our WhatsApp Channel: new reviews and the week's picks (footer, home page, under every review).
 const WHATSAPP_CHANNEL = "https://whatsapp.com/channel/0029VbA1FqA5a248kESjLD0Z";
+const WA_LOGO = '<svg class="wa-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>';
 const watchlist = () => store.get("watchlist", []);
 const inWatchlist = (id) => watchlist().includes(id);
 const CAT_ID = /^_([a-z]{2})-((?:tv)?\d+)$/;
@@ -142,7 +143,7 @@ function renderChrome() {
             <span><b>🌶️ Masala Meter</b> how much fun, 1 to 5</span>
             <span><b>★ Score</b> how well it's made, out of 10</span>
           </div>
-          <a class="btn small wa-btn" target="_blank" rel="noopener" href="${WHATSAPP_CHANNEL}">💬 Follow on WhatsApp</a>
+          <a class="btn small wa-btn" target="_blank" rel="noopener" href="${WHATSAPP_CHANNEL}">${WA_LOGO} Follow on WhatsApp</a>
           <a class="btn small" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("Film reviews, what to watch tonight and where to stream it: https://masalamischief.in")}">Share Masala Mischief on WhatsApp</a>
           <button class="btn small install-btn" type="button" hidden>📲 Install the app</button>
           <button class="btn small alert-btn" type="button" hidden>🔔 Weekly OTT alerts</button>
@@ -1610,7 +1611,7 @@ function initReview() {
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
         <a class="wa-follow compact" href="${WHATSAPP_CHANNEL}" target="_blank" rel="noopener">
-          <span class="wa-icon" aria-hidden="true">💬</span>
+          <span class="wa-icon" aria-hidden="true">${WA_LOGO}</span>
           <span><strong>Liked this review?</strong><span>Follow us on WhatsApp for every new one.</span></span>
           <span class="wa-go">Follow</span>
         </a>
@@ -3617,11 +3618,11 @@ async function initWeek() {
       <div class="cta-row">
         <button class="btn primary" type="button" id="wa-copy">📋 Copy message</button>
         <button class="btn" type="button" id="wa-image">📸 Share as image</button>
-        <a class="btn wa-btn" id="wa-send" target="_blank" rel="noopener">💬 Send on WhatsApp</a>
+        <a class="btn wa-btn" id="wa-send" target="_blank" rel="noopener">${WA_LOGO} Send on WhatsApp</a>
       </div>
     </section>
     <a class="wa-follow" href="${WHATSAPP_CHANNEL}" target="_blank" rel="noopener">
-      <span class="wa-icon" aria-hidden="true">💬</span>
+      <span class="wa-icon" aria-hidden="true">${WA_LOGO}</span>
       <span><strong>Get this every week</strong><span>Follow Masala Mischief on WhatsApp for new OTT releases.</span></span>
       <span class="wa-go">Follow</span>
     </a>`;
