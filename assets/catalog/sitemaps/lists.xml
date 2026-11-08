@@ -15,10 +15,10 @@
 <url><loc>https://masalamischief.in/ott?app=crunchyroll</loc></url>
 <url><loc>https://masalamischief.in/ott?app=apple-tv</loc></url>
 <url><loc>https://masalamischief.in/ott?l=hi</loc></url>
+<url><loc>https://masalamischief.in/ott?l=en</loc></url>
 <url><loc>https://masalamischief.in/ott?l=ko</loc></url>
 <url><loc>https://masalamischief.in/ott?l=ta</loc></url>
 <url><loc>https://masalamischief.in/ott?l=ja</loc></url>
-<url><loc>https://masalamischief.in/ott?l=en</loc></url>
 <url><loc>https://masalamischief.in/ott?l=te</loc></url>
 <url><loc>https://masalamischief.in/ott?l=ml</loc></url>
 <url><loc>https://masalamischief.in/ott?l=kn</loc></url>
@@ -560,10 +560,10 @@
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=romance</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=animation</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=animation&amp;k=tv</loc></url>
-<url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=family</loc></url>
-<url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=family&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=documentary</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=documentary&amp;k=tv</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=family</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=family&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=sci-fi-fantasy&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=horror</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=netflix&amp;g=science-fiction</loc></url>
@@ -603,9 +603,10 @@
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=music</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=history</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=tv-movie</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=documentary</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=documentary&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=war-politics&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=war</loc></url>
-<url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=documentary</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;g=drama</loc></url>
