@@ -1285,6 +1285,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-07",
   items: [
+    { title: "Rachel Getting Married", year: 2008, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/70105368", note: "Directed by Jonathan Demme · IMDb 6.6" },
+    { title: "Saaho", year: 2019, lang: "Telugu", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/81157385", note: "Directed by Sujeeth · IMDb 5.2" },
     { title: "Christmas in Love", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/81636794", note: "Directed by Don McBrearty · IMDb 6.3", kids: true },
     { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278568", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
     { title: "Mahendragiri Varahi", year: 2026, app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/mahendragiri-varahi/1271721971", note: "Directed by Santosh Jagarlapudi · IMDb 7.7" },
@@ -1297,8 +1299,6 @@ const NEW_ON_OTT = {
     { title: "Mission: Impossible - Rogue Nation", year: 2015, lang: "English", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/80038359", note: "Directed by Christopher McQuarrie · IMDb 7.4" },
     { title: "Atharintiki Daaredi", year: 2013, lang: "Telugu", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/81643752", note: "Directed by Trivikram Srinivas · IMDb 7.3" },
     { title: "Khushi", year: 2001, lang: "Telugu", app: "Netflix", added: "2026-11-06", url: "https://www.netflix.com/title/81644560", note: "Directed by S. J. Suryah · IMDb 8.1" },
-    { title: "Meesaya Murukku 2", year: 2026, lang: "Tamil", app: "SonyLIV", added: "2026-11-06", url: "https://www.sonyliv.com/movies/meesaya-murukku-2-1090552539", note: "Directed by HipHop Tamizha Adhi · IMDb 6.3" },
-    { title: "I'm Game", year: 2026, lang: "Malayalam", app: "JioHotstar", added: "2026-11-06", url: "https://www.hotstar.com/in/movies/im-game/1271720887", note: "Directed by Nahas Hidayath · IMDb 6.3" },
   ],
 };
 
