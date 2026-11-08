@@ -4,7 +4,7 @@
 // ADMIN_PASSWORD repository secret (same value as in Cloudflare). Plain Node 20+, no dependencies.
 // Cloudflare's free D1 plan allows 100,000 row writes a day, shared with the site's reviews, accounts and alerts, so one run
 // sends at most MAX_ROWS titles; a big backlog simply carries on over the next runs.
-import { readdirSync, readFileSync } from "node:fs";
+import { readdirSync, readFileSync, appendFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 
 const SITE = process.env.SITE || "https://masalamischief.in";
@@ -72,4 +72,9 @@ async function main() {
   await call("/api/catalog-sync", { method: "POST", body: JSON.stringify({ done: true }) }).catch((e) => console.log(`Catalogue database: couldn't note the run (${e.message.slice(0, 120)}).`));
 }
 
-main().catch((e) => { console.error(`Catalogue database: ${e.message}`); process.exit(1); });
+main().catch((e) => {
+  console.error(`Catalogue database: ${e.message}`);
+  // This step is allowed to fail so it never stops the catalogue, which makes the run look green; say so in the run's summary.
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\n### ⚠️ Catalogue database not updated\n${String(e.message).slice(0, 300)}\n\nThe site itself is fine. The next run copies everything over.\n`);
+  process.exit(1);
+});
