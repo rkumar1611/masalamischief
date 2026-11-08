@@ -2570,7 +2570,7 @@ async function searchPeople(term, limit = 6) {
   const q = searchNorm(term);
   if (q.length < 3) return [];
   const parts = await Promise.all(searchFiles(q).map((f) => loadCatalog(`ps/${f}`)));
-  const longName = skeleton(searchWords(q).join("")).length >= 7;
+  const longName = skeleton(searchWords(q).join("")).length >= 9; // typos only in long names: "bahubali" isn't "Bhanushali"
   const seen = new Set();
   const scored = [];
   for (const rows of parts) for (const r of rows || []) {
