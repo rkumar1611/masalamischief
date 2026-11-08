@@ -2441,7 +2441,8 @@ function wordFit(q, t, last) {
   const qs = skeleton(q), ts = skeleton(t);
   if (qs === ts) return 2.5;
   if (last && q.length >= 2 && t.startsWith(q)) return 2.3;
-  if (last && qs.length >= 3 && ts.startsWith(qs)) return 2.1;
+  // Short searches also need the same first two letters, so "silo" isn't the start of "Shylock" ("silok").
+  if (last && qs.length >= 3 && ts.startsWith(qs) && (qs.length >= 5 || q.slice(0, 2) === t.slice(0, 2))) return 2.1;
   const allowed = qs.length >= 7 ? 2 : qs.length >= 4 ? 1 : 0;
   if (allowed && editDistance(qs, last && ts.length > qs.length + allowed ? ts.slice(0, qs.length) : ts, allowed) <= allowed) return 1.3;
   return 0;
