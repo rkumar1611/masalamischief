@@ -204,10 +204,10 @@ function initUpdates() {
     try {
       const html = await fetch(`/?update-check=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.text() : ""));
       const live = +((html.match(/app\.js\?v=(\d+)/) || [])[1] || 0);
-      if (live > mine) showUpdate();
+      let tried = 0;
     } catch {}
   };
-  const showUpdate = () => {
+  const showUpdate = (live) => {
     document.body.insertAdjacentHTML("beforeend", `
       <div class="update-bar" id="update-bar" role="status">
         <span>✨ A new version of Masala Mischief is ready.</span>
