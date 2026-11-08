@@ -2482,7 +2482,8 @@ function titleMatch(query, title) {
 // Sort order for search results: how well they match, in whole-point steps (exact and sound-alike count
 // the same, so "lagan" finds the famous Lagaan before an old "Lagan"), then the better-known title.
 // A title (or name) that fits the search word for word: the same words, or spelled with a longer vowel
-// ("pathan" = "Pathaan"), or the same letters run together ("spiderman" = "Spider-Man"). Nothing looser.
+// ("pathan" = "Pathaan"), or the same letters run together ("spiderman" = "Spider-Man"), or the last word only
+// started ("silo" = "Siloam"). Nothing looser: no guessing at other spellings.
 const vowelKey = (w) => w.replace(/([aeiou])\1+/g, "$1");
 function titleStrong(query, title) {
   const qw = searchWords(query).filter((w) => !SEARCH_STOP.has(w) || searchWords(query).length === 1);
@@ -2490,8 +2491,10 @@ function titleStrong(query, title) {
   if (!qw.length || !tw.length) return false;
   if (vowelKey(qw.join("")) === vowelKey(tw.filter((w) => !SEARCH_STOP.has(w)).join(""))) return true;
   const used = new Set();
-  return qw.every((q) => {
-    const k = tw.findIndex((t, i) => !used.has(i) && (t === q || vowelKey(t) === vowelKey(q)));
+  return qw.every((q, n) => {
+    // The last word may be unfinished: a word of the title that starts with it counts ("silo" finds Siloam).
+    const part = n === qw.length - 1 && q.length >= 3 && !/^\d+$/.test(q);
+    const k = tw.findIndex((t, i) => !used.has(i) && (t === q || vowelKey(t) === vowelKey(q) || (part && vowelKey(t).startsWith(vowelKey(q)))));
     if (k >= 0) used.add(k);
     return k >= 0;
   });
