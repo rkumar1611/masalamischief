@@ -2480,6 +2480,9 @@ function titleMatch(query, title) {
 }
 // Sort order for search results: how well they match, in whole-point steps (exact and sound-alike count
 // the same, so "lagan" finds the famous Lagaan before an old "Lagan"), then the better-known title.
+// Once something fits the search properly (exact, sound-alike or start of a word), close-typo guesses are left out:
+// "silo" shows Silo, not Silent Hill, Silence, Silver Linings or Shylock. With no proper fit, the guesses stay.
+const dropLooseMatches = (list, score) => (list.some((x) => score(x) >= 2.1) ? list.filter((x) => score(x) >= 2) : list);
 const matchStep = (s) => Math.round(s);
 const byMatch = (score, votes) => (a, b) => matchStep(score(b)) - matchStep(score(a)) || votes(b) - votes(a);
 
@@ -2589,7 +2592,7 @@ async function searchCatalog(term) {
     const score = titleMatch(q, r[2]);
     if (score) scored.push([r, score]);
   }
-  return scored.sort(byMatch((x) => x[1], (x) => x[0][6]))
+  return dropLooseMatches(scored, (x) => x[1]).sort(byMatch((x) => x[1], (x) => x[0][6]))
     .map(([[l, id, t, y, tv, p, n, v]]) => ({ l, id, t, y, ...(tv ? { k: "tv" } : {}), p, n, v }));
 }
 
