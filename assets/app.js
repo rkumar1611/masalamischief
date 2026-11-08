@@ -2481,6 +2481,23 @@ function titleMatch(query, title) {
 }
 // Sort order for search results: how well they match, in whole-point steps (exact and sound-alike count
 // the same, so "lagan" finds the famous Lagaan before an old "Lagan"), then the better-known title.
+// A title (or name) that fits the search word for word: the same words, or spelled with a longer vowel
+// ("pathan" = "Pathaan"), or the same letters run together ("spiderman" = "Spider-Man"). Nothing looser.
+const vowelKey = (w) => w.replace(/([aeiou])\1+/g, "$1");
+function titleStrong(query, title) {
+  const qw = searchWords(query).filter((w) => !SEARCH_STOP.has(w) || searchWords(query).length === 1);
+  const tw = searchWords(title);
+  if (!qw.length || !tw.length) return false;
+  if (vowelKey(qw.join("")) === vowelKey(tw.filter((w) => !SEARCH_STOP.has(w)).join(""))) return true;
+  const used = new Set();
+  return qw.every((q) => {
+    const k = tw.findIndex((t, i) => !used.has(i) && (t === q || vowelKey(t) === vowelKey(q)));
+    if (k >= 0) used.add(k);
+    return k >= 0;
+  });
+}
+// When something fits properly, show only those: "bahubali" isn't "Bahurani", "pathan" isn't "Pattan" or "Patang".
+const onlyStrong = (list, text) => { const s = list.filter((x) => titleStrong(text.q, text.of(x))); return s.length ? s : list; };
 // Once something fits the search properly (exact, sound-alike or start of a word), close-typo guesses are left out:
 // "silo" shows Silo, not Silent Hill, Silence, Silver Linings or Shylock. With no proper fit, the guesses stay.
 const dropLooseMatches = (list, score) => (list.some((x) => score(x) >= 2.1) ? list.filter((x) => score(x) >= 2) : list);
@@ -2566,7 +2583,7 @@ async function searchPeople(term, limit = 6) {
   // Match quality plus how well-known they are (titles in the catalogue), so "nolan" finds Christopher
   // Nolan before Nolan North, and "ranbir" Ranbir Kapoor before Rana Ranbir.
   const rank = ([r, s]) => s + 0.7 * Math.log10(r[3] + 1);
-  return scored.sort((a, b) => rank(b) - rank(a)).slice(0, limit)
+  return onlyStrong(scored, { q, of: (x) => x[0][1] }).sort((a, b) => rank(b) - rank(a)).slice(0, limit)
     .map(([[id, name, photo, titles]]) => ({ id, name, photo, titles }));
 }
 
@@ -2593,7 +2610,7 @@ async function searchCatalog(term) {
     const score = titleMatch(q, r[2]);
     if (score) scored.push([r, score]);
   }
-  return dropLooseMatches(scored, (x) => x[1]).sort(byMatch((x) => x[1], (x) => x[0][6]))
+  return dropLooseMatches(onlyStrong(scored, { q, of: (x) => x[0][2] }), (x) => x[1]).sort(byMatch((x) => x[1], (x) => x[0][6]))
     .map(([[l, id, t, y, tv, p, n, v]]) => ({ l, id, t, y, ...(tv ? { k: "tv" } : {}), p, n, v }));
 }
 
