@@ -1285,6 +1285,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-08",
   items: [
+    { title: "All the Pretty Horses", year: 2000, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/60004267", note: "Directed by Billy Bob Thornton · IMDb 5.8" },
+    { title: "The Angry Birds Movie", year: 2016, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/80091938", note: "Directed by Fergal Reilly  · IMDb 6.3", kids: true },
     { title: "Leap Year", year: 2010, lang: "English", app: "JioHotstar", added: "2026-11-08", url: "https://www.hotstar.com/in/movies/leap-year/1271721977", note: "Directed by Anand Tucker · IMDb 6.5" },
     { title: "Batman: Knightfall - Part 1: Knightfall", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-08", url: "https://www.hotstar.com/in/movies/batman-knightfall-part-1-knightfall/1271721229", note: "Directed by Jeff Wamester · IMDb 7.8" },
     { title: "The Five-Year Engagement", year: 2012, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/70208103", note: "Directed by Nicholas Stoller · IMDb 6.2" },
@@ -1297,8 +1299,6 @@ const NEW_ON_OTT = {
     { title: "Saawariya", year: 2007, lang: "Hindi", app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/saawariya/1271721647", note: "Directed by Sanjay Leela Bhansali · IMDb 5.2", kids: true },
     { title: "Curious George", year: 2006, lang: "English", app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/curious-george/1271721329", note: "Directed by Matthew O'Callaghan · IMDb 6.5", kids: true },
     { title: "Pacific Rim: Uprising", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/80203059", note: "Directed by Steven S. DeKnight · IMDb 5.6" },
-    { title: "Gargi", year: 2022, lang: "Tamil", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/gargi-1000183689", note: "Directed by Gautham Ramachandran · IMDb 8.1" },
-    { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278179", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
   ],
 };
 
