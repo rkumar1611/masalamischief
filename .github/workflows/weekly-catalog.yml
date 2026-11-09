@@ -74,8 +74,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if [ "${{ steps.mode.outputs.mode }}" = "full" ]; then what="Weekly catalogue"; else what="New releases"; fi
           git commit -m "$what ($(date -u +%Y-%m-%d))"
-          git pull --rebase origin main
-          git push origin main
+          # Another bot (or a manual run) may have committed catalogue files since this run started. These files are all
+          # rebuilt each run, so where they clash this run's version wins ("theirs" while rebasing); try a few times.
+          for i in 1 2 3 4; do
+            git pull --rebase -X theirs origin main && git push origin main && exit 0
+            git rebase --abort 2>/dev/null || true
+            sleep $((i * 5))
+          done
+          echo "Could not push after 4 tries"; exit 1
 
       # Our own copy of the catalogue in D1, with each title's app history (scripts/sync-catalog-db.mjs). A problem here
       # (the site not deployed yet, the database busy) must not stop the catalogue itself, so it never fails the run.
