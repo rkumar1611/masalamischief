@@ -32,8 +32,8 @@ const PLAN = {
   hi: { movies: 7000, tv: 800 }, ta: { movies: 5500, tv: 300 }, te: { movies: 5500, tv: 300 },
   ml: { movies: 5500, tv: 250 }, kn: { movies: 3200, tv: 150 },
   mr: { movies: 1700, tv: 100 }, bn: { movies: 2200, tv: 150 }, pa: { movies: 1100, tv: 60 },
-  en: { movies: 9500, tv: 2500 },
-  ko: { movies: 1500, tv: 1200, noAnimation: true },
+  en: { movies: 10000, tv: 3000 }, // TMDB's discover stops at 500 pages (10,000 titles), so 10,000 films is the most this query gives
+  ko: { movies: 2000, tv: 1500, noAnimation: true },
 };
 const LANGS = Object.keys(PLAN);
 const RECENT = 800;        // of each language's films, up to this many recent popular ones (the daily run sweeps the same list)
@@ -523,6 +523,7 @@ async function main() {
   const since = day(-RECENT_DAYS);
   const today = day(0);
   const trendSince = day(-TREND_DAYS);
+  const newSince = day(-DAILY_DAYS); // what the daily run adds (released in the last DAILY_DAYS days, any number of votes): kept here too, so a full build doesn't trim it
   const have = loadExisting();
   console.log(`Already have ${have.size} titles.`);
 
@@ -539,7 +540,8 @@ async function main() {
     trendIds[lang] = trend;
     const recent = await discover("movie", lang, { ...movieParams, sort_by: "popularity.desc", "primary_release_date.gte": since, "primary_release_date.lte": today, "vote_count.gte": lang === "en" ? 50 : 2 }, Math.ceil(RECENT / 20));
     const classic = await discover("movie", lang, { ...movieParams, sort_by: "vote_count.desc" }, Math.ceil(plan.movies / 20) + 2);
-    const ids = [...new Set([...trend, ...recent.slice(0, RECENT), ...classic])].slice(0, plan.movies);
+    const fresh = await discover("movie", lang, { ...movieParams, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, DAILY_MOVIE_PAGES);
+    const ids = [...new Set([...trend, ...fresh, ...recent.slice(0, RECENT), ...classic])].slice(0, plan.movies);
     moviePicks.push(...ids.map((id) => [id, lang]));
 
     const tvTarget = plan.tv;
@@ -547,7 +549,8 @@ async function main() {
     const tvRecent = await discover("tv", lang, { ...tvParams, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": lang === "en" ? 50 : 2 }, 3);
     const tvClassic = await discover("tv", lang, { ...tvParams, sort_by: "vote_count.desc" }, Math.ceil(tvTarget / 20) + 2);
     // Ask for a few extra, since some get dropped below as daily soaps.
-    const tvIds = [...new Set([...tvRecent.slice(0, 50), ...tvClassic])].slice(0, Math.round(tvTarget * 1.3));
+    const tvFresh = await discover("tv", lang, { ...tvParams, sort_by: "popularity.desc", "first_air_date.gte": newSince, "first_air_date.lte": today }, DAILY_TV_PAGES);
+    const tvIds = [...new Set([...tvFresh, ...tvRecent.slice(0, 50), ...tvClassic])].slice(0, Math.round(tvTarget * 1.3));
     tvPicks.push(...tvIds.map((id) => [id, lang]));
     console.log(`${lang}: ${ids.length} films, ${tvIds.length} series candidates`);
   }
@@ -555,10 +558,12 @@ async function main() {
   // Anime: Japanese animation only (so no Japanese live-action), films and series.
   const anime = { with_genres: ANIMATION };
   const animeMovies = [...new Set([
+    ...(await discover("movie", ANIME, { ...anime, sort_by: "popularity.desc", "primary_release_date.gte": newSince, "primary_release_date.lte": today }, DAILY_MOVIE_PAGES)),
     ...(await discover("movie", ANIME, { ...anime, sort_by: "popularity.desc", "primary_release_date.gte": since, "vote_count.gte": 20 }, 3)).slice(0, 60),
     ...(await discover("movie", ANIME, { ...anime, sort_by: "vote_count.desc" }, Math.ceil(ANIME_MOVIES / 20) + 1)),
   ])].slice(0, ANIME_MOVIES);
   const animeSeries = [...new Set([
+    ...(await discover("tv", ANIME, { ...anime, sort_by: "popularity.desc", "first_air_date.gte": newSince, "first_air_date.lte": today }, DAILY_TV_PAGES)),
     ...(await discover("tv", ANIME, { ...anime, sort_by: "popularity.desc", "first_air_date.gte": since, "vote_count.gte": 20 }, 4)).slice(0, 80),
     ...(await discover("tv", ANIME, { ...anime, sort_by: "vote_count.desc" }, Math.ceil(ANIME_TV / 20) + 1)),
   ])].slice(0, ANIME_TV);
@@ -587,7 +592,10 @@ async function main() {
   const refetched = new Set(m.fetch.map(([id, l]) => `${l}-${id}`));
   writeLanded(films.filter((f) => refetched.has(keyOf(f))), have);
   const tvLimit = (lang) => (lang === ANIME ? ANIME_TV : PLAN[lang].tv);
-  const keptSeries = OUT_LANGS.flatMap((lang) => series.filter((s) => s.l === lang).slice(0, tvLimit(lang)));
+  // Over the cap, the oldest, least-voted series go first: anything first aired in the last RECENT_DAYS is kept before the rest,
+  // otherwise a new series (few votes) is dropped here and added again by the next daily run.
+  const keptSeries = OUT_LANGS.flatMap((lang) => series.filter((s) => s.l === lang)
+    .sort((a, b) => ((b.rd || "") >= since ? 1 : 0) - ((a.rd || "") >= since ? 1 : 0) || b.n - a.n).slice(0, tvLimit(lang)));
   if (films.length < Math.min(have.size * 0.8, 20000) || films.length < LANGS.length * 50) {
     throw new Error(`Only ${films.length} films came back; not writing a broken catalogue.`);
   }
