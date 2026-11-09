@@ -3033,6 +3033,11 @@ async function initFilm() {
           <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="copy" type="button">Copy link</button>
         </div>
+        <a class="wa-follow compact" href="${WHATSAPP_CHANNEL}" target="_blank" rel="noopener">
+          <span class="wa-icon" aria-hidden="true">${WA_LOGO}</span>
+          <span><strong>New on OTT, straight to WhatsApp</strong><span>Follow Masala Mischief for each week's new films and series.</span></span>
+          <span class="wa-go">Follow</span>
+        </a>
         ${extLinks({ im: f.im, wd: f.wd, tmdbUrl: `https://www.themoviedb.org/${tv ? `tv/${String(f.id).slice(2)}` : `movie/${f.id}`}` })}
       </article>
       <aside>
