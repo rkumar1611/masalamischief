@@ -9,7 +9,7 @@ name: Daily site update
 
 on:
   schedule:
-    - cron: "30 3 * * *" # 09:00 IST daily
+    - cron: "43 3 * * *" # about 09:13 IST daily (odd minute: GitHub runs :00 and :30 jobs late)
   workflow_dispatch:
   push:
     branches: [main]

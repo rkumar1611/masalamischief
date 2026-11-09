@@ -8,8 +8,8 @@ name: Catalogue
 
 on:
   schedule:
-    - cron: "0 2 * * 0"   # Sundays 07:30 IST: full rebuild
-    - cron: "0 2 * * 1-6" # other days 07:30 IST: new releases only
+    - cron: "17 2 * * 0"  # Sundays about 07:47 IST: full rebuild (odd minutes: GitHub runs :00 and :30 jobs late)
+    - cron: "17 2 * * 1-6" # other days about 07:47 IST: new releases only
   workflow_dispatch:
     inputs:
       mode:

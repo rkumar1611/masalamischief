@@ -5,7 +5,7 @@ name: OTT alerts
 
 on:
   schedule:
-    - cron: "30 13 * * 5"
+    - cron: "47 13 * * 5" # about 7:17 pm IST
   workflow_dispatch:
 
 permissions:

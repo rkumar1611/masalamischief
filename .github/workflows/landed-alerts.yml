@@ -1,4 +1,4 @@
-# Every day at 9 am India time, after the morning catalogue build has been published: tells people who
+# Every day about 10 am India time, after the morning catalogue build has been published: tells people who
 # tapped "Tell me when it's on OTT" on a film that it's now on an app (scripts/send-alerts.mjs with
 # ALERT_KIND=landed). Needs the ADMIN_PASSWORD repository secret (same value as in Cloudflare).
 # Run it by hand from GitHub → Actions → "Film landed alerts" → Run workflow.
@@ -6,7 +6,7 @@ name: Film landed alerts
 
 on:
   schedule:
-    - cron: "30 3 * * *"
+    - cron: "37 4 * * *" # about 10:07 IST, after the catalogue and the daily update
   workflow_dispatch:
 
 permissions:
