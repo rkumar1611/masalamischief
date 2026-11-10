@@ -1,0 +1,35 @@
+# Runs scripts/check-site.mjs on every push to main that touches the site's own code: every script must parse, and every
+# page's scripts must start without breaking. If it fails the run goes red and GitHub emails you. It can't stop Cloudflare
+# from publishing (that starts from the same push), so a red run means: fix it now, or roll back in Cloudflare.
+# The catalogue's data files are left out; scripts/check-catalog.mjs looks after those.
+name: Site check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "*.html"
+      - "sw.js"
+      - "assets/*.js"
+      - "functions/**"
+      - "lib/**"
+      - "scripts/**"
+      - ".github/workflows/site-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Check the site's code
+        run: node scripts/check-site.mjs

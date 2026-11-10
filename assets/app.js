@@ -966,7 +966,7 @@ function poster(m, big = false) {
 
 // Score badges over the poster: our quality and Masala Meter, plus the visitor's own chillies if they rated it.
 function posterRating(m) {
-  if (m.catalog) return `<div class="poster-rating"><span class="pr" title="TMDB rating">★ ${m.quality}<small>/10 TMDB</small></span></div>`;
+  if (m.catalog) return m.quality ? `<div class="poster-rating"><span class="pr" title="TMDB rating">★ ${m.quality}<small>/10 TMDB</small></span></div>` : "";
   const mine = store.get("ratings", {})[m.id];
   return `<div class="poster-rating">
       <span class="pr" title="Quality score">★ ${m.quality}<small>/10</small></span>
@@ -2765,7 +2765,7 @@ function filmCard(f, rank, note) {
         ${f.p ? `<img src="${tmdb(f.p, "w342")}" srcset="${tmdb(f.p, "w185")} 185w, ${tmdb(f.p, "w342")} 342w" sizes="(max-width: 700px) 46vw, 180px" alt="" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
         ${rank ? `<span class="fbadge rank">#${rank}</span>` : ""}
         ${m ? `<span class="fbadge mine" title="Reviewed by Masala Mischief">🌶️ ${m.masala}/5</span>` : ""}
-        <span class="fbadge score" title="${m ? "Our score" : "TMDB rating"}">★ ${m ? m.quality : f.v}</span>
+        ${m || f.v ? `<span class="fbadge score" title="${m ? "Our score" : "TMDB rating"}">★ ${m ? m.quality : f.v}</span>` : "" /* no "★ 0": a new title has no votes yet */}
       </div>
       <div class="fbody">
         <strong>${esc(f.t)}</strong>
@@ -3013,7 +3013,7 @@ async function initFilm() {
       <span class="lang-pill">${esc(lang)}${tv ? " · Series" : ""}${years ? ` · ${years}` : ""}</span>
       ${f.c ? `<span class="age-pill" title="Indian certificate">${esc(f.c)}</span>` : ""}
       <div class="poster-foot">
-        <div class="poster-rating"><span class="pr" title="TMDB rating">★ ${f.v}<small>/10 TMDB</small></span></div>
+        ${f.v ? `<div class="poster-rating"><span class="pr" title="TMDB rating">★ ${f.v}<small>/10 TMDB</small></span></div>` : ""}
         <span class="poster-title">${esc(f.t)}</span>
       </div>
     </div>
@@ -3067,7 +3067,7 @@ async function initFilm() {
             ${f.r ? `<dt>${tv ? "Episode" : "Runtime"}</dt><dd>${tv ? `about ${f.r} min` : fmtRuntime(f.r)}</dd>` : ""}
             ${f.g.length ? `<dt>Genre</dt><dd>${esc(f.g.join(", "))}</dd>` : ""}
             ${f.c ? `<dt>Certificate</dt><dd>${esc(f.c)}</dd>` : ""}
-            <dt>TMDB</dt><dd>${f.v}/10 · <a href="https://www.themoviedb.org/${tv ? `tv/${String(f.id).slice(2)}` : `movie/${f.id}`}" target="_blank" rel="noopener">${f.n.toLocaleString("en-IN")} votes</a></dd>
+            <dt>TMDB</dt><dd>${f.v ? `${f.v}/10` : "Not rated yet"} · <a href="https://www.themoviedb.org/${tv ? `tv/${String(f.id).slice(2)}` : `movie/${f.id}`}" target="_blank" rel="noopener">${f.n.toLocaleString("en-IN")} votes</a></dd>
             ${/^tt\d+$/.test(f.im || "") ? `<dt>IMDb</dt><dd><a href="https://www.imdb.com/title/${f.im}/" target="_blank" rel="noopener">See rating on IMDb ↗</a></dd>` : ""}
           </dl>
         </div>

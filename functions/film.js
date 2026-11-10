@@ -51,7 +51,7 @@ export async function onRequestGet(context) {
     const body = `
       <article class="ssr-review">
         <h1>${esc(f.t)}${years ? ` (${years})` : ""}</h1>
-        <p>${esc(LANGS[code])} ${tv ? "series" : "movie"} · ${esc(f.g.join(", "))}${tv && f.s ? ` · ${f.s} season${f.s === 1 ? "" : "s"}` : !tv && f.r ? ` · ${f.r} min` : ""} · TMDB ${f.v}/10</p>
+        <p>${esc(LANGS[code])} ${tv ? "series" : "movie"} · ${esc(f.g.join(", "))}${tv && f.s ? ` · ${f.s} season${f.s === 1 ? "" : "s"}` : !tv && f.r ? ` · ${f.r} min` : ""}${f.v ? ` · TMDB ${f.v}/10` : ""}</p>
         ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
         <section><h2>Quick answers</h2><dl>${quickAnswers({ ...f, l: code }).map(([q, a]) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join("")}</dl></section>
         ${castLine(f, f.k)}

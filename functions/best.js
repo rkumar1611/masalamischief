@@ -46,7 +46,7 @@ export async function onRequestGet(context) {
       desc: `${h1}${app ? " in India" : ""}, ranked: ${list.slice(0, 5).map((f) => `${f.t}${f.y ? ` (${f.y})` : ""}`).join(", ")} and more. With trailers, cast and where to stream them in India.`,
       url,
       intro: `Top ${list.length}, ranked by a weighted TMDB rating. ${LANG_NAMES[l]}${app ? `, streaming on ${data.name} in India` : ""}.`,
-      items: list.map((f) => ({ name: f.t, href: filmPath(f), note: [f.y, `★ ${f.v}`].filter(Boolean).join(" · ") })),
+      items: list.map((f) => ({ name: f.t, href: filmPath(f), note: [f.y, f.v ? `★ ${f.v}` : ""].filter(Boolean).join(" · ") })),
       crumbs: [...crumbs, [h1, url]],
     });
   } catch (err) {
