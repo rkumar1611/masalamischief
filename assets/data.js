@@ -1283,8 +1283,11 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-08",
+  checked: "2026-11-10",
   items: [
+    { title: "Marty Supreme", year: 2025, lang: "English", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.7d3a0712-3794-4dd9-a6e3-b2b08315c6dc", note: "Directed by Josh Safdie · IMDb 7.5" },
+    { title: "I'm Handsome (since 2009)", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.efb0c8db-bec8-4315-a07a-caf219b71757", note: "IMDb 6.8", kids: true },
+    { title: "United Kingdom of Kerala", year: 2025, lang: "Malayalam", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.f657681b-782a-4a93-a342-72738113e4be", note: "Directed by Arun Vaiga · IMDb 5.2", kids: true },
     { title: "All the Pretty Horses", year: 2000, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/60004267", note: "Directed by Billy Bob Thornton · IMDb 5.8" },
     { title: "The Angry Birds Movie", year: 2016, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/80091938", note: "Directed by Fergal Reilly  · IMDb 6.3", kids: true },
     { title: "Leap Year", year: 2010, lang: "English", app: "JioHotstar", added: "2026-11-08", url: "https://www.hotstar.com/in/movies/leap-year/1271721977", note: "Directed by Anand Tucker · IMDb 6.5" },
@@ -1296,9 +1299,6 @@ const NEW_ON_OTT = {
     { title: "Christmas in Love", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/81636794", note: "Directed by Don McBrearty · IMDb 6.3", kids: true },
     { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278568", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
     { title: "Mahendragiri Varahi", year: 2026, app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/mahendragiri-varahi/1271721971", note: "Directed by Santosh Jagarlapudi · IMDb 7.7" },
-    { title: "Saawariya", year: 2007, lang: "Hindi", app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/saawariya/1271721647", note: "Directed by Sanjay Leela Bhansali · IMDb 5.2", kids: true },
-    { title: "Curious George", year: 2006, lang: "English", app: "JioHotstar", added: "2026-11-07", url: "https://www.hotstar.com/in/movies/curious-george/1271721329", note: "Directed by Matthew O'Callaghan · IMDb 6.5", kids: true },
-    { title: "Pacific Rim: Uprising", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/80203059", note: "Directed by Steven S. DeKnight · IMDb 5.6" },
   ],
 };
 
