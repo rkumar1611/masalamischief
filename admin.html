@@ -82,11 +82,12 @@
           <select class="adm-find" id="wa-pick" aria-label="What to post"></select>
           <textarea class="adm-find" id="wa-post" rows="16" aria-label="The post"></textarea>
           <div class="adm-actions">
-            <button type="button" id="wa-copy">📋 Copy</button>
-            <a id="wa-open" target="_blank" rel="noopener">💬 Open in WhatsApp</a>
-            <a href="https://whatsapp.com/channel/0029VbA1FqA5a248kESjLD0Z" target="_blank" rel="noopener">Open the channel</a>
+            <button type="button" id="wa-channel">📋 Copy &amp; open my channel</button>
+            <button type="button" id="wa-share">📤 Send to a chat or group</button>
+            <button type="button" id="wa-copy">Copy only</button>
             <span class="small" id="wa-out"></span>
           </div>
+          <p class="small muted"><strong>Posting to the channel:</strong> WhatsApp doesn't let a link write a channel update for you, so the post is copied first. When the channel opens, tap the message box, press and hold, choose <strong>Paste</strong>, then send. "Send to a chat or group" opens your phone's share list (or WhatsApp's own chat picker) with the post already filled in.</p>
         </div>
         <div class="adm-card">
           <h2>💬 Post our take on any film</h2>
@@ -505,11 +506,15 @@
       const mine = ourReview(n.title, n.year);
       return mine ? reviewPost(mine, n.app, n.url) : arrivalPost(n);
     }
-    const waLink = () => { $("wa-open").href = `https://wa.me/?text=${encodeURIComponent($("wa-post").value)}`; };
+    const WA_CHANNEL = "https://whatsapp.com/channel/0029VbA1FqA5a248kESjLD0Z";
     async function waFill() {
       $("wa-out").textContent = "";
       try { $("wa-post").value = await waText($("wa-pick").value); } catch { $("wa-post").value = ""; $("wa-out").textContent = "Couldn't build that one. Pick another."; }
-      waLink();
+    }
+    // Copies the post; true when it's on the clipboard.
+    async function waCopy() {
+      try { await navigator.clipboard.writeText($("wa-post").value); return true; } catch {}
+      try { $("wa-post").select(); return document.execCommand("copy"); } catch { return false; }
     }
     (function waInit() {
       const items = waItems();
@@ -518,9 +523,18 @@
         (items.length ? `<optgroup label="New on OTT (newest day)">${items.map((n, i) => opt(`n:${i}`, `${n.title} (${n.year}) · ${n.lang} · ${n.app}${ourReview(n.title, n.year) ? " · 🌶️ our review" : ""}`)).join("")}${items.length > 1 ? opt("all", `All of them in one post (${Math.min(items.length, 8)} titles)`) : ""}</optgroup>` : "") +
         `<optgroup label="Our latest reviews">${waReviews().map((m) => opt(`r:${m.id}`, `${m.title} (${m.year}) · ${m.lang} · 🌶️ ${m.masala}/5`)).join("")}</optgroup>`;
       $("wa-pick").addEventListener("change", waFill);
-      $("wa-post").addEventListener("input", waLink);
-      $("wa-copy").addEventListener("click", async () => {
-        try { await navigator.clipboard.writeText($("wa-post").value); $("wa-out").textContent = "Copied."; } catch { $("wa-post").select(); $("wa-out").textContent = "Press Ctrl+C to copy."; }
+      $("wa-copy").addEventListener("click", async () => { $("wa-out").textContent = (await waCopy()) ? "Copied." : "Couldn't copy. Select the text and copy it by hand."; });
+      // A channel update can't be filled in by a link, so: copy, then open the channel to paste it.
+      $("wa-channel").addEventListener("click", async () => {
+        const ok = await waCopy();
+        $("wa-out").textContent = ok ? "Copied. In the channel: tap the message box, hold, Paste, send." : "Couldn't copy. Copy the text by hand, then open the channel.";
+        if (ok) window.open(WA_CHANNEL, "_blank", "noopener");
+      });
+      // The phone's share list where there is one (pick WhatsApp, then a chat, group or Status); otherwise WhatsApp's chat picker.
+      $("wa-share").addEventListener("click", async () => {
+        const text = $("wa-post").value;
+        if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank", "noopener");
       });
       waFill();
     })();
