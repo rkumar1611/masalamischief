@@ -562,7 +562,7 @@
       // Several titles in one picture: posters in rows of up to three, each with its title and app underneath.
       if (card.items) {
         const n = card.items.length, cols = n <= 3 ? n : n === 4 ? 2 : 3, rowsN = Math.ceil(n / cols);
-        const gap = 36, top = 130, textH = 110, areaH = H - top - 170;
+        const gap = 36, top = 120, textH = 124, areaH = H - top - 160;
         const cellH = (areaH - gap * (rowsN - 1)) / rowsN;
         const pw = Math.min((W - 120 - gap * (cols - 1)) / cols, ((cellH - textH) * 2) / 3), ph = pw * 1.5;
         const posters = await Promise.all(card.items.map((it) => (it.poster ? loadImg(`https://image.tmdb.org/t/p/w500${it.poster}`).catch(() => null) : null)));
@@ -572,8 +572,10 @@
           const x = (W - rowW) / 2 + col * (pw + gap), y = top + r * (cellH + gap) + (cellH - textH - ph) / 2;
           g.save(); g.beginPath(); g.roundRect(x, y, pw, ph, 20); g.fillStyle = "#3a2a2e"; g.fill(); g.clip(); if (posters[i]) g.drawImage(posters[i], x, y, pw, ph); g.restore();
           g.textAlign = "center";
-          g.fillStyle = "#fff3dc"; g.font = "700 30px Inter, sans-serif"; g.fillText(fitLines(g, it.title, pw + gap - 8, 1)[0], x + pw / 2, y + ph + 44);
-          g.fillStyle = "#c9b8ad"; g.font = "600 26px Inter, sans-serif"; g.fillText(it.app, x + pw / 2, y + ph + 82);
+          g.fillStyle = "#fff3dc"; g.font = "700 28px Inter, sans-serif";
+          const names = fitLines(g, it.title, pw + gap - 8, 2);
+          names.forEach((l, k) => g.fillText(l, x + pw / 2, y + ph + 40 + k * 34));
+          g.fillStyle = "#c9b8ad"; g.font = "600 24px Inter, sans-serif"; g.fillText(it.app, x + pw / 2, y + ph + 40 + names.length * 34);
         });
         return foot();
       }
