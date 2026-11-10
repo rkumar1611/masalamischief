@@ -7,7 +7,7 @@
   <title>Admin · Masala Mischief</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/assets/icons/icon-192.png" sizes="192x192" type="image/png">
-  <link rel="stylesheet" href="assets/style.css?v=162">
+  <link rel="stylesheet" href="assets/style.css?v=163">
   <style>
     .adm { max-width: 960px; margin: 24px auto; padding: 0 16px 80px; }
     .adm h1 { margin: 0 0 4px; }
@@ -75,6 +75,18 @@
           <button class="btn" type="button" data-go="reviews">✏️ Edit one of our reviews</button>
           <button class="btn" type="button" data-go="audience">🗣️ Approve readers' reviews</button>
           <button class="btn" type="button" data-go="reports">🛠️ Fix wrong info</button>
+        </div>
+        <div class="adm-card">
+          <h2>📲 Today's WhatsApp post</h2>
+          <p class="muted small">A ready post for your channel from the newest arrivals on OTT. Pick one, change the words if you like, then copy it or open WhatsApp. The link shows the film's poster by itself.</p>
+          <select class="adm-find" id="wa-pick" aria-label="What to post"></select>
+          <textarea class="adm-find" id="wa-post" rows="7" aria-label="The post"></textarea>
+          <div class="adm-actions">
+            <button type="button" id="wa-copy">📋 Copy</button>
+            <a id="wa-open" target="_blank" rel="noopener">💬 Open in WhatsApp</a>
+            <a href="https://whatsapp.com/channel/0029VbA1FqA5a248kESjLD0Z" target="_blank" rel="noopener">Open the channel</a>
+            <span class="small" id="wa-out"></span>
+          </div>
         </div>
         <div class="adm-card">
           <h2>💬 Post our take on any film</h2>
@@ -161,7 +173,7 @@
       </section>
     </div>
   </main>
-  <script src="assets/data.js?v=162"></script>
+  <script src="assets/data.js?v=163"></script>
   <script>
     // The password is kept for this tab (sessionStorage), or on this device if you tick "keep me signed in"
     // (localStorage), and is only ever sent to our own /api/ endpoints, never put in the page.
@@ -399,6 +411,54 @@
       if (b.dataset.fa === "apply") alert("Saved. The page shows the fix in a minute or two.");
       loadFixes(); refreshStats();
     });
+
+    // ---- Today's WhatsApp post (Home): the newest arrivals from the daily "New on OTT" strip (NEW_ON_OTT in data.js)
+    const SITE_URL = "https://masalamischief.in";
+    const LANG_CODES = { Hindi: "hi", Tamil: "ta", Telugu: "te", Malayalam: "ml", Kannada: "kn", Marathi: "mr", Bengali: "bn", Punjabi: "pa", English: "en", Korean: "ko", Japanese: "ja" };
+    // The film's own page, found in the site's search files by title and year; the weekly page if it isn't in the catalogue.
+    async function filmLink(n) {
+      const t = normTitle(n.title);
+      const word = t.split(" ").find((w) => w.length >= 2 && !STOP_WORDS.has(w));
+      const rows = word ? await fetch(`/assets/catalog/s/${word.slice(0, 2)}.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []) : [];
+      const code = LANG_CODES[n.lang] || "";
+      const hit = rows.filter((r) => !r[4] && normTitle(r[2]) === t && (!n.year || !r[3] || Math.abs(r[3] - n.year) <= 1))
+        .sort((a, b) => (b[0] === code) - (a[0] === code) || b[6] - a[6])[0];
+      return hit ? `${SITE_URL}/film?id=${hit[0]}-${hit[1]}` : `${SITE_URL}/ott-this-week`;
+    }
+    const waItems = () => {
+      const all = (typeof NEW_ON_OTT === "object" && NEW_ON_OTT.items) || [];
+      const newest = all.reduce((d, n) => (n.added > d ? n.added : d), "");
+      const year = new Date().getFullYear();
+      const indian = (n) => !["English", "Korean", "Japanese"].includes(n.lang);
+      // The newest day's arrivals: recent releases first, then Indian films.
+      return all.filter((n) => n.added === newest).sort((a, b) => (b.year >= year - 1) - (a.year >= year - 1) || indian(b) - indian(a)).slice(0, 12);
+    };
+    async function waText(v) {
+      const items = waItems();
+      const line = (n) => `${n.lang} · ${n.note ? n.note.replace(/^Directed by [^·]+· /, "") : ""}`.replace(/ · $/, "");
+      if (v === "all") {
+        return `🎬 *New on OTT today*\n\n${items.slice(0, 8).map((n) => `• *${n.title}* (${n.year}) on ${n.app}\n  ${line(n)}`).join("\n")}\n\nWhere to watch each one 👇\n${SITE_URL}/ott-this-week`;
+      }
+      const n = items[+v];
+      if (!n) return "";
+      return `🎬 *${n.title}* (${n.year}) is now on ${n.app}\n\n🗣️ ${line(n)}\n\nWhere to watch, cast and more like it 👇\n${await filmLink(n)}\n\nFollow for what's new on OTT every day.`;
+    }
+    async function waFill() {
+      $("wa-post").value = await waText($("wa-pick").value);
+      $("wa-open").href = `https://wa.me/?text=${encodeURIComponent($("wa-post").value)}`;
+    }
+    (function waInit() {
+      const items = waItems();
+      if (!items.length) { $("wa-pick").innerHTML = `<option>Nothing new on OTT in today's list yet</option>`; return; }
+      $("wa-pick").innerHTML = items.map((n, i) => `<option value="${i}">${esc(n.title)} (${n.year}) · ${esc(n.lang)} · ${esc(n.app)}</option>`).join("")
+        + (items.length > 1 ? `<option value="all">All of today's arrivals (${Math.min(items.length, 8)} titles)</option>` : "");
+      $("wa-pick").addEventListener("change", waFill);
+      $("wa-post").addEventListener("input", () => { $("wa-open").href = `https://wa.me/?text=${encodeURIComponent($("wa-post").value)}`; });
+      $("wa-copy").addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText($("wa-post").value); $("wa-out").textContent = "Copied."; } catch { $("wa-post").select(); $("wa-out").textContent = "Press Ctrl+C to copy."; }
+      });
+      waFill();
+    })();
 
     // ---- Feedback (/api/feedback)
     let fbFilter = "open";

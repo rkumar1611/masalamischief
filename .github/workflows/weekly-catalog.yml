@@ -46,7 +46,7 @@ jobs:
       - name: Choose quick or full
         id: mode
         run: |
-          if [ "${{ github.event.schedule }}" = "0 2 * * 0" ] || [ "${{ inputs.mode }}" = "full" ] || [ "${{ github.event_name }}" = "push" ]; then
+          if [ "${{ github.event.schedule }}" = "17 2 * * 0" ] || [ "${{ inputs.mode }}" = "full" ] || [ "${{ github.event_name }}" = "push" ]; then
             echo "mode=full" >> "$GITHUB_OUTPUT"
           else
             echo "mode=daily" >> "$GITHUB_OUTPUT"

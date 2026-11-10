@@ -71,11 +71,22 @@ export async function onRequestGet(context) {
     const firstLine = bio ? (bio.match(/^.*?[.!?](\s|$)/) || [bio])[0].trim() : "";
     const desc = `${name}${role ? `, ${role}` : ""}: ${titles.length} movies and web series, including ${top.join(", ")}. ${firstLine || facts ? `${firstLine || `${facts}.`} ` : ""}Where to stream them in India.`.slice(0, 300);
 
+    // A plain-words introduction, so a page with only a few titles and no biography still says who this is and what's here
+    // (app.js personIntro() writes the same for the page itself).
+    const list = (a) => (a.length > 1 ? `${a.slice(0, -1).join(", ")} and ${a[a.length - 1]}` : a[0] || "");
+    const years = titles.map((t) => +t.y).filter(Boolean);
+    const span = years.length ? (Math.min(...years) === Math.max(...years) ? ` from ${years[0]}` : ` from ${Math.min(...years)} to ${Math.max(...years)}`) : "";
+    const langNames = [...new Set(titles.map((t) => t.lang).filter(Boolean))].slice(0, 4);
+    const verb = role === "director" ? "has directed" : role === "writer" ? "has written" : role === "actor" ? "appears in" : "is credited in";
+    const what = [movies.length ? `${movies.length} movie${movies.length === 1 ? "" : "s"}` : "", series.length ? `${series.length} web series` : ""].filter(Boolean).join(" and ");
+    const intro = `${name} ${verb} ${what} listed on Masala Mischief${langNames.length ? ` (${list(langNames)})` : ""}${span}, including ${list(top.slice(0, 3))}. Open any title to see which app it is streaming on in India, or where to book it if it is still in cinemas.`;
+
     const body = `
       <article class="ssr-review">
         <h1>${esc(name)}</h1>
         ${facts ? `<p>${esc(facts)}.</p>` : ""}
         ${bio ? `<p>${esc(bio)}</p>` : ""}
+        <p>${esc(intro)}</p>
         <p>${titles.length} movies and series, newest first.</p>
         ${[[`${name} movies`, movies], [`${name} web series`, series]].filter(([, list]) => list.length).map(([h, list]) => `
         <h2>${esc(h)}</h2>

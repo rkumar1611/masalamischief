@@ -2458,7 +2458,10 @@ function wordFit(q, t, last) {
 }
 // 0 when the title doesn't match the search, otherwise a score (higher is better): every typed word
 // has to fit a word of the title. Words typed together ("spiderman") can match the title's split ones.
+// The same letters once spaces and dots are gone: "ra one" is "Ra.One" (number words aren't turned into digits here).
+const sameLetters = (query, title) => { const q = searchNorm(query).replace(/ /g, ""); return q.length >= 3 && q === searchNorm(title).replace(/ /g, ""); };
 function titleMatch(query, title) {
+  if (sameLetters(query, title)) return 4;
   const qw = searchWords(query).filter((w) => !SEARCH_STOP.has(w) || searchWords(query).length === 1);
   const tw = searchWords(title);
   if (!qw.length || !tw.length) return 0;
@@ -2495,6 +2498,7 @@ function titleMatch(query, title) {
 // started ("silo" = "Siloam"). Nothing looser: no guessing at other spellings.
 const vowelKey = (w) => w.replace(/([aeiou])\1+/g, "$1");
 function titleStrong(query, title) {
+  if (sameLetters(query, title)) return true;
   const qw = searchWords(query).filter((w) => !SEARCH_STOP.has(w) || searchWords(query).length === 1);
   const tw = searchWords(title);
   if (!qw.length || !tw.length) return false;
@@ -3156,8 +3160,16 @@ async function initPerson() {
   const thisYear = new Date().getFullYear();
   const latest = found.filter((f) => f.y && f.y <= thisYear + 1).sort((a, b) => b.y - a.y)[0];
   const titleLink = (f) => `<a href="${filmHref({ ...f, mine: byTmdb[f.id] })}">${esc(f.t)}</a>${f.y ? ` (${f.y})` : ""}`;
+  // A plain-words introduction for people with no biography (as functions/person.js writes for search engines).
+  const listWords = (a) => (a.length > 1 ? `${a.slice(0, -1).join(", ")} and ${a[a.length - 1]}` : a[0] || "");
+  const yrs = titles.map((f) => +f.y).filter(Boolean);
+  const span = yrs.length ? (Math.min(...yrs) === Math.max(...yrs) ? ` from ${yrs[0]}` : ` from ${Math.min(...yrs)} to ${Math.max(...yrs)}`) : "";
+  const verb = job === "Directing" ? "has directed" : job === "Writing" ? "has written" : job === "Acting" ? "appears in" : "is credited in";
+  const what = [movies ? `${movies} movie${movies === 1 ? "" : "s"}` : "", series ? `${series} web series` : ""].filter(Boolean).join(" and ");
+  const intro = bio ? "" : `${name} ${verb} ${what} listed on Masala Mischief${langs.length ? ` (${listWords(langs.slice(0, 4))})` : ""}${span}. Open any title to see which app it is streaming on in India, or where to book it if it is still in cinemas.`;
   const about = `
     ${facts ? `<p class="person-facts">${esc(facts)}</p>` : ""}
+    ${intro ? `<p class="person-bio">${esc(intro)}</p>` : ""}
     ${bio ? `<p class="person-bio${bio.length > 320 ? " clamp" : ""}" id="pbio">${esc(bio)}</p>${bio.length > 320 ? `<button class="btn small" type="button" id="pbio-more">Read more</button>` : ""}` : ""}
     ${knownFor.length ? `<p class="person-known"><strong>Known for:</strong> ${knownFor.map(titleLink).join(", ")}</p>` : ""}
     ${latest ? `<p class="person-known"><strong>Latest:</strong> ${titleLink(latest)}</p>` : ""}`;
