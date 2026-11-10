@@ -11,6 +11,10 @@ on:
   schedule:
     - cron: "43 3 * * *" # about 09:13 IST daily (odd minute: GitHub runs :00 and :30 jobs late)
   workflow_dispatch:
+  # Right after each Catalogue run, so this doesn't depend on GitHub starting a second scheduled job on time.
+  workflow_run:
+    workflows: ["Catalogue"]
+    types: [completed]
   push:
     branches: [main]
     paths:
@@ -26,6 +30,7 @@ concurrency:
 
 jobs:
   refresh:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
