@@ -437,7 +437,9 @@
       return rows.filter((r) => !r[4] && normTitle(r[2]) === t && (!n.year || !r[3] || Math.abs(r[3] - n.year) <= 1))
         .sort((a, b) => (b[0] === code) - (a[0] === code) || b[6] - a[6])[0] || null;
     }
-    // The line that opens the title straight in the app (Prime Video, Netflix…), when we have its link. MOVIES.find((m) => normTitle(m.title) === normTitle(title) && (!year || Math.abs(m.year - year) <= 1));
+    // The lines that open the title straight in the app (Prime Video, Netflix…), when we have its link.
+    const watchLines = (app, url) => (app && /^https:\/\//.test(url || "") ? [`▶️ Watch it now on ${app} 👇`, url, ""] : []);
+    const ourReview = (title, year) => MOVIES.find((m) => normTitle(m.title) === normTitle(title) && (!year || Math.abs(m.year - year) <= 1));
     // One of our reviews: tagline, the opening of the review, what works and what doesn't, our scores.
     function reviewPost(m, app, url) {
       const w = (typeof WATCH === "object" && WATCH[m.id]) || {};
@@ -453,6 +455,7 @@
         `🌶️ Masala Meter: ${m.masala}/5  ·  ⭐ ${m.quality}/10`,
         facts || null, "",
         "Full review 👇", `${SITE_URL}/review?id=${encodeURIComponent(m.id)}`, "",
+        ...watchLines(apps[0], url || ((typeof WATCH_LINKS === "object" && WATCH_LINKS[m.id]) || {})[apps[0]]),
         "Seen it? React 🔥 if you loved it, 👎 if not.",
       ]);
     }
@@ -476,6 +479,7 @@
         [`📺 Now on ${n.app}`, runText(f.r), n.lang, f.c].filter(Boolean).join("  ·  "),
         rating || null, "",
         "Cast, trailer and more like it 👇", row ? `${SITE_URL}/film?id=${row[0]}-${row[1]}` : `${SITE_URL}/ott-this-week`, "",
+        ...watchLines(n.app, n.url),
         "On your list? React 🔥",
       ]);
     }
