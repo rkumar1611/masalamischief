@@ -78,9 +78,9 @@
         </div>
         <div class="adm-card">
           <h2>📲 Today's WhatsApp post</h2>
-          <p class="muted small">A ready post for your channel from the newest arrivals on OTT. Pick one, change the words if you like, then copy it or open WhatsApp. The link shows the film's poster by itself.</p>
+          <p class="muted small">A ready post for your channel, in the short house layout: pick a new arrival on OTT or one of our reviews, change the words if you like, then copy it or open WhatsApp. The link shows the poster by itself. For a title we've reviewed it uses our Masala Meter, tagline and verdict.</p>
           <select class="adm-find" id="wa-pick" aria-label="What to post"></select>
-          <textarea class="adm-find" id="wa-post" rows="7" aria-label="The post"></textarea>
+          <textarea class="adm-find" id="wa-post" rows="16" aria-label="The post"></textarea>
           <div class="adm-actions">
             <button type="button" id="wa-copy">📋 Copy</button>
             <a id="wa-open" target="_blank" rel="noopener">💬 Open in WhatsApp</a>
@@ -412,18 +412,72 @@
       loadFixes(); refreshStats();
     });
 
-    // ---- Today's WhatsApp post (Home): the newest arrivals from the daily "New on OTT" strip (NEW_ON_OTT in data.js)
+    // ---- Today's WhatsApp post (Home): a channel post in the house layout, from the newest arrivals on OTT (NEW_ON_OTT in
+    // data.js) or one of our own reviews. WhatsApp marks: *bold*, _italic_. Kept short so it isn't cut behind "Read more".
     const SITE_URL = "https://masalamischief.in";
     const LANG_CODES = { Hindi: "hi", Tamil: "ta", Telugu: "te", Malayalam: "ml", Kannada: "kn", Marathi: "mr", Bengali: "bn", Punjabi: "pa", English: "en", Korean: "ko", Japanese: "ja" };
-    // The film's own page, found in the site's search files by title and year; the weekly page if it isn't in the catalogue.
-    async function filmLink(n) {
+    const getJson = (p) => fetch(p).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    // Cut at the end of a sentence where there is one, else at a word.
+    const cutText = (s, max) => {
+      s = String(s || "").replace(/\s+/g, " ").trim();
+      if (s.length <= max) return s;
+      const cut = s.slice(0, max);
+      const end = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("! "), cut.lastIndexOf("? "));
+      return end > max * 0.5 ? cut.slice(0, end + 1) : `${cut.replace(/\s+\S*$/, "")}…`;
+    };
+    const runText = (m) => (m ? `${Math.floor(m / 60) ? `${Math.floor(m / 60)}h ` : ""}${m % 60 ? `${m % 60}m` : ""}`.trim() : "");
+    // Lines joined, without empty ones doubling up.
+    const postLines = (lines) => lines.filter((l, i, a) => l !== null && !(l === "" && (i === 0 || a[i - 1] === "" || a[i - 1] === null))).join("\n").trim();
+    // The title in the catalogue's search files ([lang, id, title, year, series?, poster, votes, rating]), by title and year, or null.
+    async function catalogueHit(n) {
       const t = normTitle(n.title);
       const word = t.split(" ").find((w) => w.length >= 2 && !STOP_WORDS.has(w));
-      const rows = word ? await fetch(`/assets/catalog/s/${word.slice(0, 2)}.json`).then((r) => (r.ok ? r.json() : [])).catch(() => []) : [];
+      const rows = word ? (await getJson(`/assets/catalog/s/${word.slice(0, 2)}.json`)) || [] : [];
       const code = LANG_CODES[n.lang] || "";
-      const hit = rows.filter((r) => !r[4] && normTitle(r[2]) === t && (!n.year || !r[3] || Math.abs(r[3] - n.year) <= 1))
-        .sort((a, b) => (b[0] === code) - (a[0] === code) || b[6] - a[6])[0];
-      return hit ? `${SITE_URL}/film?id=${hit[0]}-${hit[1]}` : `${SITE_URL}/ott-this-week`;
+      return rows.filter((r) => !r[4] && normTitle(r[2]) === t && (!n.year || !r[3] || Math.abs(r[3] - n.year) <= 1))
+        .sort((a, b) => (b[0] === code) - (a[0] === code) || b[6] - a[6])[0] || null;
+    }
+    const ourReview = (title, year) => MOVIES.find((m) => normTitle(m.title) === normTitle(title) && (!year || Math.abs(m.year - year) <= 1));
+    // One of our reviews: tagline, the opening of the review, what works and what doesn't, our scores.
+    function reviewPost(m, app) {
+      const w = (typeof WATCH === "object" && WATCH[m.id]) || {};
+      const apps = app ? [app] : (w.stream || []);
+      const facts = [apps.length ? `📺 ${apps.slice(0, 2).join(" & ")}` : "", m.kind === "tv" ? (m.seasons ? `${m.seasons} season${m.seasons === 1 ? "" : "s"}` : "Series") : runText(m.runtime), m.lang].filter(Boolean).join("  ·  ");
+      return postLines([
+        "🌶️ *MASALA MISCHIEF PICK*", "",
+        `🎬 *${m.title}* (${m.year})`,
+        m.tagline ? `_${m.tagline.trim()}_` : null, "",
+        cutText((m.review || [])[0], 260) || null, "",
+        (m.hits || []).length ? `👍 ${m.hits.slice(0, 2).join(", ")}` : null,
+        (m.misses || []).length ? `👎 ${m.misses[0]}` : null, "",
+        `🌶️ Masala Meter: ${m.masala}/5  ·  ⭐ ${m.quality}/10`,
+        facts || null, "",
+        "Full review 👇", `${SITE_URL}/review?id=${encodeURIComponent(m.id)}`, "",
+        "Seen it? React 🔥 if you loved it, 👎 if not.",
+      ]);
+    }
+    // A new arrival we haven't reviewed: what it's about, who's in it, a rating, where it is. No Masala Meter (that's only for our reviews).
+    async function arrivalPost(n) {
+      const row = await catalogueHit(n);
+      const man = row ? await getJson("/assets/catalog/manifest.json") : null;
+      const shard = row && man && man.shards ? await getJson(`/assets/catalog/t/${row[0]}/${row[1] % man.shards.t}.json`) : null;
+      const f = (shard && shard.films && shard.films[row[1]]) || {};
+      const imdb = (String(n.note || "").match(/IMDb ([\d.]+)/) || [])[1];
+      const rating = imdb ? `⭐ IMDb ${imdb}/10` : f.v && f.n >= 20 ? `⭐ TMDB ${f.v}/10` : "";
+      const cast = (f.cast || []).slice(0, 3).map((c) => c[1]).join(", ");
+      const dir = ((f.dir || [])[0] || [])[1] || (String(n.note || "").match(/Directed by ([^·]+)/) || [])[1] || "";
+      return postLines([
+        "🍿 *NEW ON OTT TODAY*", "",
+        `🎬 *${n.title}* (${n.year})`,
+        (f.g || []).length ? `_${f.g.slice(0, 3).join(" · ")}_` : null, "",
+        cutText(f.ov, 240) || null, "",
+        cast ? `🎭 ${cast}` : null,
+        dir ? `🎬 Directed by ${dir.trim()}` : null, "",
+        [`📺 Now on ${n.app}`, runText(f.r), n.lang, f.c].filter(Boolean).join("  ·  "),
+        rating || null, "",
+        "Where to watch, cast and more like it 👇", row ? `${SITE_URL}/film?id=${row[0]}-${row[1]}` : `${SITE_URL}/ott-this-week`, "",
+        "On your list? React 🔥",
+      ]);
     }
     const waItems = () => {
       const all = (typeof NEW_ON_OTT === "object" && NEW_ON_OTT.items) || [];
@@ -433,27 +487,34 @@
       // The newest day's arrivals: recent releases first, then Indian films.
       return all.filter((n) => n.added === newest).sort((a, b) => (b.year >= year - 1) - (a.year >= year - 1) || indian(b) - indian(a)).slice(0, 12);
     };
+    const waReviews = () => MOVIES.slice().sort((a, b) => b.reviewed.localeCompare(a.reviewed)).slice(0, 8);
     async function waText(v) {
       const items = waItems();
-      const line = (n) => `${n.lang} · ${n.note ? n.note.replace(/^Directed by [^·]+· /, "") : ""}`.replace(/ · $/, "");
       if (v === "all") {
-        return `🎬 *New on OTT today*\n\n${items.slice(0, 8).map((n) => `• *${n.title}* (${n.year}) on ${n.app}\n  ${line(n)}`).join("\n")}\n\nWhere to watch each one 👇\n${SITE_URL}/ott-this-week`;
+        const line = (n) => `${n.lang}${(String(n.note || "").match(/IMDb [\d.]+/) || [""])[0] ? ` · ${String(n.note).match(/IMDb [\d.]+/)[0]}` : ""}`;
+        return postLines(["🍿 *NEW ON OTT TODAY*", "", ...items.slice(0, 8).map((n) => `• *${n.title}* (${n.year}) on ${n.app}\n   ${line(n)}`), "",
+          "Where to watch each one 👇", `${SITE_URL}/ott-this-week`, "", "Which one first? React 🔥"]);
       }
-      const n = items[+v];
+      if (v.startsWith("r:")) { const m = MOVIES.find((x) => x.id === v.slice(2)); return m ? reviewPost(m) : ""; }
+      const n = items[+v.slice(2)];
       if (!n) return "";
-      return `🎬 *${n.title}* (${n.year}) is now on ${n.app}\n\n🗣️ ${line(n)}\n\nWhere to watch, cast and more like it 👇\n${await filmLink(n)}\n\nFollow for what's new on OTT every day.`;
+      const mine = ourReview(n.title, n.year);
+      return mine ? reviewPost(mine, n.app) : arrivalPost(n);
     }
+    const waLink = () => { $("wa-open").href = `https://wa.me/?text=${encodeURIComponent($("wa-post").value)}`; };
     async function waFill() {
-      $("wa-post").value = await waText($("wa-pick").value);
-      $("wa-open").href = `https://wa.me/?text=${encodeURIComponent($("wa-post").value)}`;
+      $("wa-out").textContent = "";
+      try { $("wa-post").value = await waText($("wa-pick").value); } catch { $("wa-post").value = ""; $("wa-out").textContent = "Couldn't build that one. Pick another."; }
+      waLink();
     }
     (function waInit() {
       const items = waItems();
-      if (!items.length) { $("wa-pick").innerHTML = `<option>Nothing new on OTT in today's list yet</option>`; return; }
-      $("wa-pick").innerHTML = items.map((n, i) => `<option value="${i}">${esc(n.title)} (${n.year}) · ${esc(n.lang)} · ${esc(n.app)}</option>`).join("")
-        + (items.length > 1 ? `<option value="all">All of today's arrivals (${Math.min(items.length, 8)} titles)</option>` : "");
+      const opt = (v, text) => `<option value="${esc(v)}">${esc(text)}</option>`;
+      $("wa-pick").innerHTML =
+        (items.length ? `<optgroup label="New on OTT (newest day)">${items.map((n, i) => opt(`n:${i}`, `${n.title} (${n.year}) · ${n.lang} · ${n.app}${ourReview(n.title, n.year) ? " · 🌶️ our review" : ""}`)).join("")}${items.length > 1 ? opt("all", `All of them in one post (${Math.min(items.length, 8)} titles)`) : ""}</optgroup>` : "") +
+        `<optgroup label="Our latest reviews">${waReviews().map((m) => opt(`r:${m.id}`, `${m.title} (${m.year}) · ${m.lang} · 🌶️ ${m.masala}/5`)).join("")}</optgroup>`;
       $("wa-pick").addEventListener("change", waFill);
-      $("wa-post").addEventListener("input", () => { $("wa-open").href = `https://wa.me/?text=${encodeURIComponent($("wa-post").value)}`; });
+      $("wa-post").addEventListener("input", waLink);
       $("wa-copy").addEventListener("click", async () => {
         try { await navigator.clipboard.writeText($("wa-post").value); $("wa-out").textContent = "Copied."; } catch { $("wa-post").select(); $("wa-out").textContent = "Press Ctrl+C to copy."; }
       });
