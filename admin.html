@@ -84,7 +84,7 @@
           <div class="adm-actions">
             <button type="button" id="wa-channel">📋 Copy &amp; open my channel</button>
             <button type="button" id="wa-share">📤 Send to a chat or group</button>
-            <button type="button" id="wa-image" hidden>🖼️ Share picture (words as caption)</button>
+            <button type="button" id="wa-image" hidden>🖼️ Post with picture</button>
             <button type="button" id="wa-copy">Copy only</button>
             <span class="small" id="wa-out"></span>
           </div>
@@ -542,7 +542,7 @@
       if (lines.length > max) { lines.length = max; lines[max - 1] = `${lines[max - 1].replace(/\s+\S+$/, "")}…`; }
       return lines;
     }
-    async function waImage(card) {
+    async function waImage(card, type = "image/jpeg") {
       const W = 1080, H = 1350;
       const c = document.createElement("canvas"); c.width = W; c.height = H;
       const g = c.getContext("2d");
@@ -557,7 +557,7 @@
         g.textAlign = "center";
         g.fillStyle = "#f6b73c"; g.font = "700 34px Inter, sans-serif"; g.fillText(card.foot, W / 2, H - 100);
         g.fillStyle = "#fff3dc"; g.font = "800 44px 'Baloo 2', sans-serif"; g.fillText("masalamischief.in", W / 2, H - 44);
-        return new Promise((resolve) => c.toBlob(resolve, "image/jpeg", 0.9));
+        return new Promise((resolve) => c.toBlob(resolve, type, 0.9));
       };
       // Several titles in one picture: posters in rows of up to three, each with its title and app underneath.
       if (card.items) {
@@ -603,7 +603,7 @@
       // Foot: where it is, and us
       g.fillStyle = "#f6b73c"; g.font = "700 34px Inter, sans-serif"; g.fillText(card.foot, W / 2, H - 100);
       g.fillStyle = "#fff3dc"; g.font = "800 44px 'Baloo 2', sans-serif"; g.fillText("masalamischief.in", W / 2, H - 44);
-      return new Promise((resolve) => c.toBlob(resolve, "image/jpeg", 0.9));
+      return new Promise((resolve) => c.toBlob(resolve, type, 0.9));
     }
     // Copies the post; true when it's on the clipboard.
     async function waCopy() {
@@ -630,27 +630,38 @@
         if (navigator.share) { try { await navigator.share({ text }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank", "noopener");
       });
-      // The picture: on a phone the share list opens with the image and the post's words; elsewhere a preview to save.
+      // The picture, so that it goes out first with the words under it as its caption (one message).
+      // Phone: the share list opens with the picture alone, the words are copied to paste into WhatsApp's "Add a caption".
+      // Computer: the picture itself is copied; pasted into the chat (Ctrl+V), WhatsApp opens it with a caption line, and a
+      // second button here then copies the words for that line. (Handing WhatsApp both at once makes it send the words first.)
       $("wa-image").addEventListener("click", async () => {
         if (!waCard) return;
         const b = $("wa-image"); b.disabled = true; $("wa-out").textContent = "Making the image…";
+        const phone = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         try {
-          const blob = await waImage(waCard);
-          const file = new File([blob], `${waCard.id}-masala-mischief.jpg`, { type: "image/jpeg" });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            // The picture and the words go together; WhatsApp uses the words as the caption. Some phones (mostly iPhones) drop
-            // the words, so they're also on the clipboard to paste.
-            // Only the picture is handed over. Sent together with the words, WhatsApp posts the words first and the picture after;
-            // pasted into the picture's caption box they go out as one message, picture on top and words underneath.
-            const copied = await waCopy();
-            $("wa-out").textContent = copied ? "Pick WhatsApp and the group. Then tap \"Add a caption\", hold, Paste, and send." : "Pick WhatsApp and the group, then type or paste the words as the caption.";
-            await navigator.share({ files: [file] }).catch(() => {});
-          } else {
-            const url = URL.createObjectURL(blob);
-            $("wa-preview").innerHTML = `<img src="${url}" alt="The picture for this post" style="max-width:260px;width:100%;border-radius:12px;display:block;margin:8px 0"><a href="${url}" download="${esc(file.name)}">⬇️ Save the image</a>`;
-            const copied = await waCopy();
-            $("wa-out").textContent = `Save the image, attach it in the group or channel, then paste the words as its caption${copied ? " (they're copied)" : ""}.`;
+          if (phone) {
+            const blob = await waImage(waCard);
+            const file = new File([blob], `${waCard.id}-masala-mischief.jpg`, { type: "image/jpeg" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              const copied = await waCopy();
+              $("wa-out").textContent = copied ? "Pick WhatsApp and the group. Then tap \"Add a caption\", hold, Paste, and send." : "Pick WhatsApp and the group, then type or paste the words as the caption.";
+              await navigator.share({ files: [file] }).catch(() => {});
+              b.disabled = false;
+              return;
+            }
           }
+          const png = await waImage(waCard, "image/png");
+          const url = URL.createObjectURL(png);
+          let copiedPicture = false;
+          try { await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]); copiedPicture = true; } catch {}
+          $("wa-preview").innerHTML = `<img src="${url}" alt="The picture for this post" style="max-width:220px;width:100%;border-radius:12px;display:block;margin:8px 0">
+            <ol class="small" style="margin:6px 0 8px 18px;padding:0">
+              <li>${copiedPicture ? "The picture is copied. In WhatsApp, open the group or channel, click the message box and press <strong>Ctrl+V</strong>. The picture opens with a caption line." : `<a href="${url}" download="${esc(waCard.id)}-masala-mischief.png">⬇️ Save the picture</a>, then attach it in WhatsApp (📎). It opens with a caption line.`}</li>
+              <li>Come back here and press <button type="button" id="wa-words">📋 Copy the words</button></li>
+              <li>In WhatsApp, click the caption line under the picture, press <strong>Ctrl+V</strong>, and send.</li>
+            </ol>`;
+          $("wa-out").textContent = copiedPicture ? "Picture copied. Follow the three steps below." : "Follow the three steps below.";
+          $("wa-words").addEventListener("click", async () => { $("wa-out").textContent = (await waCopy()) ? "Words copied. Paste them into the caption line under the picture." : "Couldn't copy. Select the text above and copy it by hand."; });
         } catch { $("wa-out").textContent = "Couldn't make the image. Try again, or post the words alone."; }
         b.disabled = false;
       });
