@@ -84,7 +84,7 @@
           <div class="adm-actions">
             <button type="button" id="wa-channel">📋 Copy &amp; open my channel</button>
             <button type="button" id="wa-share">📤 Send to a chat or group</button>
-            <button type="button" id="wa-image" hidden>🖼️ Share picture + words</button>
+            <button type="button" id="wa-image" hidden>🖼️ Share picture (words as caption)</button>
             <button type="button" id="wa-copy">Copy only</button>
             <span class="small" id="wa-out"></span>
           </div>
@@ -640,10 +640,11 @@
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             // The picture and the words go together; WhatsApp uses the words as the caption. Some phones (mostly iPhones) drop
             // the words, so they're also on the clipboard to paste.
-            const text = $("wa-post").value;
-            await waCopy();
-            $("wa-out").textContent = "Pick WhatsApp, then the group. If the words are missing under the picture, paste them (they're copied).";
-            await navigator.share({ files: [file], text }).catch(() => {});
+            // Only the picture is handed over. Sent together with the words, WhatsApp posts the words first and the picture after;
+            // pasted into the picture's caption box they go out as one message, picture on top and words underneath.
+            const copied = await waCopy();
+            $("wa-out").textContent = copied ? "Pick WhatsApp and the group. Then tap \"Add a caption\", hold, Paste, and send." : "Pick WhatsApp and the group, then type or paste the words as the caption.";
+            await navigator.share({ files: [file] }).catch(() => {});
           } else {
             const url = URL.createObjectURL(blob);
             $("wa-preview").innerHTML = `<img src="${url}" alt="The picture for this post" style="max-width:260px;width:100%;border-radius:12px;display:block;margin:8px 0"><a href="${url}" download="${esc(file.name)}">⬇️ Save the image</a>`;
