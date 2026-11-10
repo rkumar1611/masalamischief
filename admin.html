@@ -466,6 +466,7 @@
       const man = row ? await getJson("/assets/catalog/manifest.json") : null;
       const shard = row && man && man.shards ? await getJson(`/assets/catalog/t/${row[0]}/${row[1] % man.shards.t}.json`) : null;
       const f = (shard && shard.films && shard.films[row[1]]) || {};
+      const imdb = +(String(n.note || "").match(/IMDb ([\d.]+)/) || [])[1] || 0;
       const cast = (f.cast || []).slice(0, 3).map((c) => c[1]).join(", ");
       const dir = ((f.dir || [])[0] || [])[1] || (String(n.note || "").match(/Directed by ([^·]+)/) || [])[1] || "";
       return postLines([
@@ -476,7 +477,7 @@
         cast ? `🎭 ${cast}` : null,
         dir ? `🎬 Directed by ${dir.trim()}` : null, "",
         [`📺 Now on ${n.app}`, runText(f.r), n.lang, f.c].filter(Boolean).join("  ·  "),
-        "", // no star rating here: other sites' scores aren't ours, and a new film often shows 0/10
+        imdb ? `⭐ IMDb ${imdb}/10` : null, "", // IMDb's score when the day's list has one (never a 0)
         "Cast, trailer and more like it 👇", row ? `${SITE_URL}/film?id=${row[0]}-${row[1]}` : `${SITE_URL}/ott-this-week`, "",
         ...watchLines(n.app, n.url),
         "On your list? React 🔥",
@@ -494,7 +495,7 @@
     async function waText(v) {
       const items = waItems();
       if (v === "all") {
-        const line = (n) => n.lang;
+        const line = (n) => { const s = +(String(n.note || "").match(/IMDb ([\d.]+)/) || [])[1] || 0; return `${n.lang}${s ? ` · IMDb ${s}` : ""}`; };
         return postLines(["🍿 *NEW ON OTT TODAY*", "", ...items.slice(0, 8).map((n) => `• *${n.title}* (${n.year}) on ${n.app}\n   ${line(n)}`), "",
           "Where to watch each one 👇", `${SITE_URL}/ott-this-week`, "", "Which one first? React 🔥"]);
       }

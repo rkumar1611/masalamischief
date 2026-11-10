@@ -43,7 +43,8 @@ export async function onRequestGet(context) {
     const url = `${SITE}/film?id=${code}-${rawId}`;
     // Search wording: "<film> OTT", with the answer first (see lib/seo.js).
     const title = filmSearchTitle({ ...f, l: code });
-    const ogTitle = `${f.t}${years ? ` (${years})` : ""} · ${LANGS[code]} ${tv ? "series" : "movie"} · ★ ${f.v}/10`;
+    // The title on link previews (WhatsApp and others). No star rating: a new film shows "★ 0/10" until people have voted.
+    const ogTitle = `${f.t}${years ? ` (${years})` : ""} · ${LANGS[code]} ${tv ? "series" : "movie"}`;
     const desc = filmSearchDesc(f);
     const image = f.b ? `https://image.tmdb.org/t/p/w1280${f.b}` : f.p ? `https://image.tmdb.org/t/p/w780${f.p}` : null;
 
