@@ -844,3 +844,6 @@ span.person-photo { font-size: 2.4rem; }
   .popular-lists.tiles::-webkit-scrollbar { display: none; }
   .popular-lists a.ptile { scroll-snap-align: start; }
 }
+/* Feedback page */
+.fb-form { position: relative; }
+.fb-form input[type="text"] { width: 100%; box-sizing: border-box; }

@@ -7,7 +7,7 @@
   <title>Admin · Masala Mischief</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/assets/icons/icon-192.png" sizes="192x192" type="image/png">
-  <link rel="stylesheet" href="assets/style.css?v=160">
+  <link rel="stylesheet" href="assets/style.css?v=161">
   <style>
     .adm { max-width: 960px; margin: 24px auto; padding: 0 16px 80px; }
     .adm h1 { margin: 0 0 4px; }
@@ -60,6 +60,7 @@
         <button class="chip" type="button" data-t="reviews">✍️ Our reviews</button>
         <button class="chip" type="button" data-t="audience">🗣️ Readers' reviews<span class="n" id="n-audience" hidden></span></button>
         <button class="chip" type="button" data-t="reports">🛠️ Wrong-info<span class="n" id="n-reports" hidden></span></button>
+        <button class="chip" type="button" data-t="feedback">💬 Feedback<span class="n" id="n-feedback" hidden></span></button>
         <button class="chip" type="button" data-t="titles">🎞️ Titles</button>
         <button class="chip" type="button" data-t="alerts">📣 Alerts</button>
         <button class="chip" type="button" data-t="links">🔗 Shortcuts</button>
@@ -114,6 +115,16 @@
         <div id="fix-rows"></div>
       </section>
 
+      <!-- Feedback from the /feedback page -->
+      <section data-s="feedback" hidden>
+        <p class="muted small">Messages from the <a href="/feedback" target="_blank" rel="noopener">feedback page</a>. Only you can see them. Mark one done when you've dealt with it; Done messages can be deleted.</p>
+        <div class="chips" id="fb-filters">
+          <button class="chip" type="button" data-bf="open">📬 Open</button>
+          <button class="chip" type="button" data-bf="done">✅ Done</button>
+        </div>
+        <div id="fb-rows"></div>
+      </section>
+
       <!-- Titles (our own catalogue database) -->
       <section data-s="titles" hidden>
         <p class="muted small">Look up any title in our own catalogue database and correct which apps it streams on. Your correction is saved in the database and stays until you remove it.</p>
@@ -150,7 +161,7 @@
       </section>
     </div>
   </main>
-  <script src="assets/data.js?v=160"></script>
+  <script src="assets/data.js?v=161"></script>
   <script>
     // The password is kept for this tab (sessionStorage), or on this device if you tick "keep me signed in"
     // (localStorage), and is only ever sent to our own /api/ endpoints, never put in the page.
@@ -199,7 +210,7 @@
     try { $("keep").checked = Boolean(localStorage.getItem("mm-admin")); } catch {}
 
     // ---- Tabs
-    const TABS = ["home", "reviews", "audience", "reports", "titles", "alerts", "links"];
+    const TABS = ["home", "reviews", "audience", "reports", "feedback", "titles", "alerts", "links"];
     function show(name) {
       tab = TABS.includes(name) ? name : "home";
       document.querySelectorAll("[data-s]").forEach((s) => (s.hidden = s.dataset.s !== tab));
@@ -209,6 +220,7 @@
       if (tab === "reviews") renderMine();
       if (tab === "audience") loadReviews();
       if (tab === "reports") loadFixes();
+      if (tab === "feedback") loadFeedback();
       if (tab === "alerts") refreshStats();
     }
     $("tabs").addEventListener("click", (e) => { const b = e.target.closest("[data-t]"); if (b) show(b.dataset.t); });
@@ -220,11 +232,12 @@
     function renderStats(d) {
       const r = d.reviews || {}, f = d.fixes || {}, p = d.push || {};
       const badge = (id, n) => { $(id).hidden = !n; $(id).textContent = n || ""; };
-      badge("n-audience", r.pending); badge("n-reports", f.open);
+      badge("n-audience", r.pending); badge("n-reports", f.open); badge("n-feedback", (d.feedback || {}).open);
       const stat = (n, label, go, hot) => `<a class="adm-stat${hot ? " alert" : ""}" ${go ? `data-go="${go}"` : ""}><strong>${n ?? "–"}</strong>${label}</a>`;
       $("stats").innerHTML =
         stat(r.pending || 0, "readers' reviews waiting", "audience", r.pending) +
         stat(f.open || 0, "wrong-info reports open", "reports", f.open) +
+        stat((d.feedback || {}).open || 0, "feedback messages open", "feedback", (d.feedback || {}).open) +
         stat(r.reported || 0, "reviews reported", "audience", r.reported) +
         stat(MOVIES.length, "our own reviews", "reviews") +
         stat(r.live || 0, "readers' reviews live") +
@@ -385,6 +398,38 @@
       if (!ok) { b.disabled = false; msg.textContent = data.error || "Something went wrong."; return; }
       if (b.dataset.fa === "apply") alert("Saved. The page shows the fix in a minute or two.");
       loadFixes(); refreshStats();
+    });
+
+    // ---- Feedback (/api/feedback)
+    let fbFilter = "open";
+    const FB_KIND = { idea: "💡 Idea", bug: "🐞 Broken", missing: "🎬 Missing title", other: "💬 Other" };
+    async function loadFeedback() {
+      const { ok, data } = await api(`/api/feedback?filter=${fbFilter}`);
+      document.querySelectorAll("#fb-filters [data-bf]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.bf === fbFilter));
+      if (!ok) { $("fb-rows").innerHTML = `<p class="muted">${esc(data.error || "Couldn't load feedback.")}</p>`; return; }
+      document.querySelector('#fb-filters [data-bf="open"]').textContent = `📬 Open${data.open ? ` (${data.open})` : ""}`;
+      const clearAll = fbFilter === "done" && data.feedback.length > 1
+        ? `<div class="adm-actions"><button type="button" data-fb="clear">🗑️ Delete all ${data.feedback.length} done messages</button><span class="small" data-fbmsg="clear"></span></div>` : "";
+      $("fb-rows").innerHTML = clearAll + data.feedback.map((m) => `
+        <div class="adm-row${m.status === "open" ? " pending" : ""}">
+          <div class="meta"><strong>${FB_KIND[m.kind] || esc(m.kind)}</strong> · ${ago(m.created)}${m.contact ? ` · ✉️ ${esc(m.contact)}` : ""}${m.page ? ` · from <a href="${esc(m.page)}" target="_blank" rel="noopener">${esc(m.page)}</a>` : ""}</div>
+          <p>${esc(m.message).replace(/\n/g, "<br>")}</p>
+          <div class="adm-actions">
+            ${m.status === "open" ? `<button data-fb="done" data-id="${m.id}">✅ Mark done</button>` : `<button data-fb="reopen" data-id="${m.id}">Reopen</button><button data-fb="delete" data-id="${m.id}">🗑️ Delete</button>`}
+          </div>
+          <p class="small" data-fbmsg="${m.id}"></p>
+        </div>`).join("") || `<p class="muted">Nothing here. 🎉</p>`;
+    }
+    $("fb-filters").addEventListener("click", (e) => { const b = e.target.closest("[data-bf]"); if (b) { fbFilter = b.dataset.bf; loadFeedback(); } });
+    $("fb-rows").addEventListener("click", async (e) => {
+      const b = e.target.closest("[data-fb]");
+      if (!b) return;
+      if (b.dataset.fb === "delete" && !confirm("Delete this message for good?")) return;
+      if (b.dataset.fb === "clear" && !confirm("Delete every done message for good? Open messages are not touched.")) return;
+      b.disabled = true;
+      const { ok, data } = await api("/api/feedback", "POST", b.dataset.fb === "clear" ? { action: "clear" } : { action: b.dataset.fb, id: +b.dataset.id });
+      if (!ok) { b.disabled = false; document.querySelector(`[data-fbmsg="${b.dataset.id || "clear"}"]`).textContent = data.error || "Something went wrong."; return; }
+      loadFeedback(); refreshStats();
     });
 
     // ---- Alerts: send by hand

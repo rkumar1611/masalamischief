@@ -165,6 +165,7 @@ function renderChrome() {
           <h4>About</h4>
           <a href="privacy">Privacy & community rules</a>
           <a href="privacy#rules">How audience reviews work</a>
+          <a href="feedback?from=${encodeURIComponent(location.pathname + location.search)}">Send feedback</a>
         </nav>
       </div>
       <div class="footer-bottom">
@@ -740,7 +741,7 @@ function initSiteSearch() {
       out.innerHTML = hits.length || people.length
         ? (peopleFirst ? peopleHtml + titlesHtml : titlesHtml + peopleHtml) +
           (hits.length ? `<a class="sr-all" href="films?q=${encodeURIComponent(q.value.trim())}">See all results →</a>` : "")
-        : `<p class="muted small sr-empty">No matches. Try another spelling.</p>`;
+        : `<p class="muted small sr-empty">No matches. Try another spelling. <a href="feedback?kind=missing&q=${encodeURIComponent(q.value.trim())}">Missing a title? Tell us</a>.</p>`;
     }, 120);
   });
 }
@@ -2875,7 +2876,7 @@ async function initFilms() {
   const isTop = () => state.view !== "all";
   const paint = () => {
     $("fgrid").innerHTML = results.slice(0, shown).map((f, i) => filmCard(f, isTop() ? i + 1 : 0)).join("") ||
-      `<div class="empty">${$("fpeople").hidden ? "Nothing matches. Try fewer filters." : "No titles by that name. Tap the name above for their films and series."}</div>`;
+      `<div class="empty">${$("fpeople").hidden ? "Nothing matches. Try fewer filters." : "No titles by that name. Tap the name above for their films and series. Missing one? <a href='feedback?kind=missing'>Tell us</a>."}</div>`;
     $("fmore").hidden = isTop() || shown >= results.length;
   };
   // Actors and directors matching the search, as a row of faces above the titles.
@@ -3691,6 +3692,63 @@ async function initWeek() {
   paint();
 }
 
+/* ---------- Feedback page (feedback.html): ideas, bugs and missing titles, kept for us in /admin → Feedback ---------- */
+async function initFeedback() {
+  const root = document.getElementById("feedback");
+  const params = new URLSearchParams(location.search);
+  const cfg = await getCommunityConfig();
+  const wa = `<a class="wa-follow compact" href="${WHATSAPP_CHANNEL}" target="_blank" rel="noopener">
+      <span class="wa-icon" aria-hidden="true">${WA_LOGO}</span>
+      <span><strong>Prefer WhatsApp?</strong><span>Follow the channel for new OTT releases and weekly picks.</span></span>
+      <span class="wa-go">Follow</span></a>`;
+  if (!cfg.reviews) {
+    root.innerHTML = `<div class="empty">Feedback isn't switched on just yet. Please check back soon.</div>${wa}`;
+    return;
+  }
+  const kinds = { idea: "💡 An idea or suggestion", bug: "🐞 Something's broken", missing: "🎬 A film or series is missing", other: "💬 Something else" };
+  const kind0 = kinds[params.get("kind")] ? params.get("kind") : "idea";
+  const from = (params.get("from") || "").slice(0, 150);
+  const q0 = (params.get("q") || "").slice(0, 100);
+  root.innerHTML = `
+    <form class="cm-form fb-form" id="fb-form" novalidate>
+      <div class="cm-row"><label class="cm-label" for="fb-kind">This is</label>
+        <select id="fb-kind">${Object.entries(kinds).map(([k, v]) => `<option value="${k}"${k === kind0 ? " selected" : ""}>${v}</option>`).join("")}</select></div>
+      <textarea id="fb-msg" maxlength="1000" rows="6" placeholder="${kind0 === "missing" ? "Which film or series, and the language or year if you know it" : "What would you like us to know?"}">${q0 && kind0 === "missing" ? esc(q0) : ""}</textarea>
+      <p class="small muted"><span id="fb-count">0</span>/1000</p>
+      <input id="fb-contact" type="text" maxlength="100" placeholder="Email or name (optional, only if you'd like a reply)" autocomplete="email">
+      <input id="fb-web" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+      <div id="fb-ts"></div>
+      <div class="cm-row"><button class="btn primary" type="submit" id="fb-send">Send feedback</button><span class="small" id="fb-out" role="status"></span></div>
+      <p class="fine">We read these ourselves; they're not shown on the site. Your message is stored with a scrambled version of your IP address (to stop spam). See our <a href="privacy">privacy note</a>.</p>
+    </form>${wa}`;
+  const $ = (id) => root.querySelector(`#${id}`);
+  const msg = $("fb-msg");
+  msg.addEventListener("input", () => ($("fb-count").textContent = msg.value.length));
+  $("fb-count").textContent = msg.value.length;
+  let token = "";
+  let widget;
+  loadTurnstile().then((ts) => { widget = ts.render($("fb-ts"), { sitekey: cfg.sitekey, theme: currentTheme(), callback: (t) => (token = t), "expired-callback": () => (token = "") }); })
+    .catch(() => { $("fb-out").textContent = "Couldn't load the spam check. Please refresh."; });
+  $("fb-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const out = $("fb-out");
+    if (msg.value.trim().length < 5) { out.textContent = "Please write a few words."; return; }
+    if (!token) { out.textContent = "One moment, the spam check is still running…"; return; }
+    $("fb-send").disabled = true;
+    out.textContent = "Sending…";
+    const res = await fetch("/api/feedback", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: $("fb-kind").value, message: msg.value, contact: $("fb-contact").value, page: from, website: $("fb-web").value, token }) })
+      .then(async (r) => ({ ok: r.ok, ...(await r.json().catch(() => ({}))) })).catch(() => ({ ok: false, error: "Network problem. Please try again." }));
+    if (!res.ok) {
+      $("fb-send").disabled = false;
+      if (window.turnstile && widget !== undefined) { window.turnstile.reset(widget); token = ""; }
+      out.textContent = res.error || "Something went wrong. Please try again.";
+      return;
+    }
+    root.innerHTML = `<div class="panel"><h2>Thank you! 🙏</h2><p>We've got your message and we read every one. If you left a way to reach you, we may write back.</p>
+      <p><a class="btn" href="/">Back to the home page</a></p></div>${wa}`;
+  });
+}
 // Signed in at /admin on this device: a small 🛡️ button on every page with the shortcuts (dashboard, write,
 // edit this review, reports, sign out). Nothing is added for visitors.
 function initAdminFab() {
@@ -3719,4 +3777,4 @@ function initAdminFab() {
 renderChrome();
 initAdminFab();
 freshenWatch(); // the saved where-to-watch now; the latest one in the background
-({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming, week: initWeek }[document.body.dataset.page] || (() => {}))();
+({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming, week: initWeek, feedback: initFeedback }[document.body.dataset.page] || (() => {}))();
