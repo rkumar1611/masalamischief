@@ -3,5 +3,6 @@ Allow: /
 Disallow: /admin
 Disallow: /write
 Disallow: /api/
+Disallow: /feedback
 
 Sitemap: https://masalamischief.in/sitemap.xml

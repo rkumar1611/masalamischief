@@ -165,7 +165,7 @@ function renderChrome() {
           <h4>About</h4>
           <a href="privacy">Privacy & community rules</a>
           <a href="privacy#rules">How audience reviews work</a>
-          <a href="feedback?from=${encodeURIComponent(location.pathname + location.search)}">Send feedback</a>
+          <a href="feedback" rel="nofollow" id="feedback-link">Send feedback</a>
         </nav>
       </div>
       <div class="footer-bottom">
@@ -176,6 +176,10 @@ function renderChrome() {
       </div>
     </div></footer>`);
 
+  // Feedback remembers which page it was opened from (see initFeedback).
+  document.getElementById("feedback-link").addEventListener("click", () => {
+    if (page !== "feedback") { try { sessionStorage.setItem("mm-feedback-from", location.pathname + location.search); } catch {} }
+  });
   const btn = document.getElementById("theme-btn");
   const paint = () => (btn.textContent = currentTheme() === "dark" ? "☀️" : "🌙");
   paint();
@@ -3719,7 +3723,10 @@ async function initFeedback() {
   }
   const kinds = { idea: "💡 An idea or suggestion", bug: "🐞 Something's broken", missing: "🎬 A film or series is missing", other: "💬 Something else" };
   const kind0 = kinds[params.get("kind")] ? params.get("kind") : "idea";
-  const from = (params.get("from") || "").slice(0, 150);
+  // The page they came from, remembered when the footer link was clicked (not put in the address: one link per page
+  // would give search engines tens of thousands of feedback addresses to crawl).
+  let from = "";
+  try { from = (sessionStorage.getItem("mm-feedback-from") || "").slice(0, 150); } catch {}
   const q0 = (params.get("q") || "").slice(0, 100);
   root.innerHTML = `
     <form class="cm-form fb-form" id="fb-form" novalidate>
