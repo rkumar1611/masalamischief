@@ -29,6 +29,20 @@ const LANG_LABELS = { English: "Hollywood" };
 
 const MOVIES = [
   {
+    id: "how-to-train-your-dragon", title: "How to Train Your Dragon", year: 2025, lang: "English", audio: ["English", "Hindi", "Telugu", "Tamil"],
+    genres: ["Fantasy", "Family", "Action", "Adventure"], runtime: 125,
+    moods: ["family-time", "casual-watch", "feel-good"], masala: 4, quality: 8.5,
+    tagline: "Sometimes, the creature you're taught to fear becomes your greatest friend.",
+    review: [
+      "The live-action adaptation brings the beloved story to life with stunning visuals, breathtaking flying sequences, and a beautifully recreated world of Vikings and dragons.",
+      "Mason Thames delivers a charming performance as Hiccup, while Toothless steals the show with his adorable expressions and unforgettable personality. ❤️",
+      "The emotional bond between Hiccup and Toothless is the real highlight, making this an entertaining experience for both children and adults."
+    ],
+    hits: ["Stunning dragon visuals, heartwarming friendship, thrilling flying sequences, and beautiful music."],
+    misses: ["The story closely follows the original animated film, leaving fewer surprises for fans who have already watched it."],
+    reviewed: "2026-11-11",
+  },
+  {
     id: "akka", title: "Akka", year: 2026, lang: "Tamil", audio: ["Tamil", "Hindi", "Telugu", "Malayalam", "Kannada"],
     genres: ["Drama", "Crime"], runtime: 0, kind: "tv", seasons: 1,
     moods: ["mind-bender"], masala: 3, quality: 7,
@@ -872,6 +886,7 @@ const MOVIES = [
 // stream = included with a subscription; rent = rent or buy. Re-check every month or so.
 const WATCH_CHECKED = "2026-10-28";
 const WATCH = {
+  "how-to-train-your-dragon": { stream: ["Netflix", "ZEE5"], rent: [] },
   "akka": { stream: ["Netflix"], rent: [] },
   "3-idiots": { stream: [], rent: [] },
   "kumbalangi-nights": { stream: ["Prime Video"], rent: ["Apple TV"] },
@@ -941,6 +956,9 @@ const WATCH = {
 // Direct links to each film's page on the streaming app (from JustWatch India, WATCH_CHECKED).
 // A platform missing here falls back to that app's home page (PLATFORM_HOME).
 const WATCH_LINKS = {
+  "how-to-train-your-dragon": {
+    "Netflix": "https://www.netflix.com/title/83077834",
+  },
   "akka": {
     "Netflix": "https://www.netflix.com/title/81772075",
   },
@@ -1305,6 +1323,7 @@ const NEW_ON_OTT = {
 // Film images from TMDB (themoviedb.org): backdrop = wide still for cards, poster = portrait for the review page.
 // Paths only; the site loads them from image.tmdb.org. Films without an entry keep the coloured tile.
 const IMAGES = {
+  "how-to-train-your-dragon": { tmdb: 1087192, poster: "/53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg", backdrop: "/8J6UlIFcU7eZfq9iCLbgc8Auklg.jpg", match: "How to Train Your Dragon (2025)", imdb: "tt26743210" },
   "akka": { tmdb: "tv243555", poster: "/tdnHaR0vlKMQbjmaCs2V3LDmzSd.jpg", backdrop: "/cVUKFfws4upCB4ytz5uGIONIiRc.jpg", match: "Akka (2026)", imdb: "tt29625288" },
   "3-idiots": { tmdb: 20453, poster: "/66A9MqXOyVFCssoloscw79z8Tew.jpg", backdrop: "/u7kuUaySqXBVAtqEl9vkTkAzHV9.jpg", match: "3 Idiots (2009)", imdb: "tt1187043" },
   "kumbalangi-nights": { tmdb: 575351, poster: "/lJ3RvIirE2C7gdBKvPRaoQ3iCo2.jpg", backdrop: "/8i8ml0LRdFT6LSaTMUG3gLzJfEq.jpg", match: "Kumbalangi Nights (2019)", imdb: "tt8413338" },
