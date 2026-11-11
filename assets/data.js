@@ -1285,20 +1285,20 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-10",
   items: [
+    { title: "Talladega Nights: The Ballad of Ricky Bobby", year: 2006, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70044894", note: "Directed by Adam McKay · IMDb 6.6" },
+    { title: "Keanu", year: 2016, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80085172", note: "Directed by Peter Atencio · IMDb 6.2" },
+    { title: "The Perfect Storm", year: 2021, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/60000884", note: "Directed by Wolfgang Petersen · IMDb 6.5" },
+    { title: "How to Train Your Dragon: The Hidden World", year: 2019, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/81021806", note: "Directed by Dean DeBlois · IMDb 7.4", kids: true },
+    { title: "How to Train Your Dragon 2", year: 2014, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70298991", note: "Directed by Dean DeBlois · IMDb 7.8", kids: true },
+    { title: "Fool's Gold", year: 2008, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70084780", note: "Directed by Andy Tennant · IMDb 5.8" },
+    { title: "Entourage", year: 2015, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80028455", note: "Directed by Doug Ellin · IMDb 6.5" },
+    { title: "How to Train Your Dragon", year: 2010, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70109893", note: "Directed by Dean DeBlois  · IMDb 8.1", kids: true },
     { title: "How the Grinch Stole Christmas", year: 2000, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/60000901", note: "Directed by Ron Howard · IMDb 6.4", kids: true },
     { title: "Marty Supreme", year: 2025, lang: "English", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.7d3a0712-3794-4dd9-a6e3-b2b08315c6dc", note: "Directed by Josh Safdie · IMDb 7.5" },
     { title: "I'm Handsome (since 2009)", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.efb0c8db-bec8-4315-a07a-caf219b71757", note: "IMDb 6.8", kids: true },
     { title: "United Kingdom of Kerala", year: 2025, lang: "Malayalam", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.f657681b-782a-4a93-a342-72738113e4be", note: "Directed by Arun Vaiga · IMDb 5.2", kids: true },
     { title: "All the Pretty Horses", year: 2000, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/60004267", note: "Directed by Billy Bob Thornton · IMDb 5.8" },
     { title: "The Angry Birds Movie", year: 2016, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/80091938", note: "Directed by Fergal Reilly  · IMDb 6.3", kids: true },
-    { title: "Leap Year", year: 2010, lang: "English", app: "JioHotstar", added: "2026-11-08", url: "https://www.hotstar.com/in/movies/leap-year/1271721977", note: "Directed by Anand Tucker · IMDb 6.5" },
-    { title: "Batman: Knightfall - Part 1: Knightfall", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-08", url: "https://www.hotstar.com/in/movies/batman-knightfall-part-1-knightfall/1271721229", note: "Directed by Jeff Wamester · IMDb 7.8" },
-    { title: "The Five-Year Engagement", year: 2012, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/70208103", note: "Directed by Nicholas Stoller · IMDb 6.2" },
-    { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278579", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
-    { title: "Rachel Getting Married", year: 2008, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/70105368", note: "Directed by Jonathan Demme · IMDb 6.6" },
-    { title: "Saaho", year: 2019, lang: "Telugu", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/81157385", note: "Directed by Sujeeth · IMDb 5.2" },
-    { title: "Christmas in Love", year: 2018, lang: "English", app: "Netflix", added: "2026-11-07", url: "https://www.netflix.com/title/81636794", note: "Directed by Don McBrearty · IMDb 6.3", kids: true },
-    { title: "Varshangalkku Shesham", year: 2024, lang: "Malayalam", app: "SonyLIV", added: "2026-11-07", url: "https://www.sonyliv.com/movies/varshangalkku-shesham-1000278568", note: "Directed by Vineeth Sreenivasan · IMDb 6.6" },
   ],
 };
 
