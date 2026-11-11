@@ -5,6 +5,7 @@
 // If anything goes wrong, the plain page is served as before.
 import "../assets/data.js";
 import { SITE, esc, tmdbImg, ldScript, breadcrumbs } from "../lib/seo.js";
+import { thinPerson } from "../lib/thin.js";
 
 const PEOPLE_SHARDS = 64; // the older layout's people/<id % 64>.json
 const LANGS = {
@@ -113,6 +114,8 @@ export async function onRequestGet(context) {
       .on('link[rel="canonical"]', { element(el) { el.setAttribute("href", url); } })
       .on("head", { element(el) { el.append(ldScript(jsonLd), { html: true }); } })
       .on("#person", { element(el) { el.setInnerContent(body, { html: true }); } });
+    // A short list with no biography (lib/thin.js) is kept out of search engines; visitors still get it.
+    if (thinPerson(titles.length, Boolean(bio))) rewriter.on('meta[name="robots"]', setContent("noindex"));
     if (photo) {
       // A portrait photo; the size tags are for the landscape default image, so drop them.
       rewriter

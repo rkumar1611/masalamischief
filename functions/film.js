@@ -7,6 +7,7 @@
 import { SITE, esc, tmdbImg, ldScript, sameAs, people, breadcrumbs, aggregate, castLine, watchActions, filmSearchTitle, filmSearchDesc, quickAnswers } from "../lib/seo.js";
 import { audienceRating } from "../lib/community.js";
 import { overrideApps } from "../lib/fixes.js";
+import { thinTitle } from "../lib/thin.js";
 
 const LANGS = {
   hi: "Hindi", ta: "Tamil", te: "Telugu", ml: "Malayalam", kn: "Kannada", mr: "Marathi", bn: "Bengali", pa: "Punjabi",
@@ -93,6 +94,8 @@ export async function onRequestGet(context) {
       .on('link[rel="canonical"]', { element(el) { el.setAttribute("href", url); } })
       .on("head", { element(el) { el.append(ldScript(jsonLd), { html: true }); } })
       .on("#film", { element(el) { el.setInnerContent(body, { html: true }); } });
+    // A page with nothing to tell a searcher (lib/thin.js) is kept out of search engines; visitors still get it.
+    if (thinTitle(f)) rewriter.on('meta[name="robots"]', setContent("noindex"));
     if (image) {
       rewriter
         .on('meta[property="og:image"]', setContent(image))

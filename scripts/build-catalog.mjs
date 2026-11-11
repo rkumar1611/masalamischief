@@ -21,6 +21,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import { createHash } from "node:crypto";
 import { EXTRA_APPEND, VIDEO_LANGS, extrasOf } from "./tmdb-extras.mjs";
 import { overrideApps } from "../lib/fixes.js";
+import { thinTitle, thinPerson } from "../lib/thin.js";
 
 const OUT = new URL("../assets/catalog/", import.meta.url);
 const DATA = new URL("../assets/data.js", import.meta.url);
@@ -1025,11 +1026,15 @@ function writeSitemaps(all, people) {
   // Our reviewed films have review pages (in main.xml), not film pages.
   const reviewed = new Set(reviewedFilms().keys());
   for (const lang of OUT_LANGS) {
-    const paths = all.filter((f) => f.l === lang && !reviewed.has(f.id)).map((f) => `/film?id=${keyOf(f)}`);
+    // Thin pages (lib/thin.js) carry "noindex" and are left out here, so search engines are only offered pages with something to say.
+    const paths = all.filter((f) => f.l === lang && !reviewed.has(f.id) && !thinTitle(f)).map((f) => `/film?id=${keyOf(f)}`);
     if (paths.length) writeIfChanged(new URL(`${lang}.xml`, dir), xml(paths.slice(0, 50000)));
   }
-  // Actor and director pages, for people with at least 3 titles (fewer makes a thin page).
-  const pids = Object.entries(people).filter(([, p]) => p[2].length >= 3).map(([id]) => id).sort((a, b) => a - b);
+  // Actor and director pages that aren't thin: more than three titles, or a biography (pb/, from earlier runs).
+  const bios = {};
+  const pb = new URL("pb/", OUT);
+  if (existsSync(pb)) for (const f of readdirSync(pb)) { try { Object.assign(bios, JSON.parse(readFileSync(new URL(f, pb), "utf8"))); } catch { /* skip a bad shard */ } }
+  const pids = Object.entries(people).filter(([id, p]) => !thinPerson(p[2].length, Boolean((bios[id] || [])[0]))).map(([id]) => id).sort((a, b) => a - b);
   writeIfChanged(new URL("people.xml", dir), xml(pids.slice(0, 50000).map((id) => `/person?id=${id}`)));
 }
 
