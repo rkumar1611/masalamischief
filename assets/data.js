@@ -1285,6 +1285,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-10",
   items: [
+    { title: "Rock On 2", year: 2016, lang: "Hindi", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80159009", note: "Directed by Shujaat Saudagar · IMDb 4.9" },
     { title: "Talladega Nights: The Ballad of Ricky Bobby", year: 2006, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70044894", note: "Directed by Adam McKay · IMDb 6.6" },
     { title: "Keanu", year: 2016, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80085172", note: "Directed by Peter Atencio · IMDb 6.2" },
     { title: "The Perfect Storm", year: 2021, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/60000884", note: "Directed by Wolfgang Petersen · IMDb 6.5" },
@@ -1298,7 +1299,6 @@ const NEW_ON_OTT = {
     { title: "I'm Handsome (since 2009)", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.efb0c8db-bec8-4315-a07a-caf219b71757", note: "IMDb 6.8", kids: true },
     { title: "United Kingdom of Kerala", year: 2025, lang: "Malayalam", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.f657681b-782a-4a93-a342-72738113e4be", note: "Directed by Arun Vaiga · IMDb 5.2", kids: true },
     { title: "All the Pretty Horses", year: 2000, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/60004267", note: "Directed by Billy Bob Thornton · IMDb 5.8" },
-    { title: "The Angry Birds Movie", year: 2016, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/80091938", note: "Directed by Fergal Reilly  · IMDb 6.3", kids: true },
   ],
 };
 
