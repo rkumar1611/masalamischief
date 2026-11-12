@@ -497,8 +497,21 @@
         "On your list? React 🔥",
       ]);
     }
+    // The strip (NEW_ON_OTT) only holds well-known titles from JustWatch's new page, so on a quiet stretch it stays the same for
+    // days. Films with a confirmed OTT date and app in the last 3 days (upcoming.json `soon`) are added, so the post moves on.
+    let waLanded = [];
+    async function waLoadLanded() {
+      const up = await getJson("/assets/catalog/upcoming.json");
+      const today = new Date().toISOString().slice(0, 10);
+      const from = new Date(Date.parse(today) - 2 * 864e5).toISOString().slice(0, 10);
+      const langName = Object.fromEntries(Object.entries(LANG_CODES).map(([n, c]) => [c, n]));
+      waLanded = ((up && up.soon) || []).filter((f) => f.a && f.d >= from && f.d <= today)
+        .map((f) => ({ title: f.t, year: +(f.rd || f.d).slice(0, 4), lang: langName[f.l] || "", app: f.a, added: f.d, url: "", note: "" }));
+    }
     const waItems = () => {
-      const all = (typeof NEW_ON_OTT === "object" && NEW_ON_OTT.items) || [];
+      const strip = (typeof NEW_ON_OTT === "object" && NEW_ON_OTT.items) || [];
+      const have = new Set(strip.map((n) => normTitle(n.title)));
+      const all = [...strip, ...waLanded.filter((n) => !have.has(normTitle(n.title)))];
       const newest = all.reduce((d, n) => (n.added > d ? n.added : d), "");
       const year = new Date().getFullYear();
       const indian = (n) => !["English", "Korean", "Japanese"].includes(n.lang);
@@ -610,11 +623,12 @@
       try { await navigator.clipboard.writeText($("wa-post").value); return true; } catch {}
       try { $("wa-post").select(); return document.execCommand("copy"); } catch { return false; }
     }
-    (function waInit() {
+    (async function waInit() {
+      await waLoadLanded().catch(() => {});
       const items = waItems();
       const opt = (v, text) => `<option value="${esc(v)}">${esc(text)}</option>`;
       $("wa-pick").innerHTML =
-        (items.length ? `<optgroup label="New on OTT (newest day)">${items.map((n, i) => opt(`n:${i}`, `${n.title} (${n.year}) · ${n.lang} · ${n.app}${ourReview(n.title, n.year) ? " · 🌶️ our review" : ""}`)).join("")}${items.length > 1 ? opt("all", `All of them in one post (${Math.min(items.length, 8)} titles)`) : ""}</optgroup>` : "") +
+        (items.length ? `<optgroup label="New on OTT (newest day: ${esc(items[0].added)})">${items.map((n, i) => opt(`n:${i}`, `${n.title} (${n.year}) · ${n.lang} · ${n.app}${ourReview(n.title, n.year) ? " · 🌶️ our review" : ""}`)).join("")}${items.length > 1 ? opt("all", `All of them in one post (${Math.min(items.length, 8)} titles)`) : ""}</optgroup>` : "") +
         `<optgroup label="Our latest reviews">${waReviews().map((m) => opt(`r:${m.id}`, `${m.title} (${m.year}) · ${m.lang} · 🌶️ ${m.masala}/5`)).join("")}</optgroup>`;
       $("wa-pick").addEventListener("change", waFill);
       $("wa-copy").addEventListener("click", async () => { $("wa-out").textContent = (await waCopy()) ? "Copied." : "Couldn't copy. Select the text and copy it by hand."; });
