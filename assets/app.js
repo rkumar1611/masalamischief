@@ -154,7 +154,7 @@ function renderChrome() {
           <a href="reviews">Our reviews</a><a href="films">Movies & series</a>
           <a href="films?view=top-movie">Top 50 movies</a><a href="films?view=top-tv">Top 50 series</a>
           <a href="films?view=top-anime">Anime</a>
-          <a href="ott-this-week">OTT releases this week</a><a href="ott">New on OTT</a><a href="upcoming?show=now">In theatres</a><a href="upcoming">Upcoming movies</a><a href="best">Best-of lists</a>
+          <a href="ott-this-week">OTT releases this week</a><a href="ott-tracker?l=ta">Tamil OTT tracker</a><a href="ott">New on OTT</a><a href="upcoming?show=now">In theatres</a><a href="upcoming">Upcoming movies</a><a href="best">Best-of lists</a>
         </nav>
         <nav class="footer-col" aria-label="Pick something">
           <h4>Pick something</h4>
@@ -3708,6 +3708,61 @@ async function initWeek() {
   paint();
 }
 
+/* ---------- OTT release date tracker (ott-tracker.html) ----------
+   Per language (ta, te, ml, kn, hi): films in cinemas now with when each reaches OTT (announced date, or our estimate),
+   the confirmed OTT dates, and what just landed. functions/ott-tracker.js writes the same words for search engines. */
+const TRACKED_LANGS = ["ta", "te", "ml", "kn", "hi"];
+async function initTracker() {
+  const root = document.getElementById("tracker");
+  const l = new URLSearchParams(location.search).get("l") || "";
+  const chips = `<nav class="chips app-tabs" aria-label="Languages">${TRACKED_LANGS.map((c) => `<a class="chip" href="ott-tracker?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}</nav>`;
+  if (!TRACKED_LANGS.includes(l)) {
+    root.innerHTML = `<div class="page-head"><h1>📅 OTT release date tracker</h1>
+      <p class="lead">Which new films are in cinemas, when each one reaches OTT, and which app it lands on. Pick a language.</p></div>${chips}`;
+    return;
+  }
+  const lang = langLabel(CAT_LANGS[l]);
+  document.title = `${lang} OTT Release Dates: Movies in Cinemas & When They Come to OTT (${shortDay(new Date().toISOString().slice(0, 10))}) · Masala Mischief`;
+  const today = new Date().toISOString().slice(0, 10);
+  const up = (await loadCatalog("upcoming")) || {};
+  const { fresh } = await weekData();
+  const confirmed = (up.soon || []).filter((f) => f.l === l).sort((a, b) => a.d.localeCompare(b.d));
+  const have = new Set(confirmed.map((f) => `${f.l}-${f.id}`));
+  const cinema = (up.now || []).filter((f) => f.l === l && !have.has(`${f.l}-${f.id}`)).map((f) => {
+    const film = { l, rd: f.d, od: f.od, oa: f.oa };
+    const due = ottDue(film, today);
+    return { ...f, due, text: due ? ottDueText(film, due, today) : "No OTT date yet." };
+  }).sort((a, b) => (b.due ? b.due.sure : 0) - (a.due ? a.due.sure : 0) || b.d.localeCompare(a.d));
+  const landed = fresh.filter((f) => f.l === l);
+  const first = confirmed.find((f) => f.d >= today);
+  const lead = `${first ? `Next confirmed ${lang} OTT release: <strong>${esc(first.t)}</strong>, ${shortDay(first.d)}${first.a ? ` on ${esc(first.a)}` : ""}. ` : ""}${cinema.length ? `${cinema.length} ${lang} film${cinema.length === 1 ? " is" : "s are"} in cinemas now. ` : ""}Dates are the announced ones where known, otherwise our estimate. Updated daily.`;
+  const href = (f) => f.href || (f.pg ? `film?id=${f.l}-${f.id}` : "");
+  const card = (f, status, extra = "") => `
+    <article class="ucard">
+      ${f.p ? `<img src="${tmdb(f.p, "w185")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
+      <div class="ucard-body">
+        <strong>${href(f) ? `<a href="${href(f)}">${esc(f.t)}</a>` : esc(f.t)}</strong>
+        <span class="small">${status}</span>
+        ${extra}
+      </div>
+    </article>`;
+  const bell = (f) => (f.pg ? `<button class="btn small land-bell" type="button" data-key="${f.l}-${f.id}" hidden>🔔 Tell me when it's on OTT</button><span class="small muted land-help"></span>` : "");
+  const section = (title, rows, empty) => `<section><div class="section-head"><h2>${title}</h2></div>${rows.length ? `<div class="ulist">${rows.join("")}</div>` : `<div class="empty">${empty}</div>`}</section>`;
+  root.innerHTML = `
+    <div class="page-head"><h1>📅 ${esc(lang)} OTT release date tracker</h1><p class="lead">${lead}</p></div>
+    ${chips}
+    ${section("🎬 In cinemas now: when do they reach OTT?", cinema.map((f) => card(f, `<span class="muted">In cinemas since ${shortDay(f.d)}</span> · ${esc(f.text)}`, bell(f))), `No ${esc(lang)} films listed in cinemas right now.`)}
+    ${section("✅ Confirmed OTT dates", confirmed.map((f) => card(f, `${f.d >= today ? "On OTT" : "On OTT since"} <strong>${shortDay(f.d)}</strong>${f.a ? ` on ${esc(f.a)}` : ""}`, f.d >= today ? bell(f) : "")), `No confirmed ${esc(lang)} OTT dates yet.`)}
+    ${section("🆕 Landed on OTT recently", landed.map((f) => card(f,`<strong>${esc(f.app)}</strong> · added ${shortDay(f.date)}${f.y ? ` · ${f.y}` : ""}`, "")), `Nothing new in ${esc(lang)} this week yet.`)}
+    <p class="muted small">Looking for every language? <a href="ott-this-week">OTT releases this week</a> · <a href="upcoming?show=now&l=${l}">All ${esc(lang)} films in cinemas</a>.</p>
+    <a class="wa-follow" href="${WHATSAPP_CHANNEL}" target="_blank" rel="noopener">
+      <span class="wa-icon" aria-hidden="true">${WA_LOGO}</span>
+      <span><strong>Get these dates on WhatsApp</strong><span>Follow Masala Mischief for new OTT releases.</span></span>
+      <span class="wa-go">Follow</span>
+    </a>`;
+  root.querySelectorAll(".land-bell").forEach((b) => initLandBell(b.dataset.key, b, b.nextElementSibling));
+}
+
 /* ---------- Feedback page (feedback.html): ideas, bugs and missing titles, kept for us in /admin → Feedback ---------- */
 async function initFeedback() {
   const root = document.getElementById("feedback");
@@ -3796,4 +3851,4 @@ function initAdminFab() {
 renderChrome();
 initAdminFab();
 freshenWatch(); // the saved where-to-watch now; the latest one in the background
-({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming, week: initWeek, feedback: initFeedback }[document.body.dataset.page] || (() => {}))();
+({ home: initHome, reviews: initReviews, review: initReview, suggest: initSuggest, family: initFamily, group: initGroup, films: initFilms, film: initFilm, person: initPerson, ott: initOtt, best: initBest, upcoming: initUpcoming, week: initWeek, tracker: initTracker, feedback: initFeedback }[document.body.dataset.page] || (() => {}))();

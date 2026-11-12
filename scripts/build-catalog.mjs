@@ -1041,7 +1041,7 @@ function writeSitemaps(all, people) {
 // lists.xml: New on <app>, best-of lists and upcoming (after writeUpcoming, which knows the languages).
 function writeListsSitemap(upcoming) {
   const index = JSON.parse(readFileSync(new URL("lists/index.json", OUT), "utf8"));
-  const paths = ["/ott", "/ott-this-week", "/best", ...index.ott.map(([s]) => `/ott?app=${s}`)];
+  const paths = ["/ott", "/ott-this-week", "/ott-tracker", ...["ta", "te", "ml", "kn", "hi"].map((l) => `/ott-tracker?l=${l}`), "/best",...index.ott.map(([s]) => `/ott?app=${s}`)];
   // New OTT releases per language (/ott?l=ml), for every language in the apps' latest lists.
   try {
     const ott = JSON.parse(readFileSync(new URL("lists/ott.json", OUT), "utf8"));
