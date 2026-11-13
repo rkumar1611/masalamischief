@@ -1301,8 +1301,11 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-12",
+  checked: "2026-11-13",
   items: [
+    { title: "Ranabaali", year: 2026, lang: "Telugu", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/81900289", note: "Directed by Rahul Sankrityan · IMDb 7.4" },
+    { title: "Funny People", year: 2009, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70108781", note: "Directed by Judd Apatow · IMDb 6.3" },
+    { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Sun NXT", added: "2026-11-13", url: "https://www.sunnxt.com/movie/detail/283153/happy-journey/", note: "IMDb 9.7", kids: true },
     { title: "The Polar Express", year: 2004, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70011200", note: "Directed by Robert Zemeckis · IMDb 6.6", kids: true },
     { title: "Unfinished Business", year: 2015, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70305900", note: "Directed by Ken Scott · IMDb 5.4" },
     { title: "Fred Claus", year: 2007, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70060012", note: "Directed by David Dobkin · IMDb 5.7", kids: true },
@@ -1314,9 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Talladega Nights: The Ballad of Ricky Bobby", year: 2006, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70044894", note: "Directed by Adam McKay · IMDb 6.6" },
     { title: "Keanu", year: 2016, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80085172", note: "Directed by Peter Atencio · IMDb 6.2" },
     { title: "The Perfect Storm", year: 2021, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/60000884", note: "Directed by Wolfgang Petersen · IMDb 6.5" },
-    { title: "How to Train Your Dragon: The Hidden World", year: 2019, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/81021806", note: "Directed by Dean DeBlois · IMDb 7.4", kids: true },
-    { title: "How to Train Your Dragon 2", year: 2014, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70298991", note: "Directed by Dean DeBlois · IMDb 7.8", kids: true },
-    { title: "Fool's Gold", year: 2008, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70084780", note: "Directed by Andy Tennant · IMDb 5.8" },
   ],
 };
 
