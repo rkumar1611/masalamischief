@@ -1051,12 +1051,21 @@ const newOttItem = (n) => `
       <span class="muted small new-date">Added ${new Date(n.added + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
     </a>`;
 
+// The day's position in a list of n films, walking through it in a shuffled order. The step must share no factor with n:
+// a list of exactly 53 films with a step of 53 would give the same film every day.
+function dayIndex(day, n, base) {
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  let step = base;
+  while (n > 1 && gcd(step, n) !== 1) step++;
+  return (day * step) % n;
+}
+
 function initHome() {
   const byDate = [...MOVIES].sort((a, b) => b.reviewed.localeCompare(a.reviewed));
   // Pick of the day: a reviewed film that's streaming, the same for everyone all day (India time), a different one tomorrow.
   const live = MOVIES.filter((m) => streamsOn(m).length).sort((a, b) => a.id.localeCompare(b.id));
   const today = Math.floor((Date.now() + 5.5 * 36e5) / 864e5);
-  const featured = live.length ? live[(today * 53) % live.length] : byDate[0];
+  const featured = live.length ? live[dayIndex(today, live.length, 53)] : byDate[0];
   renderPickOfDay(featured, today);
 
   document.getElementById("stats").innerHTML = `
@@ -1153,7 +1162,7 @@ async function renderPickOfDay(fallback, day) {
     const seen = new Set();
     const pool = top.apps.flatMap((a) => a.movies).filter((f) => f.w && f.w.length && f.v >= 6.5 && f.n >= 100 && f.r >= 75 && !seen.has(`${f.l}-${f.id}`) && seen.add(`${f.l}-${f.id}`))
       .sort((a, b) => `${a.l}-${a.id}`.localeCompare(`${b.l}-${b.id}`));
-    const f = pool[(day * 53) % pool.length];
+    const f = pool[dayIndex(day, pool.length, 53)];
     const mine = reviewedByTmdb()[f.id];
     show(mine || catToMovie(f, await loadTitle(f.l, f.id)));
   } catch {
@@ -1168,9 +1177,10 @@ function renderTonight(featured) {
   const pool = MOVIES.filter((m) => m.id !== featured.id && streamsOn(m).length).sort((a, b) => a.id.localeCompare(b.id));
   if (!el || !pool.length) { document.getElementById("tonight-section").hidden = true; return; }
   const day = Math.floor((Date.now() + 5.5 * 36e5) / 864e5);
-  const m = pool[(day * 37) % pool.length];
+  const at = dayIndex(day, pool.length, 37);
+  const m = pool[at];
   // Four more for the same day, spread through the list so they're not alike.
-  const more = [...new Set([1, 2, 3, 4, 5, 6].map((k) => pool[(day * 37 + k * 13) % pool.length]))].filter((x) => x !== m).slice(0, 4);
+  const more = [...new Set([1, 2, 3, 4, 5, 6].map((k) => pool[(at + k * 13) % pool.length]))].filter((x) => x !== m).slice(0, 4);
   const mood = moodById(m.moods[0]);
   el.innerHTML = `
     <div class="tonight">
