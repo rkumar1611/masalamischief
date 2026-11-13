@@ -1303,6 +1303,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-13",
   items: [
+    { title: "Jack Reacher", year: 2012, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70243455", note: "Directed by Christopher McQuarrie · IMDb 7" },
+    { title: "Deck the Halls", year: 2006, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70052697", note: "Directed by John Whitesell · IMDb 5.1", kids: true },
     { title: "Ranabaali", year: 2026, lang: "Telugu", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/81900289", note: "Directed by Rahul Sankrityan · IMDb 7.4" },
     { title: "Funny People", year: 2009, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70108781", note: "Directed by Judd Apatow · IMDb 6.3" },
     { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Sun NXT", added: "2026-11-13", url: "https://www.sunnxt.com/movie/detail/283153/happy-journey/", note: "IMDb 9.7", kids: true },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Jackass Presents: Bad Grandpa", year: 2013, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70286879", note: "Directed by Jeff Tremaine · IMDb 6.5" },
     { title: "Rock On 2", year: 2016, lang: "Hindi", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80159009", note: "Directed by Shujaat Saudagar · IMDb 4.9" },
     { title: "Talladega Nights: The Ballad of Ricky Bobby", year: 2006, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70044894", note: "Directed by Adam McKay · IMDb 6.6" },
-    { title: "Keanu", year: 2016, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80085172", note: "Directed by Peter Atencio · IMDb 6.2" },
-    { title: "The Perfect Storm", year: 2021, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/60000884", note: "Directed by Wolfgang Petersen · IMDb 6.5" },
   ],
 };
 
