@@ -1301,8 +1301,15 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-10",
+  checked: "2026-11-12",
   items: [
+    { title: "The Polar Express", year: 2004, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70011200", note: "Directed by Robert Zemeckis · IMDb 6.6", kids: true },
+    { title: "Unfinished Business", year: 2015, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70305900", note: "Directed by Ken Scott · IMDb 5.4" },
+    { title: "Fred Claus", year: 2007, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70060012", note: "Directed by David Dobkin · IMDb 5.7", kids: true },
+    { title: "I Now Pronounce You Chuck & Larry", year: 2007, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70058028", note: "Directed by Dennis Dugan · IMDb 5.9" },
+    { title: "The Dilemma", year: 2011, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70151294", note: "Directed by Ron Howard · IMDb 5.3" },
+    { title: "Jackass 3.5", year: 2011, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70181592", note: "Directed by Jeff Tremaine · IMDb 6.6" },
+    { title: "Jackass Presents: Bad Grandpa", year: 2013, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70286879", note: "Directed by Jeff Tremaine · IMDb 6.5" },
     { title: "Rock On 2", year: 2016, lang: "Hindi", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80159009", note: "Directed by Shujaat Saudagar · IMDb 4.9" },
     { title: "Talladega Nights: The Ballad of Ricky Bobby", year: 2006, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70044894", note: "Directed by Adam McKay · IMDb 6.6" },
     { title: "Keanu", year: 2016, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80085172", note: "Directed by Peter Atencio · IMDb 6.2" },
@@ -1310,13 +1317,6 @@ const NEW_ON_OTT = {
     { title: "How to Train Your Dragon: The Hidden World", year: 2019, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/81021806", note: "Directed by Dean DeBlois · IMDb 7.4", kids: true },
     { title: "How to Train Your Dragon 2", year: 2014, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70298991", note: "Directed by Dean DeBlois · IMDb 7.8", kids: true },
     { title: "Fool's Gold", year: 2008, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70084780", note: "Directed by Andy Tennant · IMDb 5.8" },
-    { title: "Entourage", year: 2015, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80028455", note: "Directed by Doug Ellin · IMDb 6.5" },
-    { title: "How to Train Your Dragon", year: 2010, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70109893", note: "Directed by Dean DeBlois  · IMDb 8.1", kids: true },
-    { title: "How the Grinch Stole Christmas", year: 2000, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/60000901", note: "Directed by Ron Howard · IMDb 6.4", kids: true },
-    { title: "Marty Supreme", year: 2025, lang: "English", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.7d3a0712-3794-4dd9-a6e3-b2b08315c6dc", note: "Directed by Josh Safdie · IMDb 7.5" },
-    { title: "I'm Handsome (since 2009)", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.efb0c8db-bec8-4315-a07a-caf219b71757", note: "IMDb 6.8", kids: true },
-    { title: "United Kingdom of Kerala", year: 2025, lang: "Malayalam", app: "Prime Video", added: "2026-11-10", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.f657681b-782a-4a93-a342-72738113e4be", note: "Directed by Arun Vaiga · IMDb 5.2", kids: true },
-    { title: "All the Pretty Horses", year: 2000, lang: "English", app: "Netflix", added: "2026-11-08", url: "https://www.netflix.com/title/60004267", note: "Directed by Billy Bob Thornton · IMDb 5.8" },
   ],
 };
 
