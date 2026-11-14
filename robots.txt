@@ -1,3 +1,12 @@
+# SEO and backlink crawlers send tens of thousands of requests a day and bring no visitors.
+User-agent: SERankingBacklinksBot
+User-agent: AhrefsBot
+User-agent: SemrushBot
+User-agent: MJ12bot
+User-agent: DotBot
+User-agent: BLEXBot
+Disallow: /
+
 User-agent: *
 Allow: /
 Disallow: /admin
