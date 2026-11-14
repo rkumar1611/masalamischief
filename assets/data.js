@@ -1301,8 +1301,11 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-13",
+  checked: "2026-11-14",
   items: [
+    { title: "A Charlie Brown Thanksgiving", year: 1973, lang: "English", app: "Prime Video", added: "2026-11-14", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.548d5733-5585-49dc-88a5-38931edcc402", note: "Directed by Bill Melendez  · IMDb 7.7", kids: true },
+    { title: "A League of Their Own", year: 1992, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/691124", note: "Directed by Penny Marshall · IMDb 7.4" },
+    { title: "Jack Reacher: Never Go Back", year: 2016, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/80106762", note: "Directed by Edward Zwick · IMDb 6.2" },
     { title: "Jack Reacher", year: 2012, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70243455", note: "Directed by Christopher McQuarrie · IMDb 7" },
     { title: "Deck the Halls", year: 2006, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70052697", note: "Directed by John Whitesell · IMDb 5.1", kids: true },
     { title: "Ranabaali", year: 2026, lang: "Telugu", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/81900289", note: "Directed by Rahul Sankrityan · IMDb 7.4" },
@@ -1314,9 +1317,6 @@ const NEW_ON_OTT = {
     { title: "I Now Pronounce You Chuck & Larry", year: 2007, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70058028", note: "Directed by Dennis Dugan · IMDb 5.9" },
     { title: "The Dilemma", year: 2011, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70151294", note: "Directed by Ron Howard · IMDb 5.3" },
     { title: "Jackass 3.5", year: 2011, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70181592", note: "Directed by Jeff Tremaine · IMDb 6.6" },
-    { title: "Jackass Presents: Bad Grandpa", year: 2013, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70286879", note: "Directed by Jeff Tremaine · IMDb 6.5" },
-    { title: "Rock On 2", year: 2016, lang: "Hindi", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/80159009", note: "Directed by Shujaat Saudagar · IMDb 4.9" },
-    { title: "Talladega Nights: The Ballad of Ricky Bobby", year: 2006, lang: "English", app: "Netflix", added: "2026-11-10", url: "https://www.netflix.com/title/70044894", note: "Directed by Adam McKay · IMDb 6.6" },
   ],
 };
 
