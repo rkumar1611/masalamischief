@@ -5,8 +5,11 @@ import { json } from "../../lib/community.js";
 import { accountsOn } from "../../lib/account.js";
 
 export function onRequestGet({ env }) {
-  return json({
+  const res = json({
     reviews: Boolean(env.DB && env.TURNSTILE_SECRET && env.TURNSTILE_SITEKEY), sitekey: env.TURNSTILE_SITEKEY || "",
     accounts: accountsOn(env), googleClientId: accountsOn(env) ? env.GOOGLE_CLIENT_ID : "",
   });
+  // Public and almost never changes, yet every film page asked for it: keep it an hour in the browser and at Cloudflare.
+  res.headers.set("cache-control", "public, max-age=3600, s-maxage=3600");
+  return res;
 }

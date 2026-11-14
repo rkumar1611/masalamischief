@@ -20,7 +20,11 @@ export async function onRequestGet({ request, env }) {
   const { results } = await env.DB.prepare(
     "SELECT id, name, masala, score, body, created, staff FROM reviews WHERE title = ? AND approved = 1 AND hidden = 0 ORDER BY staff DESC, created DESC LIMIT 30"
   ).bind(t).all();
-  return json({ summary, reviews: results });
+  // Kept for a couple of minutes at Cloudflare, so a busy film page (or a crawler) doesn't run this and two D1 reads every time.
+  // A visitor's own new or moderated review is shown at once: the page adds a fresh `_=` to its request then (see assets/app.js).
+  const res = json({ summary, reviews: results });
+  res.headers.set("cache-control", "public, max-age=0, s-maxage=120");
+  return res;
 }
 
 export async function onRequestPost({ request, env }) {
