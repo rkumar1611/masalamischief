@@ -1303,6 +1303,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-15",
   items: [
+    { title: "The Grinch", year: 2018, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80996790", note: "Directed by Yarrow Cheney  · IMDb 6.4", kids: true },
     { title: "War Dogs", year: 2016, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80080359", note: "Directed by Todd Phillips · IMDb 7.1" },
     { title: "Superbad", year: 2007, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/70058023", note: "Directed by Greg Mottola · IMDb 7.6" },
     { title: "The Kingdom", year: 2007, lang: "English", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/the-kingdom/1271723065", note: "Directed by Peter Berg · IMDb 7" },
@@ -1316,7 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Ranabaali", year: 2026, lang: "Telugu", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/81900289", note: "Directed by Rahul Sankrityan · IMDb 7.4" },
     { title: "Funny People", year: 2009, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70108781", note: "Directed by Judd Apatow · IMDb 6.3" },
     { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Sun NXT", added: "2026-11-13", url: "https://www.sunnxt.com/movie/detail/283153/happy-journey/", note: "IMDb 9.7", kids: true },
-    { title: "The Polar Express", year: 2004, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70011200", note: "Directed by Robert Zemeckis · IMDb 6.6", kids: true },
   ],
 };
 
