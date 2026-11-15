@@ -1301,8 +1301,10 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-14",
+  checked: "2026-11-15",
   items: [
+    { title: "War Dogs", year: 2016, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80080359", note: "Directed by Todd Phillips · IMDb 7.1" },
+    { title: "Superbad", year: 2007, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/70058023", note: "Directed by Greg Mottola · IMDb 7.6" },
     { title: "The Kingdom", year: 2007, lang: "English", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/the-kingdom/1271723065", note: "Directed by Peter Berg · IMDb 7" },
     { title: "Krrish", year: 2006, lang: "Hindi", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/krrish/1271723686", note: "Directed by Rakesh Roshan · IMDb 6.5" },
     { title: "Ma", year: 2019, lang: "English", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/ma/1271723061", note: "Directed by Tate Taylor · IMDb 5.6" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Funny People", year: 2009, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70108781", note: "Directed by Judd Apatow · IMDb 6.3" },
     { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Sun NXT", added: "2026-11-13", url: "https://www.sunnxt.com/movie/detail/283153/happy-journey/", note: "IMDb 9.7", kids: true },
     { title: "The Polar Express", year: 2004, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70011200", note: "Directed by Robert Zemeckis · IMDb 6.6", kids: true },
-    { title: "Unfinished Business", year: 2015, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70305900", note: "Directed by Ken Scott · IMDb 5.4" },
-    { title: "Fred Claus", year: 2007, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70060012", note: "Directed by David Dobkin · IMDb 5.7", kids: true },
   ],
 };
 
