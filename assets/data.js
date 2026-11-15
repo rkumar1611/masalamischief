@@ -1303,6 +1303,9 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-14",
   items: [
+    { title: "The Kingdom", year: 2007, lang: "English", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/the-kingdom/1271723065", note: "Directed by Peter Berg · IMDb 7" },
+    { title: "Krrish", year: 2006, lang: "Hindi", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/krrish/1271723686", note: "Directed by Rakesh Roshan · IMDb 6.5" },
+    { title: "Ma", year: 2019, lang: "English", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/ma/1271723061", note: "Directed by Tate Taylor · IMDb 5.6" },
     { title: "A Charlie Brown Thanksgiving", year: 1973, lang: "English", app: "Prime Video", added: "2026-11-14", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.548d5733-5585-49dc-88a5-38931edcc402", note: "Directed by Bill Melendez  · IMDb 7.7", kids: true },
     { title: "A League of Their Own", year: 1992, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/691124", note: "Directed by Penny Marshall · IMDb 7.4" },
     { title: "Jack Reacher: Never Go Back", year: 2016, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/80106762", note: "Directed by Edward Zwick · IMDb 6.2" },
@@ -1314,9 +1317,6 @@ const NEW_ON_OTT = {
     { title: "The Polar Express", year: 2004, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70011200", note: "Directed by Robert Zemeckis · IMDb 6.6", kids: true },
     { title: "Unfinished Business", year: 2015, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70305900", note: "Directed by Ken Scott · IMDb 5.4" },
     { title: "Fred Claus", year: 2007, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70060012", note: "Directed by David Dobkin · IMDb 5.7", kids: true },
-    { title: "I Now Pronounce You Chuck & Larry", year: 2007, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70058028", note: "Directed by Dennis Dugan · IMDb 5.9" },
-    { title: "The Dilemma", year: 2011, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70151294", note: "Directed by Ron Howard · IMDb 5.3" },
-    { title: "Jackass 3.5", year: 2011, lang: "English", app: "Netflix", added: "2026-11-12", url: "https://www.netflix.com/title/70181592", note: "Directed by Jeff Tremaine · IMDb 6.6" },
   ],
 };
 
