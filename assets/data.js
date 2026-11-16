@@ -1303,6 +1303,12 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-15",
   items: [
+    { title: "Oh..! Sukumari", year: 2026, lang: "Telugu", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/oh-sukumari/1271723822", note: "IMDb 4.7" },
+    { title: "Madaari", year: 2016, lang: "Hindi", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/madaari/1271723536", note: "Directed by Nishikant Kamat · IMDb 7.6" },
+    { title: "Don't Be Afraid of the Dark", year: 2010, lang: "English", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/dont-be-afraid-of-the-dark/1271723825", note: "Directed by Troy Nixey · IMDb 5.5" },
+    { title: "Rumble", year: 2021, lang: "English", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/rumble/1271723441", note: "IMDb 6", kids: true },
+    { title: "Daddy's Home 2", year: 2017, lang: "English", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/daddys-home-2/1271723808", note: "Directed by Sean Anders · IMDb 6" },
+    { title: "Krrish 3", year: 2013, lang: "Hindi", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/krrish-3/1271723826", note: "Directed by Rakesh Roshan · IMDb 5.4" },
     { title: "The Grinch", year: 2018, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80996790", note: "Directed by Yarrow Cheney  · IMDb 6.4", kids: true },
     { title: "War Dogs", year: 2016, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80080359", note: "Directed by Todd Phillips · IMDb 7.1" },
     { title: "Superbad", year: 2007, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/70058023", note: "Directed by Greg Mottola · IMDb 7.6" },
@@ -1311,12 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Ma", year: 2019, lang: "English", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/ma/1271723061", note: "Directed by Tate Taylor · IMDb 5.6" },
     { title: "A Charlie Brown Thanksgiving", year: 1973, lang: "English", app: "Prime Video", added: "2026-11-14", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.548d5733-5585-49dc-88a5-38931edcc402", note: "Directed by Bill Melendez  · IMDb 7.7", kids: true },
     { title: "A League of Their Own", year: 1992, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/691124", note: "Directed by Penny Marshall · IMDb 7.4" },
-    { title: "Jack Reacher: Never Go Back", year: 2016, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/80106762", note: "Directed by Edward Zwick · IMDb 6.2" },
-    { title: "Jack Reacher", year: 2012, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70243455", note: "Directed by Christopher McQuarrie · IMDb 7" },
-    { title: "Deck the Halls", year: 2006, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70052697", note: "Directed by John Whitesell · IMDb 5.1", kids: true },
-    { title: "Ranabaali", year: 2026, lang: "Telugu", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/81900289", note: "Directed by Rahul Sankrityan · IMDb 7.4" },
-    { title: "Funny People", year: 2009, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/70108781", note: "Directed by Judd Apatow · IMDb 6.3" },
-    { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Sun NXT", added: "2026-11-13", url: "https://www.sunnxt.com/movie/detail/283153/happy-journey/", note: "IMDb 9.7", kids: true },
   ],
 };
 
