@@ -1313,10 +1313,10 @@ const NEW_ON_OTT = {
     { title: "Argo", year: 2012, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.00a9f660-e23a-1b17-0590-29fd373cce56", note: "Directed by Ben Affleck · IMDb 7.7" },
     { title: "The Flash", year: 2023, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.bb96b290-739b-4c0f-8823-22dfa1052036", note: "Directed by Andy Muschietti · IMDb 6.6" },
     { title: "Journey 2: The Mysterious Island", year: 2012, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.eda713db-2666-4916-8c3c-9aac820c6434", note: "Directed by Brad Peyton · IMDb 5.7", kids: true },
+    { title: "Superbad", year: 2007, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/70058023", note: "Directed by Greg Mottola · IMDb 7.6" },
+    { title: "War Dogs", year: 2016, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80080359", note: "Directed by Todd Phillips · IMDb 7.1" },
+    { title: "The Grinch", year: 2018, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80996790", note: "Directed by Yarrow Cheney  · IMDb 6.4", kids: true },
     { title: "Oh..! Sukumari", year: 2026, lang: "Telugu", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/oh-sukumari/1271723822", note: "IMDb 4.7" },
-    { title: "Madaari", year: 2016, lang: "Hindi", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/madaari/1271723536", note: "Directed by Nishikant Kamat · IMDb 7.6" },
-    { title: "Don't Be Afraid of the Dark", year: 2010, lang: "English", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/dont-be-afraid-of-the-dark/1271723825", note: "Directed by Troy Nixey · IMDb 5.5" },
-    { title: "Rumble", year: 2021, lang: "English", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/rumble/1271723441", note: "IMDb 6", kids: true },
   ],
 };
 
