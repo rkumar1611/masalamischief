@@ -1301,22 +1301,22 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-15",
+  checked: "2026-11-16",
   items: [
+    { title: "Dune", year: 2021, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.a8025548-3908-4562-8896-8fffd945cfb6", note: "Directed by Denis Villeneuve · IMDb 8" },
+    { title: "The Departed", year: 2006, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.8befa417-816c-4303-9895-4120a1bb9e7a", note: "Directed by Martin Scorsese · IMDb 8.5" },
+    { title: "Edge of Tomorrow", year: 2014, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.9cba5c02-910e-368c-0c9b-8505ea0c7b09", note: "Directed by Doug Liman · IMDb 7.9" },
+    { title: "Troy", year: 2004, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.88a9f6e5-33ec-9d9f-2189-9c53d13abe19", note: "Directed by Wolfgang Petersen · IMDb 7.3" },
+    { title: "Valentine's Day", year: 2010, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.b0a9f779-e203-4973-eb42-c4fe0b0a5a4e", note: "Directed by Garry Marshall · IMDb 5.8" },
+    { title: "Rampage", year: 2018, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.14b79d85-303c-4759-5b14-8ea96535c6d2", note: "Directed by Brad Peyton · IMDb 6.1" },
+    { title: "Barbie", year: 2023, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.17f2bd91-afd8-4ae8-8dbc-9c49066e771c", note: "Directed by Greta Gerwig · IMDb 6.8" },
+    { title: "Argo", year: 2012, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.00a9f660-e23a-1b17-0590-29fd373cce56", note: "Directed by Ben Affleck · IMDb 7.7" },
+    { title: "The Flash", year: 2023, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.bb96b290-739b-4c0f-8823-22dfa1052036", note: "Directed by Andy Muschietti · IMDb 6.6" },
+    { title: "Journey 2: The Mysterious Island", year: 2012, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.eda713db-2666-4916-8c3c-9aac820c6434", note: "Directed by Brad Peyton · IMDb 5.7", kids: true },
     { title: "Oh..! Sukumari", year: 2026, lang: "Telugu", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/oh-sukumari/1271723822", note: "IMDb 4.7" },
     { title: "Madaari", year: 2016, lang: "Hindi", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/madaari/1271723536", note: "Directed by Nishikant Kamat · IMDb 7.6" },
     { title: "Don't Be Afraid of the Dark", year: 2010, lang: "English", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/dont-be-afraid-of-the-dark/1271723825", note: "Directed by Troy Nixey · IMDb 5.5" },
     { title: "Rumble", year: 2021, lang: "English", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/rumble/1271723441", note: "IMDb 6", kids: true },
-    { title: "Daddy's Home 2", year: 2017, lang: "English", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/daddys-home-2/1271723808", note: "Directed by Sean Anders · IMDb 6" },
-    { title: "Krrish 3", year: 2013, lang: "Hindi", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/krrish-3/1271723826", note: "Directed by Rakesh Roshan · IMDb 5.4" },
-    { title: "The Grinch", year: 2018, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80996790", note: "Directed by Yarrow Cheney  · IMDb 6.4", kids: true },
-    { title: "War Dogs", year: 2016, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80080359", note: "Directed by Todd Phillips · IMDb 7.1" },
-    { title: "Superbad", year: 2007, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/70058023", note: "Directed by Greg Mottola · IMDb 7.6" },
-    { title: "The Kingdom", year: 2007, lang: "English", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/the-kingdom/1271723065", note: "Directed by Peter Berg · IMDb 7" },
-    { title: "Krrish", year: 2006, lang: "Hindi", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/krrish/1271723686", note: "Directed by Rakesh Roshan · IMDb 6.5" },
-    { title: "Ma", year: 2019, lang: "English", app: "JioHotstar", added: "2026-11-14", url: "https://www.hotstar.com/in/movies/ma/1271723061", note: "Directed by Tate Taylor · IMDb 5.6" },
-    { title: "A Charlie Brown Thanksgiving", year: 1973, lang: "English", app: "Prime Video", added: "2026-11-14", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.548d5733-5585-49dc-88a5-38931edcc402", note: "Directed by Bill Melendez  · IMDb 7.7", kids: true },
-    { title: "A League of Their Own", year: 1992, lang: "English", app: "Netflix", added: "2026-11-13", url: "https://www.netflix.com/title/691124", note: "Directed by Penny Marshall · IMDb 7.4" },
   ],
 };
 
