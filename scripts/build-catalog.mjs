@@ -1067,6 +1067,28 @@ function writeListsSitemap(upcoming) {
   writeIfChanged(new URL("sitemaps/lists.xml", OUT), xml(paths));
 }
 
+// ott-changes.json: OTT dates that moved, or an app that was just confirmed, compared with the previous upcoming.json
+// (`soon`), kept CHANGE_DAYS days for the "Changed today" strip. Only films already in the old list are compared, so a
+// film sliding into the 30-day window is not reported as news.
+const CHANGE_DAYS = 7;
+function writeOttChanges(soon) {
+  const file = new URL("ott-changes.json", OUT);
+  const old = existsSync(file) ? JSON.parse(readFileSync(file, "utf8")).items || [] : [];
+  const prevFile = new URL("upcoming.json", OUT);
+  const prev = new Map();
+  if (existsSync(prevFile)) for (const s of JSON.parse(readFileSync(prevFile, "utf8")).soon || []) prev.set(`${s.l}-${s.id}`, s);
+  const found = [];
+  for (const s of soon) {
+    const was = prev.get(`${s.l}-${s.id}`);
+    if (!was) continue;
+    if (was.d !== s.d) found.push({ l: s.l, id: s.id, t: s.t, from: was.d, d: s.d, ...(s.a ? { a: s.a } : {}), f: day(0), why: "date" });
+    else if (s.a && !was.a) found.push({ l: s.l, id: s.id, t: s.t, d: s.d, a: s.a, f: day(0), why: "app" });
+  }
+  const keep = old.filter((x) => x.f >= day(-CHANGE_DAYS) && !found.some((n) => n.l === x.l && n.id === x.id));
+  writeIfChanged(file, JSON.stringify({ items: [...found, ...keep].slice(0, 40) }));
+  if (found.length) console.log(`OTT changes today: ${found.length}.`);
+}
+
 // upcoming.json: the most-awaited films releasing in the next UPCOMING_DAYS days, per language, with
 // trailer and lead cast, for the Upcoming releases page, plus the films in cinemas now (`now`).
 // Rebuilt on every run (daily and Sunday). Films with their own page in the catalogue (`all`) get pg: 1
@@ -1107,6 +1129,7 @@ async function writeUpcoming(all) {
       ov: shorten(d.overview, 200), ...(f.tr ? { tr: f.tr } : {}), cast: (f.cast || []).slice(0, 3).map((c) => [c[0], c[1]]) };
   });
   films.sort((a, b) => a.d.localeCompare(b.d) || a.t.localeCompare(b.t));
+  writeOttChanges(soon);
   writeIfChanged(new URL("upcoming.json", OUT), JSON.stringify({ items: films, now, soon }));
   writeListsSitemap(films);
   console.log(`Upcoming: ${films.length} films; in theatres: ${now.length}; OTT dates in the next ${SOON_DAYS} days: ${soon.length}.`);

@@ -3637,6 +3637,7 @@ async function initWeek() {
   const root = document.getElementById("week");
   const l = new URLSearchParams(location.search).get("l") || "";
   const { fresh, soon, share, checked } = await weekData();
+  const changed = await changedStrip(l);
   const langName = CAT_LANGS[l] ? langLabel(CAT_LANGS[l]) : "";
   const pick = (list) => list.filter((f) => !l || f.l === l);
   const newList = pick(fresh), soonList = pick(soon), shareSoon = pick(share);
@@ -3663,6 +3664,7 @@ async function initWeek() {
       <a class="chip" href="ott-this-week" aria-pressed="${!l}">All</a>
       ${langs.map((c) => `<a class="chip" href="ott-this-week?l=${c}" aria-pressed="${c === l}">${esc(langLabel(CAT_LANGS[c]))}</a>`).join("")}
     </nav>
+    ${changed}
     <section><div class="section-head"><h2>🆕 New on OTT this week</h2><button class="btn small alert-btn" type="button" hidden>🔔 Weekly OTT alerts</button></div>
       ${newList.length ? `<div class="ulist">${newList.map((f) => card(f, "new")).join("")}</div>` : `<div class="empty">Nothing new ${langName ? `in ${esc(langName)} ` : ""}this week yet. <a href="ott-this-week">See all languages</a>.</div>`}
     </section>
@@ -3722,6 +3724,18 @@ async function initWeek() {
    Per language (ta, te, ml, kn, hi): films in cinemas now with when each reaches OTT (announced date, or our estimate),
    the confirmed OTT dates, and what just landed. functions/ott-tracker.js writes the same words for search engines. */
 const TRACKED_LANGS = ["ta", "te", "ml", "kn", "hi"];
+// "Changed lately": OTT dates that moved and apps just confirmed in the last days (assets/catalog/ott-changes.json,
+// written by scripts/build-catalog.mjs). Empty string when nothing changed, so a quiet week shows no strip.
+async function changedStrip(lang) {
+  const items = ((await loadCatalog("ott-changes")) || {}).items || [];
+  const cut = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const rows = items.filter((x) => (!lang || x.l === lang) && x.f >= cut).slice(0, 8).map((x) => {
+    const what = x.why === "date" ? `OTT date moved ${shortDay(x.from)} → <strong>${shortDay(x.d)}</strong>${x.a ? ` on ${esc(x.a)}` : ""}` : `Confirmed for <strong>${shortDay(x.d)}</strong> on ${esc(x.a)}`;
+    const name = `<a href="film?id=${x.l}-${x.id}">${esc(x.t)}</a>`;
+    return `<li><strong>${name}</strong> <span class="muted small">${esc(langLabel(CAT_LANGS[x.l] || ""))}</span><br><span class="small">${what}</span> <span class="muted small">· ${shortDay(x.f)}</span></li>`;
+  });
+  return rows.length ? `<section><div class="section-head"><h2>🔄 Changed this week</h2></div><ul class="changed-list">${rows.join("")}</ul></section>` : "";
+}
 async function initTracker() {
   const root = document.getElementById("tracker");
   const l = new URLSearchParams(location.search).get("l") || "";
@@ -3744,6 +3758,7 @@ async function initTracker() {
     return { ...f, due, text: due ? ottDueText(film, due, today) : "No OTT date yet." };
   }).sort((a, b) => (b.due ? b.due.sure : 0) - (a.due ? a.due.sure : 0) || b.d.localeCompare(a.d));
   const landed = fresh.filter((f) => f.l === l);
+  const changed = await changedStrip(l);
   const first = confirmed.find((f) => f.d >= today);
   const lead = `${first ? `Next confirmed ${lang} OTT release: <strong>${esc(first.t)}</strong>, ${shortDay(first.d)}${first.a ? ` on ${esc(first.a)}` : ""}. ` : ""}${cinema.length ? `${cinema.length} ${lang} film${cinema.length === 1 ? " is" : "s are"} in cinemas now. ` : ""}Dates are the announced ones where known, otherwise our estimate. Updated daily.`;
   const href = (f) => f.href || (f.pg ? `film?id=${f.l}-${f.id}` : "");
@@ -3761,6 +3776,7 @@ async function initTracker() {
   root.innerHTML = `
     <div class="page-head"><h1>📅 ${esc(lang)} OTT release date tracker</h1><p class="lead">${lead}</p></div>
     ${chips}
+    ${changed}
     ${section("🎬 In cinemas now: when do they reach OTT?", cinema.map((f) => card(f, `<span class="muted">In cinemas since ${shortDay(f.d)}</span> · ${esc(f.text)}`, bell(f))), `No ${esc(lang)} films listed in cinemas right now.`)}
     ${section("✅ Confirmed OTT dates", confirmed.map((f) => card(f, `${f.d >= today ? "On OTT" : "On OTT since"} <strong>${shortDay(f.d)}</strong>${f.a ? ` on ${esc(f.a)}` : ""}`, f.d >= today ? bell(f) : "")), `No confirmed ${esc(lang)} OTT dates yet.`)}
     ${section("🆕 Landed on OTT recently", landed.map((f) => card(f,`<strong>${esc(f.app)}</strong> · added ${shortDay(f.date)}${f.y ? ` · ${f.y}` : ""}`, "")), `Nothing new in ${esc(lang)} this week yet.`)}
