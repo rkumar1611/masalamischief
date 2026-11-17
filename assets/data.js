@@ -1303,6 +1303,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-16",
   items: [
+    { title: "Friends with Benefits", year: 2011, lang: "English", app: "Netflix", added: "2026-11-16", url: "https://www.netflix.com/title/70167075", note: "Directed by Will Gluck · IMDb 6.5" },
+    { title: "The Good Liar", year: 2019, lang: "English", app: "Netflix", added: "2026-11-16", url: "https://www.netflix.com/title/80240371", note: "Directed by Bill Condon · IMDb 6.7" },
     { title: "Dune", year: 2021, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.a8025548-3908-4562-8896-8fffd945cfb6", note: "Directed by Denis Villeneuve · IMDb 8" },
     { title: "The Departed", year: 2006, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.8befa417-816c-4303-9895-4120a1bb9e7a", note: "Directed by Martin Scorsese · IMDb 8.5" },
     { title: "Edge of Tomorrow", year: 2014, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.9cba5c02-910e-368c-0c9b-8505ea0c7b09", note: "Directed by Doug Liman · IMDb 7.9" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Journey 2: The Mysterious Island", year: 2012, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.eda713db-2666-4916-8c3c-9aac820c6434", note: "Directed by Brad Peyton · IMDb 5.7", kids: true },
     { title: "Superbad", year: 2007, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/70058023", note: "Directed by Greg Mottola · IMDb 7.6" },
     { title: "War Dogs", year: 2016, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80080359", note: "Directed by Todd Phillips · IMDb 7.1" },
-    { title: "The Grinch", year: 2018, lang: "English", app: "Netflix", added: "2026-11-15", url: "https://www.netflix.com/title/80996790", note: "Directed by Yarrow Cheney  · IMDb 6.4", kids: true },
-    { title: "Oh..! Sukumari", year: 2026, lang: "Telugu", app: "JioHotstar", added: "2026-11-15", url: "https://www.hotstar.com/in/movies/oh-sukumari/1271723822", note: "IMDb 4.7" },
   ],
 };
 
