@@ -1301,8 +1301,15 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-17",
+  checked: "2026-11-18",
   items: [
+    { title: "The Dangerous Lives of Altar Boys", year: 2002, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.3b882e95-e69c-471a-bb0d-6a7ebe37ceab", note: "Directed by Peter Care · IMDb 6.9" },
+    { title: "The Big Easy", year: 1986, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.0ab942ff-70ab-dbf3-7f3b-3dba4fb4cc12", note: "Directed by Jim McBride · IMDb 6.5" },
+    { title: "Book of Shadows: Blair Witch 2", year: 2000, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.1640ab18-8cb7-46f4-9b56-732f6281a27a", note: "Directed by Joe Berlinger · IMDb 4.1" },
+    { title: "Eyes Wide Shut", year: 1999, lang: "English", app: "Netflix", added: "2026-11-17", url: "https://www.netflix.com/title/5670434", note: "Directed by Stanley Kubrick · IMDb 7.5" },
+    { title: "It's Complicated", year: 2009, lang: "English", app: "Netflix", added: "2026-11-17", url: "https://www.netflix.com/title/70124574", note: "Directed by Nancy Meyers · IMDb 6.6" },
+    { title: "Life As We Know It", year: 2010, lang: "English", app: "Netflix", added: "2026-11-17", url: "https://www.netflix.com/title/70131764", note: "Directed by Greg Berlanti · IMDb 6.5" },
+    { title: "Something New", year: 2006, lang: "English", app: "Netflix", added: "2026-11-17", url: "https://www.netflix.com/title/70044327", note: "Directed by Sanaa Hamri · IMDb 6.6" },
     { title: "Refusal", year: 2013, app: "JioHotstar", added: "2026-11-17", url: "https://www.hotstar.com/in/movies/inkaar/1271724016", note: "Directed by Sudhir Mishra · IMDb 6.1" },
     { title: "Gadar: Ek Prem Katha", year: 2001, lang: "Hindi", app: "JioHotstar", added: "2026-11-17", url: "https://www.hotstar.com/in/movies/gadar-ek-prem-katha/1271724222", note: "Directed by Anil Sharma · IMDb 7.3" },
     { title: "Friends with Benefits", year: 2011, lang: "English", app: "Netflix", added: "2026-11-16", url: "https://www.netflix.com/title/70167075", note: "Directed by Will Gluck · IMDb 6.5" },
@@ -1310,13 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Dune", year: 2021, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.a8025548-3908-4562-8896-8fffd945cfb6", note: "Directed by Denis Villeneuve · IMDb 8" },
     { title: "The Departed", year: 2006, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.8befa417-816c-4303-9895-4120a1bb9e7a", note: "Directed by Martin Scorsese · IMDb 8.5" },
     { title: "Edge of Tomorrow", year: 2014, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.9cba5c02-910e-368c-0c9b-8505ea0c7b09", note: "Directed by Doug Liman · IMDb 7.9" },
-    { title: "Troy", year: 2004, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.88a9f6e5-33ec-9d9f-2189-9c53d13abe19", note: "Directed by Wolfgang Petersen · IMDb 7.3" },
-    { title: "Valentine's Day", year: 2010, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.b0a9f779-e203-4973-eb42-c4fe0b0a5a4e", note: "Directed by Garry Marshall · IMDb 5.8" },
-    { title: "Rampage", year: 2018, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.14b79d85-303c-4759-5b14-8ea96535c6d2", note: "Directed by Brad Peyton · IMDb 6.1" },
-    { title: "Barbie", year: 2023, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.17f2bd91-afd8-4ae8-8dbc-9c49066e771c", note: "Directed by Greta Gerwig · IMDb 6.8" },
-    { title: "Argo", year: 2012, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.00a9f660-e23a-1b17-0590-29fd373cce56", note: "Directed by Ben Affleck · IMDb 7.7" },
-    { title: "The Flash", year: 2023, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.bb96b290-739b-4c0f-8823-22dfa1052036", note: "Directed by Andy Muschietti · IMDb 6.6" },
-    { title: "Journey 2: The Mysterious Island", year: 2012, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.eda713db-2666-4916-8c3c-9aac820c6434", note: "Directed by Brad Peyton · IMDb 5.7", kids: true },
   ],
 };
 
