@@ -1303,6 +1303,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-18",
   items: [
+    { title: "The House next Door", year: 2017, app: "JioHotstar", added: "2026-11-18", url: "https://www.hotstar.com/in/movies/the-house-next-door/1271724344", note: "Directed by Milind Rau · IMDb 6.7" },
+    { title: "Pakka Commercial", year: 2022, lang: "Telugu", app: "JioHotstar", added: "2026-11-18", url: "https://www.hotstar.com/in/movies/pakka-commercial/1271460815", note: "IMDb 4.2" },
     { title: "The Dangerous Lives of Altar Boys", year: 2002, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.3b882e95-e69c-471a-bb0d-6a7ebe37ceab", note: "Directed by Peter Care · IMDb 6.9" },
     { title: "The Big Easy", year: 1986, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.0ab942ff-70ab-dbf3-7f3b-3dba4fb4cc12", note: "Directed by Jim McBride · IMDb 6.5" },
     { title: "Book of Shadows: Blair Witch 2", year: 2000, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.1640ab18-8cb7-46f4-9b56-732f6281a27a", note: "Directed by Joe Berlinger · IMDb 4.1" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Friends with Benefits", year: 2011, lang: "English", app: "Netflix", added: "2026-11-16", url: "https://www.netflix.com/title/70167075", note: "Directed by Will Gluck · IMDb 6.5" },
     { title: "The Good Liar", year: 2019, lang: "English", app: "Netflix", added: "2026-11-16", url: "https://www.netflix.com/title/80240371", note: "Directed by Bill Condon · IMDb 6.7" },
     { title: "Dune", year: 2021, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.a8025548-3908-4562-8896-8fffd945cfb6", note: "Directed by Denis Villeneuve · IMDb 8" },
-    { title: "The Departed", year: 2006, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.8befa417-816c-4303-9895-4120a1bb9e7a", note: "Directed by Martin Scorsese · IMDb 8.5" },
-    { title: "Edge of Tomorrow", year: 2014, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.9cba5c02-910e-368c-0c9b-8505ea0c7b09", note: "Directed by Doug Liman · IMDb 7.9" },
   ],
 };
 
