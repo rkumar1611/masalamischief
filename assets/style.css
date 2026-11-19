@@ -849,3 +849,4 @@ span.person-photo { font-size: 2.4rem; }
 .fb-form input[type="text"] { width: 100%; box-sizing: border-box; }
 .changed-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .changed-list li { background: var(--card, #fff); border: 1px solid rgba(128,128,128,.25); border-radius: 12px; padding: 10px 14px; }
+.on-since { margin: 6px 0 10px; font-size: 1rem; }

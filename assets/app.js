@@ -3035,22 +3035,24 @@ async function initFilm() {
       <article>
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
+        ${f.w.length && f.od && f.oa && f.od <= new Date().toISOString().slice(0, 10) && f.w.includes(f.oa) ? `<p class="on-since">✅ <strong>On OTT since ${fmtDate(f.od)}</strong> · ${esc(f.oa)}</p>` : ""}
         ${spoken ? `<p class="muted small lang-line">🗣️ Language: ${esc(spoken)}</p>` : ""}
         ${leavingLine(f.lv)}
         ${cinemas ? `<div class="stream-line"><span class="muted small">🎬 ${out ? "In cinemas · book on" : `In cinemas ${fmtDate(f.rd)} · book on`}</span>${ticketLinks()}</div>` : ""}
         ${dueLine}
-        ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
-        <section class="quick-answers"><h2>⚡ Quick answers</h2><dl>${quickAnswers(f).map(([q, a]) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join("")}</dl></section>
-        ${castRow({ ...f, kind: f.k })}
-        <div class="panel not-reviewed">
-          <h3>🌶️ Not reviewed yet</h3>
-          <p class="muted">We haven't given this one the Masala Meter treatment. Summary and rating are from TMDB.</p>
-        </div>
         <div class="share-row">
           ${trailerBtn(f.tr, f.t, `${f.t} ${f.y || ""} ${tv ? "series" : ""} official trailer`)}
           <button class="btn primary" id="save" type="button"></button>
           <a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText + " " + pageUrl)}">Share on WhatsApp</a>
           <button class="btn" id="copy" type="button">Copy link</button>
+        </div>
+        ${f.ov ? `<p>${esc(f.ov)}</p>` : ""}
+        <section class="quick-answers"><h2>⚡ Quick answers</h2><dl>${quickAnswers(f).map(([q, a]) => `<dt>${esc(q)}</dt><dd>${esc(a)}</dd>`).join("")}</dl></section>
+        ${castRow({ ...f, kind: f.k })}
+        <div id="similar-slot"></div>
+        <div class="panel not-reviewed">
+          <h3>🌶️ Not reviewed yet</h3>
+          <p class="muted">We haven't given this one the Masala Meter treatment. Summary and rating are from TMDB.</p>
         </div>
         <a class="wa-follow compact" href="${WHATSAPP_CHANNEL}" target="_blank" rel="noopener">
           <span class="wa-icon" aria-hidden="true">${WA_LOGO}</span>
@@ -3086,8 +3088,7 @@ async function initFilm() {
           </dl>
         </div>
       </aside>
-    </div>
-    <div id="similar-slot"></div>`;
+    </div>`;
 
   document.getElementById("copy").onclick = async (e) => {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
