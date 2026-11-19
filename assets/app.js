@@ -798,7 +798,7 @@ const ottDueShort = (due) => due.sure ? `${fmtDate(due.date)}${due.app ? ` on ${
 // The answer part of a film page's title, as lib/seo.js filmSearchWhat(): apps, OTT date, or "not announced".
 function filmSearchWhat(f, due) {
   const apps = (f.ja && f.ja.length ? f.ja : f.w) || [];
-  if (apps.length) return `on ${apps.slice(0, 2).join(" & ")}: OTT Streaming Now`;
+  if (apps.length) return f.od && f.oa && f.od <= new Date().toISOString().slice(0, 10) && apps.includes(f.oa) ? `OTT Release Date: ${fmtDate(f.od)} on ${f.oa}` : `on ${apps.slice(0, 2).join(" & ")}: OTT Streaming Now`;
   if (!due) return "OTT: Where to Watch Online";
   if (due.sure) return `OTT Release Date: ${fmtDate(due.date)}${due.app ? ` on ${due.app}` : ""}`;
   const x = new Date(`${due.date}T00:00:00Z`);
