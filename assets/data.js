@@ -1303,6 +1303,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-18",
   items: [
+    { title: "Finding Forrester", year: 2000, lang: "English", app: "Netflix", added: "2026-11-18", url: "https://www.netflix.com/title/60003770", note: "Directed by Gus Van Sant · IMDb 7.3" },
+    { title: "Tower Heist", year: 2011, lang: "English", app: "Netflix", added: "2026-11-18", url: "https://www.netflix.com/title/70202145", note: "Directed by Brett Ratner · IMDb 6.2" },
     { title: "The House next Door", year: 2017, app: "JioHotstar", added: "2026-11-18", url: "https://www.hotstar.com/in/movies/the-house-next-door/1271724344", note: "Directed by Milind Rau · IMDb 6.7" },
     { title: "Pakka Commercial", year: 2022, lang: "Telugu", app: "JioHotstar", added: "2026-11-18", url: "https://www.hotstar.com/in/movies/pakka-commercial/1271460815", note: "IMDb 4.2" },
     { title: "The Dangerous Lives of Altar Boys", year: 2002, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.3b882e95-e69c-471a-bb0d-6a7ebe37ceab", note: "Directed by Peter Care · IMDb 6.9" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Refusal", year: 2013, app: "JioHotstar", added: "2026-11-17", url: "https://www.hotstar.com/in/movies/inkaar/1271724016", note: "Directed by Sudhir Mishra · IMDb 6.1" },
     { title: "Gadar: Ek Prem Katha", year: 2001, lang: "Hindi", app: "JioHotstar", added: "2026-11-17", url: "https://www.hotstar.com/in/movies/gadar-ek-prem-katha/1271724222", note: "Directed by Anil Sharma · IMDb 7.3" },
     { title: "Friends with Benefits", year: 2011, lang: "English", app: "Netflix", added: "2026-11-16", url: "https://www.netflix.com/title/70167075", note: "Directed by Will Gluck · IMDb 6.5" },
-    { title: "The Good Liar", year: 2019, lang: "English", app: "Netflix", added: "2026-11-16", url: "https://www.netflix.com/title/80240371", note: "Directed by Bill Condon · IMDb 6.7" },
-    { title: "Dune", year: 2021, lang: "English", app: "Prime Video", added: "2026-11-16", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.a8025548-3908-4562-8896-8fffd945cfb6", note: "Directed by Denis Villeneuve · IMDb 8" },
   ],
 };
 
