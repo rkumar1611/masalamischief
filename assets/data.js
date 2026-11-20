@@ -1301,22 +1301,22 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-18",
+  checked: "2026-11-20",
   items: [
+    { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-20", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.e9674a04-459d-4f05-b09c-ca956f4f47ce", note: "IMDb 8.3", kids: true },
+    { title: "Smile", year: 2022, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/81616656", note: "Directed by Parker Finn · IMDb 6.5" },
+    { title: "Project Almanac", year: 2015, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70292863", note: "Directed by Dean Israelite · IMDb 6.4" },
+    { title: "No Country for Old Men", year: 2007, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70071613", note: "Directed by Ethan Coen  · IMDb 8.2" },
+    { title: "A Cinderella Story", year: 2004, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/60036237", note: "Directed by Mark Rosman · IMDb 6", kids: true },
+    { title: "Collateral Beauty", year: 2016, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/80116204", note: "Directed by David Frankel · IMDb 6.8" },
+    { title: "Force 10 from Navarone", year: 1978, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/516982", note: "Directed by Guy Hamilton · IMDb 6.4" },
+    { title: "The Contractor", year: 2007, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70070567", note: "Directed by Josef Rusnak · IMDb 5.4" },
+    { title: "Rumor Has It...", year: 2005, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70039168", note: "Directed by Rob Reiner · IMDb 5.5" },
+    { title: "Tom & Jerry", year: 2021, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/81221372", note: "Directed by Tim Story · IMDb 5.3", kids: true },
     { title: "Finding Forrester", year: 2000, lang: "English", app: "Netflix", added: "2026-11-18", url: "https://www.netflix.com/title/60003770", note: "Directed by Gus Van Sant · IMDb 7.3" },
     { title: "Tower Heist", year: 2011, lang: "English", app: "Netflix", added: "2026-11-18", url: "https://www.netflix.com/title/70202145", note: "Directed by Brett Ratner · IMDb 6.2" },
     { title: "The House next Door", year: 2017, app: "JioHotstar", added: "2026-11-18", url: "https://www.hotstar.com/in/movies/the-house-next-door/1271724344", note: "Directed by Milind Rau · IMDb 6.7" },
     { title: "Pakka Commercial", year: 2022, lang: "Telugu", app: "JioHotstar", added: "2026-11-18", url: "https://www.hotstar.com/in/movies/pakka-commercial/1271460815", note: "IMDb 4.2" },
-    { title: "The Dangerous Lives of Altar Boys", year: 2002, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.3b882e95-e69c-471a-bb0d-6a7ebe37ceab", note: "Directed by Peter Care · IMDb 6.9" },
-    { title: "The Big Easy", year: 1986, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.0ab942ff-70ab-dbf3-7f3b-3dba4fb4cc12", note: "Directed by Jim McBride · IMDb 6.5" },
-    { title: "Book of Shadows: Blair Witch 2", year: 2000, lang: "English", app: "Prime Video", added: "2026-11-18", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.1640ab18-8cb7-46f4-9b56-732f6281a27a", note: "Directed by Joe Berlinger · IMDb 4.1" },
-    { title: "Eyes Wide Shut", year: 1999, lang: "English", app: "Netflix", added: "2026-11-17", url: "https://www.netflix.com/title/5670434", note: "Directed by Stanley Kubrick · IMDb 7.5" },
-    { title: "It's Complicated", year: 2009, lang: "English", app: "Netflix", added: "2026-11-17", url: "https://www.netflix.com/title/70124574", note: "Directed by Nancy Meyers · IMDb 6.6" },
-    { title: "Life As We Know It", year: 2010, lang: "English", app: "Netflix", added: "2026-11-17", url: "https://www.netflix.com/title/70131764", note: "Directed by Greg Berlanti · IMDb 6.5" },
-    { title: "Something New", year: 2006, lang: "English", app: "Netflix", added: "2026-11-17", url: "https://www.netflix.com/title/70044327", note: "Directed by Sanaa Hamri · IMDb 6.6" },
-    { title: "Refusal", year: 2013, app: "JioHotstar", added: "2026-11-17", url: "https://www.hotstar.com/in/movies/inkaar/1271724016", note: "Directed by Sudhir Mishra · IMDb 6.1" },
-    { title: "Gadar: Ek Prem Katha", year: 2001, lang: "Hindi", app: "JioHotstar", added: "2026-11-17", url: "https://www.hotstar.com/in/movies/gadar-ek-prem-katha/1271724222", note: "Directed by Anil Sharma · IMDb 7.3" },
-    { title: "Friends with Benefits", year: 2011, lang: "English", app: "Netflix", added: "2026-11-16", url: "https://www.netflix.com/title/70167075", note: "Directed by Will Gluck · IMDb 6.5" },
   ],
 };
 
