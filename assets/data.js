@@ -1303,6 +1303,12 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-20",
   items: [
+    { title: "Anbil Avan", year: 2026, lang: "Tamil", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/anbil-avan-1090554778", note: "IMDb 9.6" },
+    { title: "Hollow Man", year: 2000, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hollow-man-1090555102", note: "Directed by Paul Verhoeven · IMDb 5.9" },
+    { title: "Puzhu", year: 2022, lang: "Malayalam", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/puzhu-1000170989", note: "Directed by Ratheena · IMDb 6.2" },
+    { title: "Hostel", year: 2006, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hostel-2006-1090555120", note: "Directed by Eli Roth · IMDb 5.9" },
+    { title: "Urban Legend", year: 1998, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/urban-legend-1090555098", note: "Directed by Jamie Blanks · IMDb 5.6" },
+    { title: "Other Mommy", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-20", url: "https://www.zee5.com/movies/details/other-mommy/0-0-1z51112306", note: "Directed by Rob Savage · IMDb 5.3" },
     { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-20", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.e9674a04-459d-4f05-b09c-ca956f4f47ce", note: "IMDb 8.3", kids: true },
     { title: "Smile", year: 2022, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/81616656", note: "Directed by Parker Finn · IMDb 6.5" },
     { title: "Project Almanac", year: 2015, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70292863", note: "Directed by Dean Israelite · IMDb 6.4" },
@@ -1311,12 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Collateral Beauty", year: 2016, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/80116204", note: "Directed by David Frankel · IMDb 6.8" },
     { title: "Force 10 from Navarone", year: 1978, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/516982", note: "Directed by Guy Hamilton · IMDb 6.4" },
     { title: "The Contractor", year: 2007, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70070567", note: "Directed by Josef Rusnak · IMDb 5.4" },
-    { title: "Rumor Has It...", year: 2005, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70039168", note: "Directed by Rob Reiner · IMDb 5.5" },
-    { title: "Tom & Jerry", year: 2021, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/81221372", note: "Directed by Tim Story · IMDb 5.3", kids: true },
-    { title: "Finding Forrester", year: 2000, lang: "English", app: "Netflix", added: "2026-11-18", url: "https://www.netflix.com/title/60003770", note: "Directed by Gus Van Sant · IMDb 7.3" },
-    { title: "Tower Heist", year: 2011, lang: "English", app: "Netflix", added: "2026-11-18", url: "https://www.netflix.com/title/70202145", note: "Directed by Brett Ratner · IMDb 6.2" },
-    { title: "The House next Door", year: 2017, app: "JioHotstar", added: "2026-11-18", url: "https://www.hotstar.com/in/movies/the-house-next-door/1271724344", note: "Directed by Milind Rau · IMDb 6.7" },
-    { title: "Pakka Commercial", year: 2022, lang: "Telugu", app: "JioHotstar", added: "2026-11-18", url: "https://www.hotstar.com/in/movies/pakka-commercial/1271460815", note: "IMDb 4.2" },
   ],
 };
 
