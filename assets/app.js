@@ -3014,7 +3014,7 @@ async function initFilm() {
   // When it should reach OTT, for films in (or just out of) cinemas.
   const due = ottDue(f);
   const dueLine = due ? `<div class="ott-due"><p>⏳ <strong>OTT release:</strong> ${esc(ottDueShort(due))}${due.sure ? "" : ` <span class="muted small">· not announced yet</span>`}</p>
-    <button class="btn small" id="land-bell" type="button" hidden>🔔 Tell me when it's on OTT</button><p class="small muted" id="land-help"></p></div>` : "";
+    <button class="btn primary" id="land-bell" type="button" hidden>🔔 Tell me when it's on OTT</button><p class="small muted" id="land-help" hidden>Free alert on this phone or browser the day it reaches an app. No sign-up.</p></div>` : "";
   // Same wording as the server's (lib/seo.js filmSearchTitle): how people search, "<film> OTT".
   document.title = `${f.t}${years ? ` (${years})` : ""} ${filmSearchWhat(f, due)} · ${f.l === "en" ? "Hollywood" : lang} ${tv ? "Web Series" : "Movie"}`;
   const cinemas = inCinemas(f);
@@ -3094,7 +3094,11 @@ async function initFilm() {
     try { await navigator.clipboard.writeText(pageUrl); e.target.textContent = "Copied!"; } catch { prompt("Copy this link:", pageUrl); }
   };
   renderMoreLike(document.getElementById("similar-slot"), f, `🍿 Liked ${f.t}? Try these`);
-  if (due) initLandBell(`${code}-${rawId}`, document.getElementById("land-bell"), document.getElementById("land-help"));
+  if (due) {
+    const bellBtn = document.getElementById("land-bell"), bellHelp = document.getElementById("land-help");
+    initLandBell(`${code}-${rawId}`, bellBtn, bellHelp);
+    bellHelp.hidden = bellBtn.hidden; // the sentence only where alerts work (browsers without push show neither)
+  }
   root.querySelector(".panel-watch").after(reportBox(`c:${code}-${rawId}`, f.t, () => f.w));
   // Save to the watchlist (kept on this device, like saved reviews).
   const saveId = catSaveId(f);
@@ -3774,9 +3778,13 @@ async function initTracker() {
     </article>`;
   const bell = (f) => (f.pg ? `<button class="btn small land-bell" type="button" data-key="${f.l}-${f.id}" hidden>🔔 Tell me when it's on OTT</button><span class="small muted land-help"></span>` : "");
   const section = (title, rows, empty) => `<section><div class="section-head"><h2>${title}</h2></div>${rows.length ? `<div class="ulist">${rows.join("")}</div>` : `<div class="empty">${empty}</div>`}</section>`;
+  // Films that have their own page and are not on an app yet: the ones a 🔔 can follow.
+  const alertKeys = [...new Set([...cinema, ...confirmed.filter((f) => f.d >= today)].filter((f) => f.pg).map((f) => `${f.l}-${f.id}`))];
   root.innerHTML = `
     <div class="page-head"><h1>📅 ${esc(lang)} OTT release date tracker</h1><p class="lead">${lead}</p></div>
     ${chips}
+    ${alertKeys.length ? `<div class="panel alert-all"><p><strong>🔔 Don't keep checking.</strong> We'll send a free alert to this phone or browser the day each ${esc(lang)} film below reaches an app. No sign-up.</p>
+      <button class="btn primary" id="land-all" type="button" hidden>🔔 Alert me for all ${alertKeys.length}</button><p class="small muted" id="land-all-help"></p></div>` : ""}
     ${changed}
     ${section("🎬 In cinemas now: when do they reach OTT?", cinema.map((f) => card(f, `<span class="muted">In cinemas since ${shortDay(f.d)}</span> · ${esc(f.text)}`, bell(f))), `No ${esc(lang)} films listed in cinemas right now.`)}
     ${section("✅ Confirmed OTT dates", confirmed.map((f) => card(f, `${f.d >= today ? "On OTT" : "On OTT since"} <strong>${shortDay(f.d)}</strong>${f.a ? ` on ${esc(f.a)}` : ""}`, f.d >= today ? bell(f) : "")), `No confirmed ${esc(lang)} OTT dates yet.`)}
@@ -3787,6 +3795,11 @@ async function initTracker() {
       <span><strong>Get these dates on WhatsApp</strong><span>Follow Masala Mischief for new OTT releases.</span></span>
       <span class="wa-go">Follow</span>
     </a>`;
+  if (alertKeys.length) {
+    const allBtn = document.getElementById("land-all");
+    initLandAll(alertKeys, allBtn, document.getElementById("land-all-help"));
+    if (allBtn.hidden) root.querySelector(".alert-all").remove(); // this browser can't receive alerts
+  }
   root.querySelectorAll(".land-bell").forEach((b) => initLandBell(b.dataset.key, b, b.nextElementSibling));
 }
 
