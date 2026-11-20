@@ -1303,6 +1303,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-20",
   items: [
+    { title: "Trolls", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80108182", note: "Directed by Mike Mitchell · IMDb 6.4", kids: true },
+    { title: "The Producers", year: 2005, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/70021665", note: "Directed by Susan Stroman · IMDb 6.4" },
     { title: "Anbil Avan", year: 2026, lang: "Tamil", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/anbil-avan-1090554778", note: "IMDb 9.6" },
     { title: "Hollow Man", year: 2000, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hollow-man-1090555102", note: "Directed by Paul Verhoeven · IMDb 5.9" },
     { title: "Puzhu", year: 2022, lang: "Malayalam", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/puzhu-1000170989", note: "Directed by Ratheena · IMDb 6.2" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "No Country for Old Men", year: 2007, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70071613", note: "Directed by Ethan Coen  · IMDb 8.2" },
     { title: "A Cinderella Story", year: 2004, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/60036237", note: "Directed by Mark Rosman · IMDb 6", kids: true },
     { title: "Collateral Beauty", year: 2016, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/80116204", note: "Directed by David Frankel · IMDb 6.8" },
-    { title: "Force 10 from Navarone", year: 1978, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/516982", note: "Directed by Guy Hamilton · IMDb 6.4" },
-    { title: "The Contractor", year: 2007, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70070567", note: "Directed by Josef Rusnak · IMDb 5.4" },
   ],
 };
 
