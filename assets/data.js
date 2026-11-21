@@ -1303,6 +1303,9 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-20",
   items: [
+    { title: "13 Hours: The Secret Soldiers of Benghazi", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80067930", note: "Directed by Michael Bay · IMDb 7.3" },
+    { title: "Lara Croft: Tomb Raider", year: 2001, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/60004467", note: "Directed by Simon West · IMDb 5.8" },
+    { title: "Trolls World Tour", year: 2020, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/81198527", note: "Directed by Walt Dohrn · IMDb 6.1", kids: true },
     { title: "Trolls", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80108182", note: "Directed by Mike Mitchell · IMDb 6.4", kids: true },
     { title: "The Producers", year: 2005, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/70021665", note: "Directed by Susan Stroman · IMDb 6.4" },
     { title: "Anbil Avan", year: 2026, lang: "Tamil", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/anbil-avan-1090554778", note: "IMDb 9.6" },
@@ -1314,9 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-20", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.e9674a04-459d-4f05-b09c-ca956f4f47ce", note: "IMDb 8.3", kids: true },
     { title: "Smile", year: 2022, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/81616656", note: "Directed by Parker Finn · IMDb 6.5" },
     { title: "Project Almanac", year: 2015, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70292863", note: "Directed by Dean Israelite · IMDb 6.4" },
-    { title: "No Country for Old Men", year: 2007, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70071613", note: "Directed by Ethan Coen  · IMDb 8.2" },
-    { title: "A Cinderella Story", year: 2004, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/60036237", note: "Directed by Mark Rosman · IMDb 6", kids: true },
-    { title: "Collateral Beauty", year: 2016, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/80116204", note: "Directed by David Frankel · IMDb 6.8" },
   ],
 };
 
