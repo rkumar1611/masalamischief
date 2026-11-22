@@ -1303,6 +1303,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-22",
   items: [
+    { title: "I Love Boosters", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-22", url: "https://www.hotstar.com/in/movies/i-love-boosters/1271725744", note: "Directed by Boots Riley · IMDb 6.6" },
     { title: "Black Christmas", year: 2019, lang: "English", app: "Netflix", added: "2026-11-22", url: "https://www.netflix.com/title/81151909", note: "Directed by Sophia Takal · IMDb 3.5" },
     { title: "13 Hours: The Secret Soldiers of Benghazi", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80067930", note: "Directed by Michael Bay · IMDb 7.3" },
     { title: "Lara Croft: Tomb Raider", year: 2001, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/60004467", note: "Directed by Simon West · IMDb 5.8" },
@@ -1316,7 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Urban Legend", year: 1998, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/urban-legend-1090555098", note: "Directed by Jamie Blanks · IMDb 5.6" },
     { title: "Other Mommy", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-20", url: "https://www.zee5.com/movies/details/other-mommy/0-0-1z51112306", note: "Directed by Rob Savage · IMDb 5.3" },
     { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-20", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.e9674a04-459d-4f05-b09c-ca956f4f47ce", note: "IMDb 8.3", kids: true },
-    { title: "Smile", year: 2022, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/81616656", note: "Directed by Parker Finn · IMDb 6.5" },
   ],
 };
 
