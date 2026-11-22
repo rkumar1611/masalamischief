@@ -455,8 +455,11 @@
     const ourReview = (title, year) => MOVIES.find((m) => normTitle(m.title) === normTitle(title) && (!year || Math.abs(m.year - year) <= 1));
     // One of our reviews: tagline, the opening of the review, what works and what doesn't, our scores.
     function reviewPost(m, app, url) {
+      // The apps from the daily check (reviewed-watch.json, what the review page shows); data.js is the fallback.
+      const fresh = waWatch[m.id];
       const w = (typeof WATCH === "object" && WATCH[m.id]) || {};
-      const apps = app ? [app] : (w.stream || []);
+      const apps = app ? [app] : fresh ? (fresh.w || []) : (w.stream || []);
+      if (!url && fresh && fresh.u) url = fresh.u[apps[0]];
       const facts = [apps.length ? `📺 ${apps.slice(0, 2).join(" & ")}` : "", m.kind === "tv" ? (m.seasons ? `${m.seasons} season${m.seasons === 1 ? "" : "s"}` : "Series") : runText(m.runtime), m.lang].filter(Boolean).join("  ·  ");
       waCard = { id: m.id, title: m.title, sub: `${m.lang} · ${m.year}`, poster: (IMAGES[m.id] || {}).poster || "", masala: m.masala, quality: m.quality, line: m.tagline || "", head: "MASALA MISCHIEF PICK", foot: apps.length ? `Streaming on ${apps[0]}` : "Full review & where to stream" };
       return postLines([
@@ -500,7 +503,9 @@
     // The strip (NEW_ON_OTT) only holds well-known titles from JustWatch's new page, so on a quiet stretch it stays the same for
     // days. Films with a confirmed OTT date and app in the last 3 days (upcoming.json `soon`) are added, so the post moves on.
     let waLanded = [];
+    let waWatch = {}; // reviewed-watch.json: where each of our reviewed films streams now (and the direct links)
     async function waLoadLanded() {
+      waWatch = ((await getJson("/assets/catalog/reviewed-watch.json").catch(() => null)) || {}).films || {};
       const up = await getJson("/assets/catalog/upcoming.json");
       const today = new Date().toISOString().slice(0, 10);
       const from = new Date(Date.parse(today) - 2 * 864e5).toISOString().slice(0, 10);
