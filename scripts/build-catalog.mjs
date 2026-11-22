@@ -386,6 +386,10 @@ function ottRelease(d) {
   const digital = (r) => (r?.release_dates || []).filter((x) => x.type === 4 && x.release_date)
     .map((x) => ({ d: x.release_date.slice(0, 10), app: APP_RULES.find(([re]) => re.test(x.note || ""))?.[1] }));
   const india = digital(all.find((r) => r.iso_3166_1 === "IN"));
+  // A film India can already buy or rent (say, on Zee5 or Prime Video) is in its pay-per-view window, so another country's
+  // "Netflix" date says nothing about India: leave it to the estimate rather than name the wrong app.
+  const inRes = d["watch/providers"]?.results?.IN;
+  if (!india.length && ((inRes?.buy || []).length || (inRes?.rent || []).length)) return {};
   const pick = (india.length ? india : all.flatMap(digital).filter((x) => x.app))
     .filter((x) => !d.release_date || x.d >= d.release_date).sort((a, b) => a.d.localeCompare(b.d))[0];
   return pick ? { od: pick.d, ...(pick.app ? { oa: pick.app } : {}) } : {};
@@ -1097,7 +1101,7 @@ function writeOttChanges(soon) {
 const SOON_DAYS = 30;
 async function writeUpcoming(all) {
   const known = new Set(all.map(keyOf));
-  const soon = all.filter((f) => f.k !== "tv" && f.od && f.od >= day(0) && f.od <= day(SOON_DAYS) && !(f.w || []).length)
+  const soon = all.filter((f) => f.k !== "tv" && f.od && f.od >= day(0) && f.od <= day(SOON_DAYS) && !(f.w || []).length && !(f.bu || []).length)
     .sort((a, b) => a.od.localeCompare(b.od) || b.n - a.n).slice(0, 60)
     .map((f) => ({ l: f.l, id: f.id, t: f.t, d: f.od, ...(f.oa ? { a: f.oa } : {}), ...(f.rd ? { rd: f.rd } : {}), p: f.p, g: (f.g || []).slice(0, 2),
       ...(f.n >= 10 ? { v: f.v } : {}), n: f.n, cast: (f.cast || []).slice(0, 2).map((c) => [c[0], c[1]]), pg: 1 }));

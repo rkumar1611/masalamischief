@@ -779,7 +779,7 @@ function ottDue(f, today = new Date().toISOString().slice(0, 10)) {
   if (f.k === "tv" || !f.rd || (f.w && f.w.length) || (f.ja && f.ja.length)) return null;
   const since = (Date.parse(today) - Date.parse(f.rd)) / 864e5;
   if (since > 120 || since < -60) return null;
-  if (f.od && f.od >= addDays(today, -14)) return { date: f.od, app: f.oa || "", sure: true };
+  if (f.od && !(f.bu || []).length && f.od >= addDays(today, -14)) return { date: f.od, app: f.oa || "", sure: true };
   return OTT_WAIT_DAYS[f.l] ? { date: addDays(f.rd, OTT_WAIT_DAYS[f.l]), app: "", sure: false } : null;
 }
 const roughly = (d) => {
