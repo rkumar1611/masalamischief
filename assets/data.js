@@ -1301,8 +1301,9 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-20",
+  checked: "2026-11-22",
   items: [
+    { title: "Black Christmas", year: 2019, lang: "English", app: "Netflix", added: "2026-11-22", url: "https://www.netflix.com/title/81151909", note: "Directed by Sophia Takal · IMDb 3.5" },
     { title: "13 Hours: The Secret Soldiers of Benghazi", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80067930", note: "Directed by Michael Bay · IMDb 7.3" },
     { title: "Lara Croft: Tomb Raider", year: 2001, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/60004467", note: "Directed by Simon West · IMDb 5.8" },
     { title: "Trolls World Tour", year: 2020, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/81198527", note: "Directed by Walt Dohrn · IMDb 6.1", kids: true },
@@ -1316,7 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Other Mommy", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-20", url: "https://www.zee5.com/movies/details/other-mommy/0-0-1z51112306", note: "Directed by Rob Savage · IMDb 5.3" },
     { title: "Happy Journey", year: 2026, lang: "Telugu", app: "Prime Video", added: "2026-11-20", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.e9674a04-459d-4f05-b09c-ca956f4f47ce", note: "IMDb 8.3", kids: true },
     { title: "Smile", year: 2022, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/81616656", note: "Directed by Parker Finn · IMDb 6.5" },
-    { title: "Project Almanac", year: 2015, lang: "English", app: "Netflix", added: "2026-11-19", url: "https://www.netflix.com/title/70292863", note: "Directed by Dean Israelite · IMDb 6.4" },
   ],
 };
 
