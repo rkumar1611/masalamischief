@@ -1,0 +1,33 @@
+# Posts the day's OTT news to the Telegram channel https://t.me/masalamischief (scripts/post-telegram.mjs).
+# Needs the TELEGRAM_BOT_TOKEN repository secret (from @BotFather) and the bot added to the channel as an admin.
+# Runs after the daily site update, reads the live site's data, and posts nothing on a quiet day.
+# Try it by hand from GitHub → Actions → "Telegram post" → Run workflow (tick "dry run" to only see the text).
+name: Telegram post
+
+on:
+  schedule:
+    - cron: "37 5 * * *" # about 11:07 IST daily, after the daily site update has gone live
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only print the post, don't send it"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - name: Post to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}
+        run: node scripts/post-telegram.mjs

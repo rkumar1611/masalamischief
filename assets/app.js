@@ -3696,7 +3696,8 @@ async function initWeek() {
       <span class="wa-icon" aria-hidden="true">${WA_LOGO}</span>
       <span><strong>Get this every week</strong><span>Follow Masala Mischief on WhatsApp for new OTT releases.</span></span>
       <span class="wa-go">Follow</span>
-    </a>`;
+    </a>
+    <p class="muted small">Prefer Telegram? <a href="https://t.me/masalamischief" target="_blank" rel="noopener">Join t.me/masalamischief</a>.</p>`;
 
   // 🔔 for the whole "coming soon" list (or one film at a time with the bell on its card), and the weekly roundup.
   const soonKeys = soonList.map((f) => f.key).filter(Boolean);
@@ -3794,7 +3795,8 @@ async function initTracker() {
       <span class="wa-icon" aria-hidden="true">${WA_LOGO}</span>
       <span><strong>Get these dates on WhatsApp</strong><span>Follow Masala Mischief for new OTT releases.</span></span>
       <span class="wa-go">Follow</span>
-    </a>`;
+    </a>
+    <p class="muted small">Prefer Telegram? <a href="https://t.me/masalamischief" target="_blank" rel="noopener">Join t.me/masalamischief</a>.</p>`;
   if (alertKeys.length) {
     const allBtn = document.getElementById("land-all");
     initLandAll(alertKeys, allBtn, document.getElementById("land-all-help"));
