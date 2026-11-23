@@ -34,7 +34,13 @@ const changes = get("/assets/catalog/ott-changes.json").catch(() => ({}));
 
 const [items, up, ch] = await Promise.all([strip, upcoming, changes]);
 
-const landed = items.filter((n) => n.added === today).slice(0, 6);
+const seen = new Set();
+const landed = items.filter((n) => n.added === today).filter((n) => {
+  const key = `${String(n.title).toLowerCase()}|${n.year}|${n.app}`; // the strip can list one title twice (e.g. once per audio language)
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+}).slice(0, 6);
 const tomorrowSoon = (up.soon || []).filter((f) => f.d === tomorrow).slice(0, 6);
 const moved = (ch.items || []).filter((x) => x.f === today).slice(0, 5);
 
