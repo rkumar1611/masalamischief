@@ -1301,8 +1301,10 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-22",
+  checked: "2026-11-23",
   items: [
+    { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
+    { title: "Christy", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/christy-1000213414", note: "Directed by Alvin Henry · IMDb 4.9" },
     { title: "Crouching Tiger, Hidden Dragon", year: 2000, lang: "English", app: "JioHotstar", added: "2026-11-22", url: "https://www.hotstar.com/in/movies/crouching-tiger-hidden-dragon/1271723214", note: "Directed by Ang Lee · IMDb 7.8" },
     { title: "I Love Boosters", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-22", url: "https://www.hotstar.com/in/movies/i-love-boosters/1271725744", note: "Directed by Boots Riley · IMDb 6.6" },
     { title: "Black Christmas", year: 2019, lang: "English", app: "Netflix", added: "2026-11-22", url: "https://www.netflix.com/title/81151909", note: "Directed by Sophia Takal · IMDb 3.5" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Hollow Man", year: 2000, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hollow-man-1090555102", note: "Directed by Paul Verhoeven · IMDb 5.9" },
     { title: "Puzhu", year: 2022, lang: "Malayalam", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/puzhu-1000170989", note: "Directed by Ratheena · IMDb 6.2" },
     { title: "Hostel", year: 2006, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hostel-2006-1090555120", note: "Directed by Eli Roth · IMDb 5.9" },
-    { title: "Urban Legend", year: 1998, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/urban-legend-1090555098", note: "Directed by Jamie Blanks · IMDb 5.6" },
-    { title: "Other Mommy", year: 2026, lang: "English", app: "ZEE5", added: "2026-11-20", url: "https://www.zee5.com/movies/details/other-mommy/0-0-1z51112306", note: "Directed by Rob Savage · IMDb 5.3" },
   ],
 };
 
