@@ -1303,6 +1303,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-23",
   items: [
+    { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253149", note: "Directed by Tinu Pappachan · IMDb 6.2" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
     { title: "Christy", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/christy-1000213414", note: "Directed by Alvin Henry · IMDb 4.9" },
     { title: "Crouching Tiger, Hidden Dragon", year: 2000, lang: "English", app: "JioHotstar", added: "2026-11-22", url: "https://www.hotstar.com/in/movies/crouching-tiger-hidden-dragon/1271723214", note: "Directed by Ang Lee · IMDb 7.8" },
@@ -1316,7 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Anbil Avan", year: 2026, lang: "Tamil", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/anbil-avan-1090554778", note: "IMDb 9.6" },
     { title: "Hollow Man", year: 2000, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hollow-man-1090555102", note: "Directed by Paul Verhoeven · IMDb 5.9" },
     { title: "Puzhu", year: 2022, lang: "Malayalam", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/puzhu-1000170989", note: "Directed by Ratheena · IMDb 6.2" },
-    { title: "Hostel", year: 2006, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hostel-2006-1090555120", note: "Directed by Eli Roth · IMDb 5.9" },
   ],
 };
 
