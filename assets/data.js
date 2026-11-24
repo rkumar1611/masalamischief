@@ -1301,8 +1301,9 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-23",
+  checked: "2026-11-24",
   items: [
+    { title: "Ninja Assassin", year: 2009, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/70101697", note: "Directed by James McTeigue · IMDb 6.3" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253149", note: "Directed by Tinu Pappachan · IMDb 6.2" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
     { title: "Christy", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/christy-1000213414", note: "Directed by Alvin Henry · IMDb 4.9" },
@@ -1316,7 +1317,6 @@ const NEW_ON_OTT = {
     { title: "The Producers", year: 2005, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/70021665", note: "Directed by Susan Stroman · IMDb 6.4" },
     { title: "Anbil Avan", year: 2026, lang: "Tamil", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/anbil-avan-1090554778", note: "IMDb 9.6" },
     { title: "Hollow Man", year: 2000, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hollow-man-1090555102", note: "Directed by Paul Verhoeven · IMDb 5.9" },
-    { title: "Puzhu", year: 2022, lang: "Malayalam", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/puzhu-1000170989", note: "Directed by Ratheena · IMDb 6.2" },
   ],
 };
 
