@@ -1303,6 +1303,8 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-24",
   items: [
+    { title: "American Made", year: 2017, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/80121192", note: "Directed by Doug Liman · IMDb 7.2" },
+    { title: "Nancy Drew and the Hidden Staircase", year: 2019, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/81069556", note: "Directed by Katt Shea · IMDb 5.7", kids: true },
     { title: "Ninja Assassin", year: 2009, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/70101697", note: "Directed by James McTeigue · IMDb 6.3" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253149", note: "Directed by Tinu Pappachan · IMDb 6.2" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Trolls World Tour", year: 2020, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/81198527", note: "Directed by Walt Dohrn · IMDb 6.1", kids: true },
     { title: "Trolls", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80108182", note: "Directed by Mike Mitchell · IMDb 6.4", kids: true },
     { title: "The Producers", year: 2005, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/70021665", note: "Directed by Susan Stroman · IMDb 6.4" },
-    { title: "Anbil Avan", year: 2026, lang: "Tamil", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/anbil-avan-1090554778", note: "IMDb 9.6" },
-    { title: "Hollow Man", year: 2000, lang: "English", app: "SonyLIV", added: "2026-11-20", url: "https://www.sonyliv.com/movies/hollow-man-1090555102", note: "Directed by Paul Verhoeven · IMDb 5.9" },
   ],
 };
 
