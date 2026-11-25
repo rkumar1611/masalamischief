@@ -779,8 +779,10 @@ function ottDue(f, today = new Date().toISOString().slice(0, 10)) {
   if (f.k === "tv" || !f.rd || (f.w && f.w.length) || (f.ja && f.ja.length)) return null;
   const since = (Date.parse(today) - Date.parse(f.rd)) / 864e5;
   if (since > 120 || since < -60) return null;
-  if (f.od && !(f.bu || []).length && f.od >= addDays(today, -14)) return { date: f.od, app: f.oa || "", sure: true };
-  return OTT_WAIT_DAYS[f.l] ? { date: addDays(f.rd, OTT_WAIT_DAYS[f.l]), app: "", sure: false } : null;
+  const listed = f.od && !(f.bu || []).length && f.od >= addDays(today, -14);
+  if (listed && !f.ox) return { date: f.od, app: f.oa || "", sure: true };
+  // A date borrowed from another country (ox) stays an estimate, with the listing mentioned.
+  return OTT_WAIT_DAYS[f.l] ? { date: addDays(f.rd, OTT_WAIT_DAYS[f.l]), app: "", sure: false, ...(listed ? { abroad: { date: f.od, app: f.oa || "" } } : {}) } : null;
 }
 const roughly = (d) => {
   const x = new Date(`${d}T00:00:00Z`);
@@ -789,7 +791,8 @@ const roughly = (d) => {
 const ottRule = (f) => `${f.l === "en" ? "Hollywood" : CAT_LANGS[f.l]} films usually reach OTT about ${Math.round(OTT_WAIT_DAYS[f.l] / 7)} weeks after their cinema release`;
 function ottDueText(f, due, today = new Date().toISOString().slice(0, 10)) {
   if (due.sure) return `${due.date > today ? "OTT release" : "Listed for OTT from"} ${fmtDate(due.date)}${due.app ? ` on ${due.app}` : ""}.`;
-  return due.date > today ? `OTT date not announced yet; expected around ${roughly(due.date)} (${ottRule(f)}).` : `OTT date not announced yet; due any time now (${ottRule(f)}).`;
+  const abroad = due.abroad ? ` A date of ${fmtDate(due.abroad.date)}${due.abroad.app ? ` on ${due.abroad.app}` : ""} is listed in another country; it is not confirmed for India.` : "";
+  return `${due.date > today ? `OTT date not announced yet; expected around ${roughly(due.date)} (${ottRule(f)}).` : `OTT date not announced yet; due any time now (${ottRule(f)}).`}${abroad}`;
 }
 // Short form for cards and the film page: "1 Dec 2026 on Netflix" / "expected late Dec 2026".
 const ottDueShort = (due) => due.sure ? `${fmtDate(due.date)}${due.app ? ` on ${due.app}` : ""}`
@@ -798,7 +801,7 @@ const ottDueShort = (due) => due.sure ? `${fmtDate(due.date)}${due.app ? ` on ${
 // The answer part of a film page's title, as lib/seo.js filmSearchWhat(): apps, OTT date, or "not announced".
 function filmSearchWhat(f, due) {
   const apps = (f.ja && f.ja.length ? f.ja : f.w) || [];
-  if (apps.length) return f.od && f.oa && f.od <= new Date().toISOString().slice(0, 10) && apps.includes(f.oa) ? `OTT Release Date: ${fmtDate(f.od)} on ${f.oa}` : `on ${apps.slice(0, 2).join(" & ")}: OTT Streaming Now`;
+  if (apps.length) return f.od && f.oa && !f.ox && f.od <=new Date().toISOString().slice(0, 10) && apps.includes(f.oa) ? `OTT Release Date: ${fmtDate(f.od)} on ${f.oa}` : `on ${apps.slice(0, 2).join(" & ")}: OTT Streaming Now`;
   if (!due) return "OTT: Where to Watch Online";
   if (due.sure) return `OTT Release Date: ${fmtDate(due.date)}${due.app ? ` on ${due.app}` : ""}`;
   const x = new Date(`${due.date}T00:00:00Z`);
@@ -3035,7 +3038,7 @@ async function initFilm() {
       <article>
         <p class="muted film-meta">${tv ? `📺 Series${seasons ? ` · ${seasons}` : ""}${f.end ? " · ended" : " · still running"} · ` : ""}${esc(f.g.join(" · "))}${!tv && f.r ? ` · ${fmtRuntime(f.r)}` : ""}</p>
         ${f.w.length ? `<div class="stream-line"><span class="muted small">📺 Streaming on</span>${f.w.map((a) => `<a class="ott ott-${slug(a)}" href="${esc(appUrl(f, a))}" target="_blank" rel="noopener">${esc(a)} ↗</a>`).join("")}</div>` : ""}
-        ${f.w.length && f.od && f.oa && f.od <= new Date().toISOString().slice(0, 10) && f.w.includes(f.oa) ? `<p class="on-since">✅ <strong>On OTT since ${fmtDate(f.od)}</strong> · ${esc(f.oa)}</p>` : ""}
+        ${f.w.length && f.od && f.oa && !f.ox && f.od <= new Date().toISOString().slice(0, 10) && f.w.includes(f.oa) ? `<p class="on-since">✅ <strong>On OTT since ${fmtDate(f.od)}</strong> · ${esc(f.oa)}</p>` : ""}
         ${spoken ? `<p class="muted small lang-line">🗣️ Language: ${esc(spoken)}</p>` : ""}
         ${leavingLine(f.lv)}
         ${cinemas ? `<div class="stream-line"><span class="muted small">🎬 ${out ? "In cinemas · book on" : `In cinemas ${fmtDate(f.rd)} · book on`}</span>${ticketLinks()}</div>` : ""}
@@ -3484,7 +3487,7 @@ async function initUpcoming() {
       <div class="booking-row">${ticketLinks()}</div>
       <div class="ulist">${now.map((f) => {
         const name = f.pg ? `<a href="film?id=${f.l}-${f.id}">${esc(f.t)}</a>` : esc(f.t);
-        const due = ottDue({ l: f.l, rd: f.d, od: f.od, oa: f.oa });
+        const due = ottDue({ l: f.l, rd: f.d, od: f.od, oa: f.oa, ox: f.ox });
         return `
         <article class="ucard" id="n-${f.l}-${f.id}">
           ${f.p ? `<img src="${tmdb(f.p, "w185")}" alt="${esc(f.t)} poster" loading="lazy" decoding="async">` : `<span class="fposter-none">🎬</span>`}
@@ -3579,7 +3582,7 @@ async function weekData() {
   for (const f of up.now || []) {
     const href = f.pg ? `film?id=${f.l}-${f.id}` : "";
     if (href && have.has(href)) continue;
-    const due = ottDue({ l: f.l, rd: f.d, od: f.od, oa: f.oa }, today);
+    const due = ottDue({ l: f.l, rd: f.d, od: f.od, oa: f.oa, ox: f.ox }, today);
     // Estimates in the next 6 weeks; ones overdue by 2+ weeks probably have no OTT deal yet.
     if (!due || (!due.sure && (due.date > addDays(today, 42) || due.date < addDays(today, -14)))) continue;
     soon.push({ t: f.t, l: f.l, date: due.date, app: due.app, p: f.p, href, key: href ? `${f.l}-${f.id}` : "", sure: due.sure, est: !due.sure, cinema: f.d, n: known(f) });
@@ -3759,7 +3762,7 @@ async function initTracker() {
   const confirmed = (up.soon || []).filter((f) => f.l === l).sort((a, b) => a.d.localeCompare(b.d));
   const have = new Set(confirmed.map((f) => `${f.l}-${f.id}`));
   const cinema = (up.now || []).filter((f) => f.l === l && !have.has(`${f.l}-${f.id}`)).map((f) => {
-    const film = { l, rd: f.d, od: f.od, oa: f.oa };
+    const film = { l, rd: f.d, od: f.od, oa: f.oa, ox: f.ox };
     const due = ottDue(film, today);
     return { ...f, due, text: due ? ottDueText(film, due, today) : "No OTT date yet." };
   }).sort((a, b) => (b.due ? b.due.sure : 0) - (a.due ? a.due.sure : 0) || b.d.localeCompare(a.d));

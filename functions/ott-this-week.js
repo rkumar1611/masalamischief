@@ -39,7 +39,7 @@ export async function onRequestGet(context) {
     const soon = [
       ...(up.soon || []).map((f) => ({ name: f.t, l: f.l, href: `/film?id=${f.l}-${f.id}`, note: `On OTT ${date(f.d)}${f.a ? ` on ${f.a}` : ""}` })),
       ...(up.now || []).map((f) => {
-        const film = { l: f.l, rd: f.d, od: f.od, oa: f.oa };
+        const film = { l: f.l, rd: f.d, od: f.od, oa: f.oa, ox: f.ox };
         const due = ottDue(film, today);
         // As the page: estimates in the next 6 weeks, not ones 2+ weeks overdue.
         const days = due ? (Date.parse(due.date) - Date.parse(today)) / 864e5 : 0;

@@ -37,7 +37,7 @@ export async function onRequestGet(context) {
       .map((f) => ({ name: f.t, href: href({ ...f, pg: 1 }), note: `On OTT ${date(f.d)}${f.a ? ` on ${f.a}` : ""}` }));
     const have = new Set(confirmed.map((f) => f.href));
     const cinema = (up.now || []).filter((f) => f.l === l).map((f) => {
-      const film = { l, rd: f.d, od: f.od, oa: f.oa };
+      const film = { l, rd: f.d, od: f.od, oa: f.oa, ox: f.ox };
       const due = ottDue(film, today);
       return { name: f.t, href: href(f), note: `In cinemas since ${date(f.d)} · ${due ? ottDueText(film, due, today) : "No OTT date yet."}` };
     }).filter((f) => !have.has(f.href));

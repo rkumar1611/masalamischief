@@ -392,7 +392,8 @@ function ottRelease(d) {
   if (!india.length && ((inRes?.buy || []).length || (inRes?.rent || []).length)) return {};
   const pick = (india.length ? india : all.flatMap(digital).filter((x) => x.app))
     .filter((x) => !d.release_date || x.d >= d.release_date).sort((a, b) => a.d.localeCompare(b.d))[0];
-  return pick ? { od: pick.d, ...(pick.app ? { oa: pick.app } : {}) } : {};
+  // ox: the date and app come from another country, so the pages say it isn't confirmed for India (lib/seo.js ottDue).
+  return pick ? { od: pick.d, ...(pick.app ? { oa: pick.app } : {}), ...(india.length ? {} : { ox: 1 }) } : {};
 }
 
 function toFilm(d, lang) {
@@ -693,7 +694,7 @@ async function daily() {
   await writePeopleBios();
 }
 
-const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, od, oa, wr, jr, bu, ab, x, ...rest }) => rest;
+const compact = ({ ov, b, o, im, tr, cast, dir, wd, u, lv, rc, ml, au, ja, od, oa, ox, wr, jr, bu, ab, x, ...rest }) => rest;
 
 // Corrections made by hand (/admin → Titles) and from readers' reports (assets/catalog/overrides.json, see lib/fixes.js)
 // laid over the apps the builds found, so lists, the Top 10 and search agree with the film pages. Titles are copied,
@@ -1101,7 +1102,7 @@ function writeOttChanges(soon) {
 const SOON_DAYS = 30;
 async function writeUpcoming(all) {
   const known = new Set(all.map(keyOf));
-  const soon = all.filter((f) => f.k !== "tv" && f.od && f.od >= day(0) && f.od <= day(SOON_DAYS) && !(f.w || []).length && !(f.bu || []).length)
+  const soon = all.filter((f) => f.k !== "tv" && f.od && f.od >= day(0) && f.od <= day(SOON_DAYS) && !f.ox && !(f.w || []).length && !(f.bu || []).length)
     .sort((a, b) => a.od.localeCompare(b.od) || b.n - a.n).slice(0, 60)
     .map((f) => ({ l: f.l, id: f.id, t: f.t, d: f.od, ...(f.oa ? { a: f.oa } : {}), ...(f.rd ? { rd: f.rd } : {}), p: f.p, g: (f.g || []).slice(0, 2),
       ...(f.n >= 10 ? { v: f.v } : {}), n: f.n, cast: (f.cast || []).slice(0, 2).map((c) => [c[0], c[1]]), pg: 1 }));
@@ -1123,7 +1124,7 @@ async function writeUpcoming(all) {
       .filter((x) => x >= day(-NOW_DAYS) && x <= day(0)).sort().pop();
     return { l: f.l, id: f.id, t: f.t, d: inCinemas || d.release_date, p: f.p, g: f.g, ...(f.n >= 10 ? { v: f.v } : {}),
       ...(f.c ? { c: f.c } : {}), ...(f.tr ? { tr: f.tr } : {}), cast: (f.cast || []).slice(0, 2).map((c) => [c[0], c[1]]),
-      ...(f.od ? { od: f.od } : {}), ...(f.oa ? { oa: f.oa } : {}), n: f.n,
+      ...(f.od ? { od: f.od } : {}), ...(f.oa ? { oa: f.oa } : {}), ...(f.ox ? { ox: 1 } : {}), n: f.n,
       ...(known.has(keyOf(f)) ? { pg: 1 } : {}) };
   }, (d) => !appsOf(d).length);
   now.sort((a, b) => b.d.localeCompare(a.d) || a.t.localeCompare(b.t));

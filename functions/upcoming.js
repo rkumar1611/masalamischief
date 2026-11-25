@@ -27,7 +27,7 @@ export async function onRequestGet(context) {
         url,
         intro: "Films in Indian cinemas and not streaming yet. Book tickets to pick your city, cinema and showtime. OTT dates are the announced ones where known, otherwise our estimate.",
         items: now.map((f) => {
-          const film = { l: f.l, rd: f.d, od: f.od, oa: f.oa };
+          const film = { l: f.l, rd: f.d, od: f.od, oa: f.oa, ox: f.ox };
           const due = ottDue(film);
           return { name: f.t, href: f.pg ? `/film?id=${f.l}-${f.id}` : url,
             note: [`Out ${date(f.d)}`, LANG_NAMES[f.l], f.cast.map((c) => c[1]).join(", "), due && ottDueText(film, due)].filter(Boolean).join(" · ") };
