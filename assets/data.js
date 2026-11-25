@@ -1303,6 +1303,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-25",
   items: [
+    { title: "Spider-Man: Brand New Day", year: 2026, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/82647423", note: "Directed by Destin Daniel Cretton · IMDb 7.9" },
     { title: "September 5", year: 2025, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/81785311", note: "Directed by Tim Fehlbaum · IMDb 7.1" },
     { title: "World War Z", year: 2013, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/70262639", note: "Directed by Marc Forster · IMDb 7" },
     { title: "American Made", year: 2017, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/80121192", note: "Directed by Doug Liman · IMDb 7.2" },
@@ -1316,7 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Black Christmas", year: 2019, lang: "English", app: "Netflix", added: "2026-11-22", url: "https://www.netflix.com/title/81151909", note: "Directed by Sophia Takal · IMDb 3.5" },
     { title: "13 Hours: The Secret Soldiers of Benghazi", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80067930", note: "Directed by Michael Bay · IMDb 7.3" },
     { title: "Lara Croft: Tomb Raider", year: 2001, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/60004467", note: "Directed by Simon West · IMDb 5.8" },
-    { title: "Trolls World Tour", year: 2020, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/81198527", note: "Directed by Walt Dohrn · IMDb 6.1", kids: true },
   ],
 };
 
