@@ -1301,8 +1301,10 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-24",
+  checked: "2026-11-25",
   items: [
+    { title: "September 5", year: 2025, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/81785311", note: "Directed by Tim Fehlbaum · IMDb 7.1" },
+    { title: "World War Z", year: 2013, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/70262639", note: "Directed by Marc Forster · IMDb 7" },
     { title: "American Made", year: 2017, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/80121192", note: "Directed by Doug Liman · IMDb 7.2" },
     { title: "Nancy Drew and the Hidden Staircase", year: 2019, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/81069556", note: "Directed by Katt Shea · IMDb 5.7", kids: true },
     { title: "Ninja Assassin", year: 2009, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/70101697", note: "Directed by James McTeigue · IMDb 6.3" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "13 Hours: The Secret Soldiers of Benghazi", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80067930", note: "Directed by Michael Bay · IMDb 7.3" },
     { title: "Lara Croft: Tomb Raider", year: 2001, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/60004467", note: "Directed by Simon West · IMDb 5.8" },
     { title: "Trolls World Tour", year: 2020, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/81198527", note: "Directed by Walt Dohrn · IMDb 6.1", kids: true },
-    { title: "Trolls", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80108182", note: "Directed by Mike Mitchell · IMDb 6.4", kids: true },
-    { title: "The Producers", year: 2005, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/70021665", note: "Directed by Susan Stroman · IMDb 6.4" },
   ],
 };
 
