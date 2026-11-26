@@ -601,8 +601,9 @@
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=music</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=tv-movie</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=history</loc></url>
-<url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=war-politics&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=documentary</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=documentary&amp;k=tv</loc></url>
+<url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=war-politics&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=jiohotstar&amp;g=war</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video</loc></url>
 <url><loc>https://masalamischief.in/best?l=en&amp;app=prime-video&amp;k=tv</loc></url>
@@ -845,8 +846,8 @@
 <url><loc>https://masalamischief.in/best?l=ja&amp;app=prime-video&amp;g=action-adventure&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/best?l=ja&amp;app=prime-video&amp;g=sci-fi-fantasy&amp;k=tv</loc></url>
 <url><loc>https://masalamischief.in/upcoming</loc></url>
-<url><loc>https://masalamischief.in/upcoming?l=ml</loc></url>
 <url><loc>https://masalamischief.in/upcoming?l=te</loc></url>
+<url><loc>https://masalamischief.in/upcoming?l=ml</loc></url>
 <url><loc>https://masalamischief.in/upcoming?l=ta</loc></url>
 <url><loc>https://masalamischief.in/upcoming?l=hi</loc></url>
 <url><loc>https://masalamischief.in/upcoming?l=pa</loc></url>
