@@ -1301,8 +1301,10 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-25",
+  checked: "2026-11-26",
   items: [
+    { title: "Love Story", year: 2021, lang: "Telugu", app: "Prime Video", added: "2026-11-26", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.c1dcd172-ae6c-49c4-b93a-97a517b2165b", note: "Directed by Sekhar Kammula · IMDb 6.8" },
+    { title: "Zombie Reddy", year: 2021, lang: "Telugu", app: "Prime Video", added: "2026-11-26", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.4a33ab7c-791c-48f3-a87a-f869ceb43486", note: "Directed by Prasanth Varma · IMDb 6.7" },
     { title: "Spider-Man: Brand New Day", year: 2026, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/82647423", note: "Directed by Destin Daniel Cretton · IMDb 7.9" },
     { title: "September 5", year: 2025, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/81785311", note: "Directed by Tim Fehlbaum · IMDb 7.1" },
     { title: "World War Z", year: 2013, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/70262639", note: "Directed by Marc Forster · IMDb 7" },
@@ -1315,8 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Crouching Tiger, Hidden Dragon", year: 2000, lang: "English", app: "JioHotstar", added: "2026-11-22", url: "https://www.hotstar.com/in/movies/crouching-tiger-hidden-dragon/1271723214", note: "Directed by Ang Lee · IMDb 7.8" },
     { title: "I Love Boosters", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-22", url: "https://www.hotstar.com/in/movies/i-love-boosters/1271725744", note: "Directed by Boots Riley · IMDb 6.6" },
     { title: "Black Christmas", year: 2019, lang: "English", app: "Netflix", added: "2026-11-22", url: "https://www.netflix.com/title/81151909", note: "Directed by Sophia Takal · IMDb 3.5" },
-    { title: "13 Hours: The Secret Soldiers of Benghazi", year: 2016, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/80067930", note: "Directed by Michael Bay · IMDb 7.3" },
-    { title: "Lara Croft: Tomb Raider", year: 2001, lang: "English", app: "Netflix", added: "2026-11-20", url: "https://www.netflix.com/title/60004467", note: "Directed by Simon West · IMDb 5.8" },
   ],
 };
 
