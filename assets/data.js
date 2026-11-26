@@ -1303,6 +1303,10 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-26",
   items: [
+    { title: "Supergirl", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-26", url: "https://www.hotstar.com/in/movies/supergirl/1271725797", note: "Directed by Craig Gillespie · IMDb 5.8" },
+    { title: "The Body", year: 2019, lang: "Hindi", app: "JioHotstar", added: "2026-11-26", url: "https://www.hotstar.com/in/movies/the-body/1271726388", note: "Directed by Jeethu Joseph · IMDb 5.4" },
+    { title: "Inferno", year: 2016, lang: "English", app: "JioHotstar", added: "2026-11-26", url: "https://www.hotstar.com/in/movies/inferno/1271726300", note: "Directed by Ron Howard · IMDb 6.2" },
+    { title: "For Love of the Game", year: 1999, lang: "English", app: "JioHotstar", added: "2026-11-26", url: "https://www.hotstar.com/in/movies/for-love-of-the-game/1271726488", note: "Directed by Sam Raimi · IMDb 6.6" },
     { title: "Love Story", year: 2021, lang: "Telugu", app: "Prime Video", added: "2026-11-26", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.c1dcd172-ae6c-49c4-b93a-97a517b2165b", note: "Directed by Sekhar Kammula · IMDb 6.8" },
     { title: "Zombie Reddy", year: 2021, lang: "Telugu", app: "Prime Video", added: "2026-11-26", url: "https://www.primevideo.com/detail?gti=amzn1.dv.gti.4a33ab7c-791c-48f3-a87a-f869ceb43486", note: "Directed by Prasanth Varma · IMDb 6.7" },
     { title: "Spider-Man: Brand New Day", year: 2026, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/82647423", note: "Directed by Destin Daniel Cretton · IMDb 7.9" },
@@ -1313,10 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Ninja Assassin", year: 2009, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/70101697", note: "Directed by James McTeigue · IMDb 6.3" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253149", note: "Directed by Tinu Pappachan · IMDb 6.2" },
     { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
-    { title: "Christy", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/christy-1000213414", note: "Directed by Alvin Henry · IMDb 4.9" },
-    { title: "Crouching Tiger, Hidden Dragon", year: 2000, lang: "English", app: "JioHotstar", added: "2026-11-22", url: "https://www.hotstar.com/in/movies/crouching-tiger-hidden-dragon/1271723214", note: "Directed by Ang Lee · IMDb 7.8" },
-    { title: "I Love Boosters", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-22", url: "https://www.hotstar.com/in/movies/i-love-boosters/1271725744", note: "Directed by Boots Riley · IMDb 6.6" },
-    { title: "Black Christmas", year: 2019, lang: "English", app: "Netflix", added: "2026-11-22", url: "https://www.netflix.com/title/81151909", note: "Directed by Sophia Takal · IMDb 3.5" },
   ],
 };
 
