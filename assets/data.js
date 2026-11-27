@@ -1301,8 +1301,9 @@ const PARENT_NOTES = {
 // "New on OTT this week" strip on the home page, from JustWatch India's new-arrivals page.
 // Refresh weekly: update checked and replace the items (url = the film's page on that app).
 const NEW_ON_OTT = {
-  checked: "2026-11-26",
+  checked: "2026-11-27",
   items: [
+    { title: "Hanuman Ansh", year: 2026, lang: "Hindi", app: "SonyLIV", added: "2026-11-27", url: "https://www.sonyliv.com/movies/hanuman-ansh-1090553605", note: "Directed by Vishal Chaturvedi · IMDb 8.5", kids: true },
     { title: "Drishyam: The Conclusion", year: 2026, lang: "Hindi", app: "Netflix", added: "2026-11-26", url: "https://www.netflix.com/title/83074116", note: "Directed by Abhishek Pathak · IMDb 7.6" },
     { title: "Chor Nikal Ke Bhaga", year: 2023, lang: "Hindi", app: "Netflix", added: "2026-11-26", url: "https://www.netflix.com/title/81305487", note: "Directed by Ajay Singh · IMDb 7.2" },
     { title: "Enemy of the Smuggler", year: 2026, lang: "Tamil", app: "Sun NXT", added: "2026-11-26", url: "https://www.sunnxt.com/movie/detail/284811/enemy-of-the-smuggler/", note: "IMDb 9" },
@@ -1316,7 +1317,6 @@ const NEW_ON_OTT = {
     { title: "September 5", year: 2025, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/81785311", note: "Directed by Tim Fehlbaum · IMDb 7.1" },
     { title: "World War Z", year: 2013, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/70262639", note: "Directed by Marc Forster · IMDb 7" },
     { title: "American Made", year: 2017, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/80121192", note: "Directed by Doug Liman · IMDb 7.2" },
-    { title: "Nancy Drew and the Hidden Staircase", year: 2019, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/81069556", note: "Directed by Katt Shea · IMDb 5.7", kids: true },
   ],
 };
 
