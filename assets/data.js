@@ -1303,6 +1303,9 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-26",
   items: [
+    { title: "Drishyam: The Conclusion", year: 2026, lang: "Hindi", app: "Netflix", added: "2026-11-26", url: "https://www.netflix.com/title/83074116", note: "Directed by Abhishek Pathak · IMDb 7.6" },
+    { title: "Chor Nikal Ke Bhaga", year: 2023, lang: "Hindi", app: "Netflix", added: "2026-11-26", url: "https://www.netflix.com/title/81305487", note: "Directed by Ajay Singh · IMDb 7.2" },
+    { title: "Enemy of the Smuggler", year: 2026, lang: "Tamil", app: "Sun NXT", added: "2026-11-26", url: "https://www.sunnxt.com/movie/detail/284811/enemy-of-the-smuggler/", note: "IMDb 9" },
     { title: "Supergirl", year: 2026, lang: "English", app: "JioHotstar", added: "2026-11-26", url: "https://www.hotstar.com/in/movies/supergirl/1271725797", note: "Directed by Craig Gillespie · IMDb 5.8" },
     { title: "The Body", year: 2019, lang: "Hindi", app: "JioHotstar", added: "2026-11-26", url: "https://www.hotstar.com/in/movies/the-body/1271726388", note: "Directed by Jeethu Joseph · IMDb 5.4" },
     { title: "Inferno", year: 2016, lang: "English", app: "JioHotstar", added: "2026-11-26", url: "https://www.hotstar.com/in/movies/inferno/1271726300", note: "Directed by Ron Howard · IMDb 6.2" },
@@ -1314,9 +1317,6 @@ const NEW_ON_OTT = {
     { title: "World War Z", year: 2013, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/70262639", note: "Directed by Marc Forster · IMDb 7" },
     { title: "American Made", year: 2017, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/80121192", note: "Directed by Doug Liman · IMDb 7.2" },
     { title: "Nancy Drew and the Hidden Staircase", year: 2019, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/81069556", note: "Directed by Katt Shea · IMDb 5.7", kids: true },
-    { title: "Ninja Assassin", year: 2009, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/70101697", note: "Directed by James McTeigue · IMDb 6.3" },
-    { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253149", note: "Directed by Tinu Pappachan · IMDb 6.2" },
-    { title: "Chaaver", year: 2023, lang: "Malayalam", app: "SonyLIV", added: "2026-11-23", url: "https://www.sonyliv.com/movies/chaaver-1000253150", note: "Directed by Tinu Pappachan · IMDb 6.2" },
   ],
 };
 
