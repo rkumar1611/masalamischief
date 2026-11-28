@@ -1303,6 +1303,7 @@ const PARENT_NOTES = {
 const NEW_ON_OTT = {
   checked: "2026-11-27",
   items: [
+    { title: "Sonic the Hedgehog", year: 2020, lang: "English", app: "Netflix", added: "2026-11-27", url: "https://www.netflix.com/title/80217006", note: "Directed by Jeff Fowler · IMDb 6.5", kids: true },
     { title: "Hanuman Ansh", year: 2026, lang: "Hindi", app: "SonyLIV", added: "2026-11-27", url: "https://www.sonyliv.com/movies/hanuman-ansh-1090553605", note: "Directed by Vishal Chaturvedi · IMDb 8.5", kids: true },
     { title: "Drishyam: The Conclusion", year: 2026, lang: "Hindi", app: "Netflix", added: "2026-11-26", url: "https://www.netflix.com/title/83074116", note: "Directed by Abhishek Pathak · IMDb 7.6" },
     { title: "Chor Nikal Ke Bhaga", year: 2023, lang: "Hindi", app: "Netflix", added: "2026-11-26", url: "https://www.netflix.com/title/81305487", note: "Directed by Ajay Singh · IMDb 7.2" },
@@ -1316,7 +1317,6 @@ const NEW_ON_OTT = {
     { title: "Spider-Man: Brand New Day", year: 2026, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/82647423", note: "Directed by Destin Daniel Cretton · IMDb 7.9" },
     { title: "September 5", year: 2025, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/81785311", note: "Directed by Tim Fehlbaum · IMDb 7.1" },
     { title: "World War Z", year: 2013, lang: "English", app: "Netflix", added: "2026-11-25", url: "https://www.netflix.com/title/70262639", note: "Directed by Marc Forster · IMDb 7" },
-    { title: "American Made", year: 2017, lang: "English", app: "Netflix", added: "2026-11-24", url: "https://www.netflix.com/title/80121192", note: "Directed by Doug Liman · IMDb 7.2" },
   ],
 };
 
